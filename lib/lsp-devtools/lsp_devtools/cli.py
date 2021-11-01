@@ -9,8 +9,9 @@ from typing import List
 
 import appdirs
 
-from lsp_devtools import __version__, Agent, SqlHandler
-
+from . import __version__
+from .agent import Agent
+from .handlers import SqlHandler
 
 def agent(args, extra: List[str]):
     """Run the LSP agent."""
@@ -28,7 +29,7 @@ def agent(args, extra: List[str]):
         cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE
     )
 
-    logger = logging.getLogger("agent")
+    logger = logging.getLogger("lsp_devtools.agent")
     logger.setLevel(logging.INFO)
 
     handler = SqlHandler(dbpath)
