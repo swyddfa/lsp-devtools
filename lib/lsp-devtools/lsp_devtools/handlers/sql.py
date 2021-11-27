@@ -1,21 +1,22 @@
-import json 
-import logging 
+import json
 import pathlib
 import sqlite3
-import uuid
 
 from contextlib import closing
 
 import pkg_resources
 
-class SqlHandler(logging.Handler):
+from lsp_devtools.handlers import LspHandler
+from lsp_devtools.handlers import LspMessage
+
+
+class SqlHandler(LspHandler):
     """A logging handler that sends log records to a SQL database"""
 
     def __init__(self, dbpath: pathlib.Path, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.dbpath = dbpath
-        self.session_id = None
 
         resource = pkg_resources.resource_string(__name__, "dbinit.sql")
         sql_script = resource.decode("utf8")
@@ -23,46 +24,21 @@ class SqlHandler(logging.Handler):
         with closing(sqlite3.connect(self.dbpath)) as conn:
             conn.executescript(sql_script)
 
-    def emit(self, record: logging.LogRecord):
-        """Send log records to the database."""
-
-        message = record.args
-        timestamp = record.created
-        source = record.__dict__["source"]
-
-        # message = json.loads(msg)
-        id_ = message.get("id", None)
-        method = message.get("method", None)
-
-        # Do we need to generate a new session id?
-        if method == "initialize":
-            self.session_id = str(uuid.uuid4())
-
-        params = None
-        if "params" in message:
-            params = json.dumps(message["params"])
-
-        result = None
-        if "result" in message:
-            result = json.dumps(message["result"])
-
-        error = None
-        if "error" in message:
-            error = json.dumps(message["error"])
+    def handle_message(self, message: LspMessage):
 
         with closing(sqlite3.connect(self.dbpath)) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO protocol VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (
-                    self.session_id,
-                    timestamp,
-                    source,
-                    id_,
-                    method,
-                    params,
-                    result,
-                    error,
+                    message.session,
+                    message.timestamp,
+                    message.source,
+                    message.id,
+                    message.method,
+                    json.dumps(message.params) if message.params else None,
+                    json.dumps(message.result) if message.result else None,
+                    json.dumps(message.error) if message.error else None,
                 ),
             )
 

@@ -9,9 +9,11 @@ from typing import List
 
 import appdirs
 
-from . import __version__
-from .agent import Agent
-from .handlers import SqlHandler
+from lsp_devtools import __version__
+from lsp_devtools.agent import Agent
+from lsp_devtools.handlers.prometheus import PrometheusHandler
+from lsp_devtools.handlers.sql import SqlHandler
+
 
 def agent(args, extra: List[str]):
     """Run the LSP agent."""
@@ -32,10 +34,14 @@ def agent(args, extra: List[str]):
     logger = logging.getLogger("lsp_devtools.agent")
     logger.setLevel(logging.INFO)
 
-    handler = SqlHandler(dbpath)
-    handler.setLevel(logging.INFO)
+    sql_handler = SqlHandler(dbpath)
+    sql_handler.setLevel(logging.INFO)
 
-    logger.addHandler(handler)
+    prometheus_handler = PrometheusHandler()
+    prometheus_handler.setLevel(logging.INFO)
+
+    logger.addHandler(sql_handler)
+    logger.addHandler(prometheus_handler)
 
     agent = Agent(server_process, sys.stdin.buffer, sys.stdout.buffer)
     agent.start()
