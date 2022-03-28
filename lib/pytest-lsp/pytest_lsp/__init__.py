@@ -8,7 +8,7 @@ from .plugin import make_client_server
 from .plugin import ClientServer
 from .plugin import ClientServerConfig
 
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 __all__ = [
     "Client",
