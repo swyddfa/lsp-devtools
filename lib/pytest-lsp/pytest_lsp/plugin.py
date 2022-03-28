@@ -1,6 +1,5 @@
 import asyncio
 import inspect
-import importlib.resources as resources
 import json
 import logging
 import os
@@ -23,6 +22,12 @@ from pygls.lsp.types import InitializeParams
 
 from pytest_lsp.client import Client
 from pytest_lsp.client import make_test_client
+
+try:
+    import importlib.resources as resources
+except ImportError:
+    import importlib_resources as resources
+
 
 logger = logging.getLogger("client")
 
