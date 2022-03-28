@@ -1,12 +1,20 @@
+import argparse
 import asyncio
 import io
 import json
 import logging
+import os
+import pathlib
 import subprocess
+import sys
 import threading
+from typing import List
 
+import appdirs
 from pygls.protocol import JsonRPCProtocol
 from pygls.server import Server
+
+from lsp_devtools.handlers.sql import SqlHandler
 
 logger = logging.getLogger(__name__)
 
@@ -102,4 +110,51 @@ class Passthrough(JsonRPCProtocol):
             self._message_buf = []
 
             # Log the full message
-            logger.info("%s", json.loads(body.decode(self.CHARSET)), extra={"source": self.source})
+            logger.info(
+                "%s",
+                json.loads(body.decode(self.CHARSET)),
+                extra={"source": self.source},
+            )
+
+
+def agent(args, extra: List[str]):
+    """Run the LSP agent."""
+
+    if extra is None:
+        print("Missing server start command", file=sys.stderr)
+        return 1
+
+    dbpath = pathlib.Path(args.db)
+    if not dbpath.parent.exists():
+        dbpath.parent.mkdir(parents=True)
+
+    server_process = subprocess.Popen(
+        extra, stdin=subprocess.PIPE, stdout=subprocess.PIPE
+    )
+
+    logger = logging.getLogger("lsp_devtools.agent")
+    logger.setLevel(logging.INFO)
+
+    sql_handler = SqlHandler(dbpath)
+    sql_handler.setLevel(logging.INFO)
+
+    logger.addHandler(sql_handler)
+
+    agent = Agent(server_process, sys.stdin.buffer, sys.stdout.buffer)
+    agent.start()
+    agent.join()
+
+
+def cli(commands: argparse._SubParsersAction):
+    cmd = commands.add_parser(
+        "agent",
+        help="agent for recording communications between an LSP client and server.",
+    )
+    cmd.add_argument(
+        "--db",
+        help="path to use for the database",
+        default=os.path.join(
+            appdirs.user_data_dir(appname="lsp-devtools"), "lsp_sessions.db"
+        ),
+    )
+    cmd.set_defaults(run=agent)
