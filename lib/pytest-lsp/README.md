@@ -1,6 +1,6 @@
 # pytest-lsp: End-to-end testing of language servers with pytest
 
-> This plugin is in **very** early development, it currently implements just enough to support the  test suite of the [esbonio](https://github.com/swyddfa/esbonio) language server.
+> This plugin is in **very** early development, it currently implements just enough to support the test suite of the [esbonio](https://github.com/swyddfa/esbonio) language server.
 
 `pytest-lsp` is a pytest plugin for writing end-to-end tests for language servers.
 
