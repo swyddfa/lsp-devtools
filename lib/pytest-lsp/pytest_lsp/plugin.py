@@ -12,6 +12,7 @@ from typing import List
 from typing import Optional
 from typing import Union
 
+import pytest
 import pytest_asyncio
 from pygls.lsp.methods import EXIT
 from pygls.lsp.methods import INITIALIZE
@@ -30,6 +31,12 @@ except ImportError:
 
 
 logger = logging.getLogger("client")
+
+
+if hasattr(pytest_asyncio, "fixture"):
+    make_fixture = pytest_asyncio.fixture
+else:
+    make_fixture = pytest.fixture
 
 
 class ClientServer:
@@ -196,7 +203,7 @@ def fixture(
         config = [config]
 
     def wrapper(fn):
-        @pytest_asyncio.fixture(params=config, **kwargs)
+        @make_fixture(params=config, **kwargs)
         async def the_fixture(request):
 
             lsp = make_client_server(request.param)
