@@ -1,0 +1,85 @@
+name: LSP Devtools
+
+on:
+  pull_request:
+    branches:
+    - release
+  push:
+    branches:
+    - release
+
+jobs:
+  # Simple job the checks to see which parts we actually have to build.
+  trigger:
+    name: Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      pytest-lsp: ${{steps.check-pytest-lsp.outputs.build}}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - run: |
+        if [ -z "${BASE_REF}" ]; then
+          echo "BASE=HEAD^" >> $GITHUB_ENV
+        else
+          echo "BASE=origin/${BASE_REF}" >> $GITHUB_ENV
+        fi
+      name: Determine base
+      env:
+        BASE_REF: ${{ github.base_ref }}
+
+    - id: check-pytest-lsp
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh pytest-lsp
+      name: "Build pytest-lsp?"
+
+  pytest-lsp:
+    name: pytest-lsp
+    needs: [trigger]
+    if: always() && needs.trigger.outputs.pytest-lsp
+    runs-on: ubuntu-latest # TODO: Enable windows, macOS builds.
+    steps:
+    - uses: 'actions/checkout@v2'
+
+    - uses: 'actions/setup-python@v1'
+      with:
+        python-version: 3.10
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install build
+
+      name: Install Build Tools
+
+    - name: Package
+      run: |
+        cd lib/pytest-lsp
+        python -m build
+      if: always() && matrix.python-version == '3.10'
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: 'dist'
+        path: lib/pytest-lsp/dist
+      if: always() && matrix.python-version == '3.10'
+
+    - name: Publish
+      id: assets
+      run: |
+        cd lib/pytest-lsp
+        python -m pip install twine
+        python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
+
+        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
+        echo "::set-output name=WHL::$whl"
+
+        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
+        echo "::set-output name=SRC::$src"
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
