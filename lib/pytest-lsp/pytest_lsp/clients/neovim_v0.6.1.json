@@ -1,0 +1,269 @@
+{
+  "workspace": {
+    "apply_edit": true,
+    "workspace_edit": {
+      "document_changes": null,
+      "resource_operations": [
+        "rename",
+        "create",
+        "delete"
+      ],
+      "failure_handling": null,
+      "normalizes_line_endings": null,
+      "change_annotation_support": null
+    },
+    "did_change_configuration": null,
+    "did_change_watched_files": null,
+    "symbol": {
+      "dynamic_registration": false,
+      "symbol_kind": {
+        "value_set": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26
+        ]
+      },
+      "tag_support": null
+    },
+    "execute_command": null,
+    "workspace_folders": true,
+    "configuration": true,
+    "semantic_tokens": null,
+    "code_lens": null,
+    "file_operations": null
+  },
+  "text_document": {
+    "synchronization": {
+      "dynamic_registration": false,
+      "will_save": false,
+      "will_save_wait_until": false,
+      "did_save": true
+    },
+    "completion": {
+      "dynamic_registration": false,
+      "completion_item": {
+        "snippet_support": false,
+        "commit_characters_support": false,
+        "documentation_format": [
+          "markdown",
+          "plaintext"
+        ],
+        "deprecated_support": false,
+        "preselect_support": false,
+        "tag_support": null,
+        "insert_replace_support": null,
+        "resolve_support": null,
+        "insert_text_mode_support": null
+      },
+      "completion_item_kind": {
+        "value_set": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25
+        ]
+      },
+      "context_support": false
+    },
+    "hover": {
+      "dynamic_registration": false,
+      "content_format": [
+        "markdown",
+        "plaintext"
+      ]
+    },
+    "signature_help": {
+      "dynamic_registration": false,
+      "signature_information": {
+        "documentation_format": [
+          "markdown",
+          "plaintext"
+        ],
+        "parameter_information": {
+          "label_offset_support": true
+        },
+        "active_parameter_support": true
+      },
+      "context_support": null
+    },
+    "declaration": {
+      "dynamic_registration": null,
+      "link_support": true
+    },
+    "definition": {
+      "dynamic_registration": null,
+      "link_support": true
+    },
+    "type_definition": {
+      "dynamic_registration": null,
+      "link_support": true
+    },
+    "implementation": {
+      "dynamic_registration": null,
+      "link_support": true
+    },
+    "references": {
+      "dynamic_registration": false
+    },
+    "document_highlight": {
+      "dynamic_registration": false
+    },
+    "document_symbol": {
+      "dynamic_registration": false,
+      "symbol_kind": {
+        "value_set": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26
+        ]
+      },
+      "hierarchical_document_symbol_support": true,
+      "tag_support": null,
+      "label_support": null
+    },
+    "code_action": {
+      "dynamic_registration": false,
+      "code_action_literal_support": {
+        "code_action_kind": {
+          "value_set": [
+            "",
+            "Empty",
+            "QuickFix",
+            "Refactor",
+            "RefactorExtract",
+            "RefactorInline",
+            "RefactorRewrite",
+            "Source",
+            "SourceOrganizeImports",
+            "quickfix",
+            "refactor",
+            "refactor.extract",
+            "refactor.inline",
+            "refactor.rewrite",
+            "source",
+            "source.organizeImports"
+          ]
+        }
+      },
+      "is_preferred_support": null,
+      "disabled_support": null,
+      "data_support": true,
+      "resolve_support": {
+        "properties": [
+          "edit"
+        ]
+      },
+      "honors_change_annotations": null
+    },
+    "code_lens": null,
+    "document_link": null,
+    "color_provider": null,
+    "formatting": null,
+    "range_formatting": null,
+    "on_type_formatting": null,
+    "rename": {
+      "dynamic_registration": false,
+      "prepare_support": true,
+      "prepare_support_default_behavior": null,
+      "honors_change_annotations": null
+    },
+    "publish_diagnostics": {
+      "related_information": true,
+      "tag_support": {
+        "value_set": [
+          1,
+          2
+        ]
+      },
+      "version_support": null,
+      "code_description_support": null,
+      "data_support": null
+    },
+    "folding_range": null,
+    "selection_range": null,
+    "linked_editing_range": null,
+    "call_hierarchy": null,
+    "semantic_tokens": null,
+    "moniker": null
+  },
+  "window": {
+    "work_done_progress": true,
+    "show_message": {
+      "message_action_item": {
+        "additional_properties_support": false
+      }
+    },
+    "show_document": {
+      "support": false
+    }
+  },
+  "general": null,
+  "experimental": null
+}
