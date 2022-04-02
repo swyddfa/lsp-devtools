@@ -58,11 +58,22 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - run: |
+        sudo apt update
+        sudo apt install pandoc
+
         python --version
         python -m pip install --upgrade pip
-        python -m pip install build tox
+        python -m pip install build tox bump2version towncrier==19.2 docutils
 
       name: Install Build Tools
+
+    - run: |
+        set -e
+
+        ./scripts/make-release.sh pytest-lsp
+      name: Set Version
+      id: info
+      if: matrix.python-version == '3.10'      
 
     - run: |
         cd lib/pytest-lsp
@@ -96,4 +107,38 @@ jobs:
 
         src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
         echo "::set-output name=SRC::$src"
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Create Release
+      id: release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ steps.info.outputs.TAG }}
+        release_name: Pytest LSP v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
+        body_path: lib/pytest-lsp/.changes.html
+        draft: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: lib/pytest-lsp/dist/${{ steps.assets.outputs.WHL }}
+        asset_name: ${{ steps.assets.outputs.WHL }}
+        asset_content_type: application/octet-stream
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: lib/pytest-lsp/dist/${{ steps.assets.outputs.SRC }}
+        asset_name: ${{ steps.assets.outputs.SRC }}
+        asset_content_type: application/octet-stream
       if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
