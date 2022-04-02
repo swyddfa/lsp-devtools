@@ -1,3 +1,12 @@
+v0.0.5 - 2022-04-02
+-------------------
+
+Fixes
+^^^^^
+
+- The plugin should now work on Python v3.6+ (`#1 <https://github.com/alcarney/lsp-devtools/issues/1>`_)
+
+
 v0.0.3 - 2022-03-28
 -------------------
 

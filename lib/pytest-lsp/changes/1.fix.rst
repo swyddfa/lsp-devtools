@@ -1,1 +1,0 @@
-The plugin should now work on Python v3.6+
