@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import threading
 from typing import Any
 from typing import Callable
@@ -24,10 +25,10 @@ from pygls.lsp.types import InitializeParams
 from pytest_lsp.client import Client
 from pytest_lsp.client import make_test_client
 
-try:
-    import importlib.resources as resources
-except ImportError:
+if sys.version_info.minor < 9:
     import importlib_resources as resources
+else:
+    import importlib.resources as resources
 
 
 logger = logging.getLogger("client")
