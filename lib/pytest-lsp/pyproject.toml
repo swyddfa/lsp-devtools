@@ -3,4 +3,17 @@ requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-asyncio_mode = "strict"
+asyncio_mode = "auto"
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+isolated_build = True
+skip_missing_interpreters = true
+envlist = py{36,37,38,39,310}
+
+[testenv]
+extras= dev
+commands =
+    pytest {posargs}
+"""

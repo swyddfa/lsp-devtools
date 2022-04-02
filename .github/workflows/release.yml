@@ -3,10 +3,12 @@ name: LSP Devtools
 on:
   pull_request:
     branches:
+    - develop
     - release
   push:
     branches:
     - release
+    - develop
 
 jobs:
   # Simple job the checks to see which parts we actually have to build.
@@ -45,7 +47,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.10"]
+        python-version: ["3.6", "3.7", "3.8", "3.9" "3.10"]
         os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v2
@@ -58,9 +60,16 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install build
+        python -m pip install build tox
 
       name: Install Build Tools
+
+    - run: |
+        cd lib/pytest-lsp
+
+        version=$(echo ${{ matrix.python-version }} | tr -d .)
+        python -m tox -e `tox -l | grep $version | tr '\n' ','`
+      name: Test      
 
     - name: Package
       run: |
