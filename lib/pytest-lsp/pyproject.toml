@@ -3,4 +3,54 @@ requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-asyncio_mode = "strict"
+asyncio_mode = "auto"
+
+[tool.towncrier]
+filename = "CHANGES.rst"
+directory = "changes/"
+title_format = "v{version} - {project_date}"
+issue_format = "`#{issue} <https://github.com/alcarney/lsp-devtools/issues/{issue}>`_"
+underlines = ["-", "^", "\""]
+
+[[tool.towncrier.type]]
+     directory = "feature"
+     name = "Features"
+     showcontent = true
+
+[[tool.towncrier.type]]
+     directory = "fix"
+     name = "Fixes"
+     showcontent = true
+
+[[tool.towncrier.type]]
+     directory = "doc"
+     name = "Docs"
+     showcontent = true
+
+[[tool.towncrier.type]]
+     directory = "breaking"
+     name = "Breaking Changes"
+     showcontent = true
+
+[[tool.towncrier.type]]
+     directory = "deprecated"
+     name = "Deprecated"
+     showcontent = true
+
+[[tool.towncrier.type]]
+     directory = "misc"
+     name = "Misc"
+     showcontent = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+isolated_build = True
+skip_missing_interpreters = true
+envlist = py{36,37,38,39,310}
+
+[testenv]
+extras= dev
+commands =
+    pytest {posargs}
+"""
