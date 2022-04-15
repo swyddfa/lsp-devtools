@@ -9,31 +9,34 @@ from pytest_lsp.client import Client
 logger = logging.getLogger(__name__)
 
 
-def warn(item: str, reason: str):
-    logger.warning("Unable to check %s compliance, %s.", item, reason)
-
-
 def completion_items(client: Client, items: List[CompletionItem]):
     """Ensure that the completion items returned from the server are compliant with the
     spec and the client's declared capabilities."""
 
-    text_document = client.capabilities.text_document
-    if not text_document:
-        warn("CompletionItem", "missing text document capabilities")
-        return
-
-    completion = text_document.completion
-    if not completion:
-        warn("CompletionItem", "missing completion client capabilities")
-        return
-
-    completion_item = completion.completion_item
-    if not completion_item:
-        warn("CompletionItem", "missing completion item capabilities")
-        return
-
-    snippet_support = completion_item.snippet_support
+    commit_characters_support = client.capabilities.get_capability(
+        "text_document.completion.completion_item.commit_characters_support", False
+    )
+    documentation_formats = set(
+        client.capabilities.get_capability(
+            "text_document.completion.completion_item.documentation_format", []
+        )
+    )
+    snippet_support = client.capabilities.get_capability(
+        "text_document.completion.completion_item.snippet_support", False
+    )
 
     for item in items:
+
+        if item.commit_characters:
+            assert (
+                commit_characters_support
+            ), "Client does not support commit characters"
+
+        if isinstance(item.documentation, MarkupContent):
+            kind = item.documentation.kind
+            assert (
+                kind in documentation_formats
+            ), f"Client does not support documentation format '{kind}'"
+
         if item.insert_text_format == InsertTextFormat.Snippet:
             assert snippet_support, "Client does not support snippets."
