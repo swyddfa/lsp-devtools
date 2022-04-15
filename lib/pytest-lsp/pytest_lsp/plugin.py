@@ -203,8 +203,10 @@ def fixture(
     if isinstance(config, ClientServerConfig):
         config = [config]
 
+    ids = [conf.client or f"client{idx}" for idx, conf in enumerate(config)]
+
     def wrapper(fn):
-        @make_fixture(params=config, **kwargs)
+        @make_fixture(params=config, ids=ids, **kwargs)
         async def the_fixture(request):
 
             lsp = make_client_server(request.param)
