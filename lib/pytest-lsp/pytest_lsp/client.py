@@ -150,6 +150,22 @@ class Client(LanguageServer):
 
         return [Location(**obj) for obj in response]
 
+    async def document_link_request(self, uri: str) -> List[DocumentLink]:
+        """Make a ``textDocument/documentLink`` request
+
+        Parameters
+        ----------
+        uri
+           The uri of the document to make the request for.
+        """
+
+        response = await self.lsp.send_request_async(
+            DOCUMENT_LINK,
+            DocumentLinkParams(text_document=TextDocumentIdentifier(uri=uri)),
+        )
+
+        return [DocumentLink(**obj) for obj in response]
+
     async def document_symbols_request(self, uri: str) -> List[DocumentSymbol]:
         """Make a ``textDocument/documentSymbol`` request
 

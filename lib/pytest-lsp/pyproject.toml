@@ -13,34 +13,39 @@ issue_format = "`#{issue} <https://github.com/alcarney/lsp-devtools/issues/{issu
 underlines = ["-", "^", "\""]
 
 [[tool.towncrier.type]]
-     directory = "feature"
-     name = "Features"
-     showcontent = true
+directory = "feature"
+name = "Features"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "fix"
-     name = "Fixes"
-     showcontent = true
+directory = "enhancement"
+name = "Enhancements"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "doc"
-     name = "Docs"
-     showcontent = true
+directory = "fix"
+name = "Fixes"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "breaking"
-     name = "Breaking Changes"
-     showcontent = true
+directory = "doc"
+name = "Docs"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "deprecated"
-     name = "Deprecated"
-     showcontent = true
+directory = "breaking"
+name = "Breaking Changes"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "misc"
-     name = "Misc"
-     showcontent = true
+directory = "deprecated"
+name = "Deprecated"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Misc"
+showcontent = true
 
 [tool.tox]
 legacy_tox_ini = """
