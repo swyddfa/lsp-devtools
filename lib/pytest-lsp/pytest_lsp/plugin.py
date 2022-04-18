@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess
 import sys
+import textwrap
 import threading
 from typing import Any
 from typing import Callable
@@ -193,6 +194,34 @@ def make_client_server(config: ClientServerConfig) -> ClientServer:
     )
 
 
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
+    """Add any captured log messages to the report."""
+    client: Optional[Client] = None
+
+    for arg in item.funcargs.values():
+        if isinstance(arg, Client):
+            client = arg
+            break
+
+    if not client:
+        return
+
+    levels = ["ERROR: ", " WARN: ", " INFO: ", "DEBUG: "]
+
+    if call.when == "setup":
+        captured_messages = client.log_messages[: client._setup_log_index + 1]
+    else:
+        captured_messages = client.log_messages[client._last_log_index :]
+        client._last_log_index = len(client.log_messages)
+
+    messages = [
+        f"{textwrap.indent(m.message, levels[m.type - 1])}" for m in captured_messages
+    ]
+
+    if len(messages) > 0:
+        item.add_report_section(call.when, "window/logMessages", "\n".join(messages))
+
+
 def fixture(
     fixture_function=None,
     *,
@@ -218,6 +247,9 @@ def fixture(
                 await fn(lsp.client)
             else:
                 await fn()
+
+            lsp.client._setup_log_index = len(lsp.client.log_messages)
+            lsp.client._last_log_index = len(lsp.client.log_messages)
 
             yield lsp.client
             await lsp.stop()
