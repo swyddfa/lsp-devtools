@@ -40,3 +40,16 @@ def completion_items(client: Client, items: List[CompletionItem]):
 
         if item.insert_text_format == InsertTextFormat.Snippet:
             assert snippet_support, "Client does not support snippets."
+
+
+def document_links(client: Client, items: List[DocumentLink]):
+    """Ensure that the document links returned from the server are compliant with the
+    spec and the client's declared capabilities."""
+
+    tooltip_support = client.capabilities.get_capability(
+        "text_document.document_link.tooltip_support", False
+    )
+
+    for item in items:
+        if item.tooltip:
+            assert tooltip_support, "Client does not support tooltips."
