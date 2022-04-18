@@ -1,3 +1,12 @@
+v0.0.6 - 2022-04-18
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- Added helpers for ``textDocument/documentLink`` requests. (`#4 <https://github.com/alcarney/lsp-devtools/issues/4>`_)
+
+
 v0.0.5 - 2022-04-02
 -------------------
 

@@ -1,1 +1,0 @@
-Added helpers for ``textDocument/documentLink`` requests.
