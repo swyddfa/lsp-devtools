@@ -93,6 +93,12 @@ class Client(LanguageServer):
         self.diagnostics: Dict[str, List[Diagnostic]] = {}
         """Used to hold any recieved diagnostics."""
 
+        self._setup_log_index = 0
+        """Used to keep track of which log messages occurred during startup."""
+
+        self._last_log_index = 0
+        """Used to keep track of which log messages correspond with which test case."""
+
     async def completion_request(
         self,
         uri: str,
@@ -151,7 +157,7 @@ class Client(LanguageServer):
         return CompletionItem(**response)
 
     async def definition_request(
-            self, uri: str, position: Position
+        self, uri: str, position: Position
     ) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
         """Make a ``textDocument/definition`` request to a language server.
 
@@ -212,7 +218,7 @@ class Client(LanguageServer):
             return None
 
     async def document_symbols_request(
-            self, uri: str
+        self, uri: str
     ) -> Optional[Union[List[DocumentSymbol], List[SymbolInformation]]]:
         """Make a ``textDocument/documentSymbol`` request
 
@@ -236,16 +242,13 @@ class Client(LanguageServer):
 
         if response:
             return [
-                DocumentSymbol(**obj) if "range" in obj
-                else SymbolInformation(**obj)
+                DocumentSymbol(**obj) if "range" in obj else SymbolInformation(**obj)
                 for obj in response
             ]
         else:
             return None
 
-    async def hover_request(
-            self, uri: str, position: Position
-    ) -> Optional[Hover]:
+    async def hover_request(self, uri: str, position: Position) -> Optional[Hover]:
         """Make a ``textDocument/hover`` request.
 
         Parameters
@@ -454,11 +457,12 @@ def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> Client:
         ]
 
     @client.feature(WINDOW_LOG_MESSAGE)
-    def log_message(client: Client, params: LogMessageParams):
-        client.log_messages.append(params)
+    def log_message(client: Client, params):
+        log = LogMessageParams(**object_to_dict(params))
+        client.log_messages.append(log)
 
         levels = [logger.error, logger.warning, logger.info, logger.debug]
-        levels[params.type - 1](params.message)
+        levels[log.type - 1](log.message)
 
     @client.feature(WINDOW_SHOW_MESSAGE)
     def show_message(client: Client, params):

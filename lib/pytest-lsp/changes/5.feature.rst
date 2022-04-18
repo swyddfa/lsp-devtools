@@ -1,0 +1,1 @@
+Any ``window/logMessage`` messages emitted by a server under test are now captured and reported alongside any test failures
