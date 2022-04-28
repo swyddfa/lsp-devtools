@@ -88,6 +88,7 @@ class Passthrough(JsonRPCProtocol):
 
             # Forward on the data as we receive it
             self.transport.write(data)
+            logger.debug(data.decode(self.CHARSET), extra={"source": self.source})
 
             # Append the incoming chunk to the message buffer
             self._message_buf.append(data)
