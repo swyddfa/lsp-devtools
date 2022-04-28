@@ -6,7 +6,7 @@ from pygls.lsp.types import InitializeParams
 from pygls.server import LanguageServer
 
 
-def record_capabilities(args, extra):
+def capabilities(args, extra):
 
     server = LanguageServer()
 
@@ -32,4 +32,4 @@ def cli(commands: argparse._SubParsersAction):
         "capabilities",
         help="dummy lsp server for recording a client's capabilities.",
     )
-    cmd.set_defaults(run=record_capabilities)
+    cmd.set_defaults(run=capabilities)
