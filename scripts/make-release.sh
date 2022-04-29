@@ -13,6 +13,11 @@ COMMIT_MSG=
 
 COMPONENT=$1
 case $1 in
+    lsp-devtools)
+        SRC="lib/lsp-devtools"
+        TAG_PREFIX="lsp-devtools-v"
+        COMMIT_MSG="LSP Devtools Release v"
+        ;;
     pytest-lsp)
         SRC="lib/pytest-lsp"
         TAG_PREFIX="pytest-lsp-v"

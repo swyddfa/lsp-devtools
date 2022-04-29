@@ -16,6 +16,7 @@ jobs:
     name: Trigger
     runs-on: ubuntu-latest
     outputs:
+      lsp-devtools: ${{steps.check-lsp-devtools.outputs.build}}
       pytest-lsp: ${{steps.check-pytest-lsp.outputs.build}}
     steps:
     - uses: actions/checkout@v2
@@ -32,6 +33,14 @@ jobs:
       env:
         BASE_REF: ${{ github.base_ref }}
 
+    - id: check-lsp-devtools
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh lsp-devtools
+      name: "Build lsp-devtools?"
+
     - id: check-pytest-lsp
       run: |
         set -e
@@ -39,6 +48,103 @@ jobs:
 
         ./scripts/should-build.sh pytest-lsp
       name: "Build pytest-lsp?"
+
+  lsp-devtools:
+    name: lsp-devtools
+    needs: [trigger]
+    if: always() && needs.trigger.outputs.lsp-devtools
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+        os: [ubuntu-latest]
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - run: |
+        sudo apt update
+        sudo apt install pandoc
+
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install build tox bump2version towncrier==19.2 docutils
+
+      name: Install Build Tools
+
+    - run: |
+        set -e
+
+        ./scripts/make-release.sh lsp-devtools
+      name: Set Version
+      id: info
+      if: matrix.python-version == '3.10'
+
+    - name: Package
+      run: |
+        cd lib/lsp-devtools
+        python -m build
+      if: always() && matrix.python-version == '3.10'
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: 'dist'
+        path: lib/lsp-devtools/dist
+      if: always() && matrix.python-version == '3.10'
+
+    - name: Publish
+      id: assets
+      run: |
+        cd lib/lsp-devtools
+        python -m pip install twine
+        python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
+
+        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
+        echo "::set-output name=WHL::$whl"
+
+        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
+        echo "::set-output name=SRC::$src"
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Create Release
+      id: release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ steps.info.outputs.TAG }}
+        release_name: LSP Devtools v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
+        body_path: lib/lsp-devtools/.changes.html
+        draft: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: lib/lsp-devtools/dist/${{ steps.assets.outputs.WHL }}
+        asset_name: ${{ steps.assets.outputs.WHL }}
+        asset_content_type: application/octet-stream
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: lib/lsp-devtools/dist/${{ steps.assets.outputs.SRC }}
+        asset_name: ${{ steps.assets.outputs.SRC }}
+        asset_content_type: application/octet-stream
+      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+
 
   pytest-lsp:
     name: pytest-lsp
@@ -73,14 +179,14 @@ jobs:
         ./scripts/make-release.sh pytest-lsp
       name: Set Version
       id: info
-      if: matrix.python-version == '3.10'      
+      if: matrix.python-version == '3.10'
 
     - run: |
         cd lib/pytest-lsp
 
         version=$(echo ${{ matrix.python-version }} | tr -d .)
         python -m tox -e `tox -l | grep $version | tr '\n' ','`
-      name: Test      
+      name: Test
 
     - name: Package
       run: |

@@ -3,6 +3,7 @@
 
 # File patterns to check for each component, if there's a match a build will be
 # triggered
+LSP_DEVTOOLS="^lib/lsp-devtools/"
 PYTEST_LSP="^lib/pytest-lsp/"
 
 # Determine which files have changed
@@ -11,6 +12,9 @@ echo -e "Files Changed:\n"
 cat changes
 
 case $1 in
+    lsp-devtools)
+        PATTERN=${LSP_DEVTOOLS}
+        ;;
     pytest-lsp)
         PATTERN=${PYTEST_LSP}
         ;;

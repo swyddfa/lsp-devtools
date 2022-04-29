@@ -11,7 +11,7 @@ from lsp_devtools import __version__
 logger = logging.getLogger(__name__)
 
 
-BUILTIN_COMMANDS = ["lsp_devtools.agent", "lsp_devtools.capabilities"]
+BUILTIN_COMMANDS = ["lsp_devtools.cmds.capabilities", "lsp_devtools.cmds.record"]
 
 
 def load_command(commands: argparse._SubParsersAction, name: str):
