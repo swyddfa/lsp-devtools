@@ -1,1 +1,2 @@
 include lsp_devtools/handlers/dbinit.sql
+include lsp_devtools/py.typed
