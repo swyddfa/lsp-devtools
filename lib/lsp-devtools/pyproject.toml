@@ -38,3 +38,15 @@ showcontent = true
 directory = "misc"
 name = "Misc"
 showcontent = true
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+isolated_build = True
+skip_missing_interpreters = true
+
+[testenv:mypy]
+extras= dev
+commands =
+    mypy -p lsp_devtools
+"""
