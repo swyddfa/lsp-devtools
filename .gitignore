@@ -1,7 +1,8 @@
 .env
+.tox
 *.pyc
 
 dist
-
+.mypy_cache
 __pycache__
 *.egg-info

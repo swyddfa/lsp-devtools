@@ -12,7 +12,7 @@ from lsp_devtools.agent import logger
 class DebugOnly(logging.Filter):
     """Only permits messages at debug level."""
 
-    def filter(self, record: logging.Filter):
+    def filter(self, record: logging.LogRecord):
         return record.levelno == logging.DEBUG and "source" in record.__dict__
 
 

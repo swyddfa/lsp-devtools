@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import io
 import json
 import logging
 import os
@@ -8,6 +7,7 @@ import pathlib
 import subprocess
 import sys
 import threading
+from typing import BinaryIO
 from typing import List
 
 import appdirs
@@ -34,7 +34,7 @@ class Agent:
 
     """
 
-    def __init__(self, server: subprocess.Popen, stdin: io.BytesIO, stdout: io.BytesIO):
+    def __init__(self, server: subprocess.Popen, stdin: BinaryIO, stdout: BinaryIO):
         self.stdin = stdin
         self.stdout = stdout
         self.server_process = server
