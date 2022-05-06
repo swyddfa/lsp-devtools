@@ -1,6 +1,6 @@
-from prometheus_client import Counter
-from prometheus_client import Histogram
-from prometheus_client import start_http_server
+from prometheus_client import Counter  # type: ignore
+from prometheus_client import Histogram  # type: ignore
+from prometheus_client import start_http_server  # type: ignore
 
 from lsp_devtools.handlers import LspHandler
 from lsp_devtools.handlers import LspMessage

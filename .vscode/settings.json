@@ -9,5 +9,6 @@
         "**/__pycache__": true,
         "**/*.egg-info": true,
         "**/.pytest_cache": true,
+        "**/.mypy_cache": true,
     }
 }
