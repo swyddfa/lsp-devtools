@@ -1,3 +1,12 @@
+v0.0.7 - 2022-05-26
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- Add helpers for ``textDocument/hover`` requests. (`#8 <https://github.com/alcarney/lsp-devtools/issues/8>`_)
+
+
 v0.0.6 - 2022-04-18
 -------------------
 
