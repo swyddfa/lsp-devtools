@@ -78,7 +78,7 @@ class Client(LanguageServer):
         """Used to keep track of the documents that the client has opened."""
 
         self.shown_documents: List[ShowDocumentParams] = []
-        """Used to keep track of the documents requested to be shown via a 
+        """Used to keep track of the documents requested to be shown via a
         ``window/showDocument`` request."""
 
         self.messages: List[ShowMessageParams] = []
@@ -181,6 +181,26 @@ class Client(LanguageServer):
         )
 
         return [DocumentSymbol(**obj) for obj in response]
+
+    async def hover_request(self, uri: str, position: Position) -> Hover:
+        """Make a ``textDocument/hover`` request.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document to make the request for.
+        position
+           The position of the hover request
+        """
+
+        response = await self.lsp.send_request_async(
+            HOVER,
+            HoverParams(
+                text_document=TextDocumentIdentifier(uri=uri), position=position
+            ),
+        )
+
+        return Hover(**response)
 
     async def execute_command_request(self, command: str, *args: Any):
         return await self.lsp.send_request_async(
