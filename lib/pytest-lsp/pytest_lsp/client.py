@@ -3,6 +3,7 @@ import logging
 from concurrent.futures import Future
 from typing import Dict
 from typing import List
+from typing import Union
 
 from pygls.exceptions import JsonRpcMethodNotFound
 from pygls.lsp.methods import *
@@ -130,7 +131,9 @@ class Client(LanguageServer):
         response = await self.lsp.send_request_async(COMPLETION_ITEM_RESOLVE, item)
         return CompletionItem(**response)
 
-    async def definition_request(self, uri: str, position: Position) -> List[Location]:
+    async def definition_request(
+            self, uri: str, position: Position
+    ) -> Union[Location, List[Location], List[LocationLink]]:
         """Make a ``textDocument/definition`` request to a language server.
 
         Parameters
@@ -148,7 +151,13 @@ class Client(LanguageServer):
             ),
         )
 
-        return [Location(**obj) for obj in response]
+        if isinstance(response, list):
+            return [
+                LocationLink(**obj) if "targetUri" in obj else Location(**obj)
+                for obj in response
+            ]
+        else:
+            return Location(**response)
 
     async def document_link_request(self, uri: str) -> List[DocumentLink]:
         """Make a ``textDocument/documentLink`` request
