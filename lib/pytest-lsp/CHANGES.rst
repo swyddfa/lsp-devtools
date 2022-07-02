@@ -1,3 +1,24 @@
+v0.1.0 - 2022-07-02
+-------------------
+
+Features
+^^^^^^^^
+
+- Any ``window/logMessage`` messages emitted by a server under test are now captured and reported alongside any test failures (`#5 <https://github.com/alcarney/lsp-devtools/issues/5>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- For currently implemented lsp request helpers, the test client now supports all valid return types. (`#11 <https://github.com/alcarney/lsp-devtools/issues/11>`_)
+
+
+Fixes
+^^^^^
+
+- The test client now correctly handles ``null`` responses. (`#9 <https://github.com/alcarney/lsp-devtools/issues/9>`_)
+
+
 v0.0.7 - 2022-05-26
 -------------------
 

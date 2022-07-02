@@ -1,1 +1,0 @@
-For currently implemented lsp request helpers, the test client now supports all valid return types.
