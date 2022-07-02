@@ -64,7 +64,7 @@ import pytest
 
 @pytest.mark.asyncio
 async def test_capabilities(client):
-    actual = await client.execute_command_request("return.client.capabilities") 
+    actual = await client.execute_command_request("return.client.capabilities")
     assert actual == json.loads('{expected}')
     """
     )

@@ -1,8 +1,11 @@
 import asyncio
 import logging
 from concurrent.futures import Future
+from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
+from typing import Union
 
 from pygls.exceptions import JsonRpcMethodNotFound
 from pygls.lsp.methods import *
@@ -90,12 +93,18 @@ class Client(LanguageServer):
         self.diagnostics: Dict[str, List[Diagnostic]] = {}
         """Used to hold any recieved diagnostics."""
 
+        self._setup_log_index = 0
+        """Used to keep track of which log messages occurred during startup."""
+
+        self._last_log_index = 0
+        """Used to keep track of which log messages correspond with which test case."""
+
     async def completion_request(
         self,
         uri: str,
         line: int,
         character: int,
-    ) -> CompletionList:
+    ) -> Optional[Union[CompletionList, List[CompletionItem]]]:
         """Send a ``textDocument/completion`` request.
 
         Parameters
@@ -105,7 +114,14 @@ class Client(LanguageServer):
         line
            The line number to make the completion request from
         character
-           The character column to make the completion reqest from.
+           The character column to make the completion request from.
+
+        Return
+        ------
+        Optional[Union[CompletionList, List[CompletionItem]]]
+           Either a list of CompletionItem, a CompletionList or None
+           based on the response of the language server, corresponding
+           to 'CompletionItem[] | CompletionList | null'.
         """
 
         response = await self.lsp.send_request_async(
@@ -116,7 +132,12 @@ class Client(LanguageServer):
             ),
         )
 
-        return CompletionList(**response)
+        if isinstance(response, dict):
+            return CompletionList(**response)
+        elif isinstance(response, list):
+            return [CompletionItem(**item) for item in response]
+        else:
+            return None
 
     async def completion_resolve_request(self, item: CompletionItem) -> CompletionItem:
         """Make a ``completionItem/resolve`` request to a language server.
@@ -124,13 +145,20 @@ class Client(LanguageServer):
         Parameters
         ----------
         item
-           The ``CompletionItem`` to bed resolved
+           The ``CompletionItem`` to be resolved.
+
+        Return
+        ------
+        CompletionItem
+           The resolved completion item.
         """
 
         response = await self.lsp.send_request_async(COMPLETION_ITEM_RESOLVE, item)
         return CompletionItem(**response)
 
-    async def definition_request(self, uri: str, position: Position) -> List[Location]:
+    async def definition_request(
+        self, uri: str, position: Position
+    ) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
         """Make a ``textDocument/definition`` request to a language server.
 
         Parameters
@@ -138,9 +166,15 @@ class Client(LanguageServer):
         uri
            The uri of the document to make the request within.
         position
-           The position of the definition request
-        """
+           The position of the definition request.
 
+        Return
+        ------
+        Optional[Union[Location, List[Location], List[LocationLink]]]
+           Either a Location, list of Location, a list of LocationLink
+           or None based on the response of the language server,
+           corresponding to 'Location | Location[] | LocationLink[] | null'.
+        """
         response = await self.lsp.send_request_async(
             DEFINITION,
             DefinitionParams(
@@ -148,15 +182,29 @@ class Client(LanguageServer):
             ),
         )
 
-        return [Location(**obj) for obj in response]
+        if isinstance(response, list):
+            return [
+                LocationLink(**obj) if "targetUri" in obj else Location(**obj)
+                for obj in response
+            ]
+        elif isinstance(response, dict):
+            return Location(**response)
+        else:
+            return None
 
-    async def document_link_request(self, uri: str) -> List[DocumentLink]:
+    async def document_link_request(self, uri: str) -> Optional[List[DocumentLink]]:
         """Make a ``textDocument/documentLink`` request
 
         Parameters
         ----------
         uri
            The uri of the document to make the request for.
+
+        Return
+        ------
+        Optional[List[DocumentLink]]
+           Either a list of DocumentLink or None based on the response of the
+           language server, corresponding to 'DocumentLink[] | null'.
         """
 
         response = await self.lsp.send_request_async(
@@ -164,15 +212,27 @@ class Client(LanguageServer):
             DocumentLinkParams(text_document=TextDocumentIdentifier(uri=uri)),
         )
 
-        return [DocumentLink(**obj) for obj in response]
+        if response:
+            return [DocumentLink(**obj) for obj in response]
+        else:
+            return None
 
-    async def document_symbols_request(self, uri: str) -> List[DocumentSymbol]:
+    async def document_symbols_request(
+        self, uri: str
+    ) -> Optional[Union[List[DocumentSymbol], List[SymbolInformation]]]:
         """Make a ``textDocument/documentSymbol`` request
 
         Parameters
         ----------
         uri
            The uri of the document to make the request for.
+
+        Return
+        ------
+        Optional[Union[List[DocumentSymbol], List[SymbolInformation]]]
+           Either a list of DocumentSymbol, a list of SymbolInformation
+           or None based on the response of the language server, corresponding
+           to 'DocumentSymbol[] | SymbolInformation[] | null'.
         """
 
         response = await self.lsp.send_request_async(
@@ -180,9 +240,15 @@ class Client(LanguageServer):
             DocumentSymbolParams(text_document=TextDocumentIdentifier(uri=uri)),
         )
 
-        return [DocumentSymbol(**obj) for obj in response]
+        if response:
+            return [
+                DocumentSymbol(**obj) if "range" in obj else SymbolInformation(**obj)
+                for obj in response
+            ]
+        else:
+            return None
 
-    async def hover_request(self, uri: str, position: Position) -> Hover:
+    async def hover_request(self, uri: str, position: Position) -> Optional[Hover]:
         """Make a ``textDocument/hover`` request.
 
         Parameters
@@ -191,6 +257,12 @@ class Client(LanguageServer):
            The uri of the document to make the request for.
         position
            The position of the hover request
+
+        Return
+        ------
+        Optional[Hover]
+           A Hover or None based on the response of the language server,
+           corresponding to 'Hover | null'.
         """
 
         response = await self.lsp.send_request_async(
@@ -200,7 +272,10 @@ class Client(LanguageServer):
             ),
         )
 
-        return Hover(**response)
+        if response:
+            return Hover(**response)
+        else:
+            return None
 
     async def execute_command_request(self, command: str, *args: Any):
         return await self.lsp.send_request_async(
@@ -382,11 +457,12 @@ def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> Client:
         ]
 
     @client.feature(WINDOW_LOG_MESSAGE)
-    def log_message(client: Client, params: LogMessageParams):
-        client.log_messages.append(params)
+    def log_message(client: Client, params):
+        log = LogMessageParams(**object_to_dict(params))
+        client.log_messages.append(log)
 
         levels = [logger.error, logger.warning, logger.info, logger.debug]
-        levels[params.type - 1](params.message)
+        levels[log.type - 1](log.message)
 
     @client.feature(WINDOW_SHOW_MESSAGE)
     def show_message(client: Client, params):
