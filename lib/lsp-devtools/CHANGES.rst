@@ -1,3 +1,12 @@
+v0.0.3 - 2022-07-17
+-------------------
+
+Misc
+^^^^
+
+- Remove upper bound on required ``pygls`` version (`#14 <https://github.com/alcarney/lsp-devtools/issues/14>`_)
+
+
 v0.0.2 - 2022-05-06
 -------------------
 
