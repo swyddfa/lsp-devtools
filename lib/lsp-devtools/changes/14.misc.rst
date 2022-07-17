@@ -1,0 +1,1 @@
+Remove upper bound on required ``pygls`` version
