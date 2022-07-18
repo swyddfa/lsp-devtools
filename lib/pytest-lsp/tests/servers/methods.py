@@ -132,5 +132,31 @@ def on_hover(ls: LanguageServer, params: HoverParams):
     )
 
 
+@server.feature(IMPLEMENTATION)
+def on_implementation(ls: LanguageServer, params: ImplementationParams):
+
+    line = params.position.line
+
+    if line == 0:
+        return None
+
+    if line == 1:
+        return Location(uri=params.text_document.uri, range=arange("0:1-2:4"))
+
+    if line == 2:
+        return [
+            Location(uri=params.text_document.uri, range=arange("0:1-2:4")),
+            Location(uri=params.text_document.uri, range=arange("3:1-4:4")),
+        ]
+
+    return [
+        LocationLink(
+            target_uri=params.text_document.uri,
+            target_range=arange("0:1-2:4"),
+            target_selection_range=arange("3:1-4:4"),
+        ),
+    ]
+
+
 if __name__ == "__main__":
     server.start_io()
