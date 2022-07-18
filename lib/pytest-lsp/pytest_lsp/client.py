@@ -277,6 +277,42 @@ class Client(LanguageServer):
         else:
             return None
 
+    async def implementation_request(
+        self, uri: str, position: Position
+    ) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
+        """Make a ``textDocument/implementation`` request to a language server.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document to make the request within.
+        position
+           The position of the implementation request.
+
+        Return
+        ------
+        Optional[Union[Location, List[Location], List[LocationLink]]]
+           Either a Location, list of Location, a list of LocationLink
+           or None based on the response of the language server,
+           corresponding to 'Location | Location[] | LocationLink[] | null'.
+        """
+        response = await self.lsp.send_request_async(
+            IMPLEMENTATION,
+            ImplementationParams(
+                text_document=TextDocumentIdentifier(uri=uri), position=position
+            ),
+        )
+
+        if isinstance(response, list):
+            return [
+                LocationLink(**obj) if "targetUri" in obj else Location(**obj)
+                for obj in response
+            ]
+        elif isinstance(response, dict):
+            return Location(**response)
+        else:
+            return None
+
     async def execute_command_request(self, command: str, *args: Any):
         return await self.lsp.send_request_async(
             WORKSPACE_EXECUTE_COMMAND,

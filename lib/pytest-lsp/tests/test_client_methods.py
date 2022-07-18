@@ -2,10 +2,9 @@ import asyncio
 import pathlib
 import sys
 
+import pygls.uris as uri
 import pytest
 import pytest_lsp
-import pygls.uris as uri
-
 from pygls.lsp.types import *
 from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
@@ -188,9 +187,7 @@ async def test_client_document_symbol(client: Client, uri: str, expected):
         (
             1,
             Hover(
-                contents=MarkupContent(
-                    kind=MarkupKind.PlainText, value="hover content"
-                )
+                contents=MarkupContent(kind=MarkupKind.PlainText, value="hover content")
             ),
         ),
     ],
@@ -199,4 +196,38 @@ async def test_client_hover(client: Client, line: int, expected):
     """Ensure that the client can handle hover responses correctly"""
 
     response = await client.hover_request(TEST_URI, Position(line=line, character=0))
+    assert response == expected
+
+
+@pytest.mark.parametrize(
+    "line,expected",
+    [
+        (0, None),
+        (1, Location(uri=TEST_URI, range=arange("0:1-2:4"))),
+        (
+            2,
+            [
+                Location(uri=TEST_URI, range=arange("0:1-2:4")),
+                Location(uri=TEST_URI, range=arange("3:1-4:4")),
+            ],
+        ),
+        (
+            3,
+            [
+                LocationLink(
+                    target_uri=TEST_URI,
+                    target_range=arange("0:1-2:4"),
+                    target_selection_range=arange("3:1-4:4"),
+                ),
+            ],
+        ),
+    ],
+)
+async def test_client_implementation(client: Client, line: int, expected):
+    """Ensure that the client can handle implementation responses correctly"""
+
+    response = await client.implementation_request(
+        TEST_URI, Position(line=line, character=0)
+    )
+
     assert response == expected
