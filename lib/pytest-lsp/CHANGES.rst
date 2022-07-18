@@ -1,3 +1,12 @@
+v0.1.2 - 2022-07-18
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- Add helpers for ``textDocument/implementation`` requests (`#15 <https://github.com/alcarney/lsp-devtools/issues/15>`_)
+
+
 v0.1.1 - 2022-07-17
 -------------------
 
