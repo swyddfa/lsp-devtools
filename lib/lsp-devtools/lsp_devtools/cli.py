@@ -1,5 +1,4 @@
 import argparse
-from ast import arg
 import importlib
 import logging
 import sys
@@ -7,11 +6,14 @@ import traceback
 
 from lsp_devtools import __version__
 
-
 logger = logging.getLogger(__name__)
 
 
-BUILTIN_COMMANDS = ["lsp_devtools.cmds.capabilities", "lsp_devtools.cmds.record"]
+BUILTIN_COMMANDS = [
+    "lsp_devtools.cmds.agent",
+    "lsp_devtools.cmds.capabilities",
+    "lsp_devtools.cmds.record",
+]
 
 
 def load_command(commands: argparse._SubParsersAction, name: str):
