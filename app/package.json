@@ -4,6 +4,7 @@
   "description": "Developer tooling for language servers",
   "main": "index.js",
   "scripts": {
+    "dev": "npx webpack --mode development && npx tailwindcss -i styles.css -o dist/styles.css",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -18,6 +19,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
+    "vanilla-jsoneditor": "^0.7.5",
     "vscode-jsonrpc": "^8.0.2",
     "vscode-ws-jsonrpc": "^2.0.0"
   }
