@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LSP Devtools</title>
+
+    <link rel="stylesheet" href="./dist/styles.css">
+    <script defer src="./dist/index.js"></script>
+</head>
+
+<body>
+    <div class="flex flex-column justify-between">
+        <div>
+            <table class="border-collapse ">
+                <thead>
+                    <tr class="py-2">
+                        <th class="px-4">Timestamp</th>
+                        <th class="px-4">Source</th>
+                        <th class="px-4">ID</th>
+                        <th class="px-4">Method</th>
+                        <th class="px-4">Params</th>
+                        <th class="px-4">Result</th>
+                        <th class="px-4">Error</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                </tbody>
+            </table>
+        </div>
+        <div id="json-viewer" class="h-screen sticky top-0 flex-grow max-w-[40vw]">
+
+        </div>
+    </div>
+
+    <template id="table-row">
+        <tr class="border-t py-1">
+            <td class="px-4"></td>
+            <td class="px-4"></td>
+            <td class="px-4 text-right"></td>
+            <td class="px-4"></td>
+            <td class="px-2"></td>
+            <td class="px-2"></td>
+            <td class="px-2"></td>
+        </tr>
+    </template>
+
+    <template id="view-button">
+        <button
+            class="flex px-2 py-1 text-sm items-center justify-between bg-blue-500 hover:bg-blue-400 rounded-md text-white">
+            <span class="mr-2">View</span>
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+        </button>
+    </template>
+
+</body>
+
+</html>

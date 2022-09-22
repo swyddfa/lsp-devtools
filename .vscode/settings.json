@@ -1,4 +1,15 @@
 {
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        }
+    },
+    "isort.args": [
+        "--settings-file",
+        "./lib/lsp-devtools/pyproject.toml"
+    ],
     "files.exclude": {
         "**/.git": true,
         "**/.svn": true,
