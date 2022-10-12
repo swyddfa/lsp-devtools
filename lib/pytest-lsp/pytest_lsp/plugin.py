@@ -178,6 +178,19 @@ def make_client_server(config: ClientServerConfig) -> ClientServer:
         config.server_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE
     )
 
+    try:
+        # Timeout is arbitrary, because we'd also like to know if the server crashes
+        # in the future. But this is useful because if the server is going to crash
+        # it will most likely do it in the first few milliseconds of startup.
+        server.wait(timeout=0.1)
+    except subprocess.TimeoutExpired:
+        pass
+    finally:
+        if server.returncode is not None:
+            raise Exception(
+                f"{config.server_command} exited with exit code {server.returncode}"
+            )
+
     if config.client_capabilities:
         capabilities = config.client_capabilities
     elif config.client:
