@@ -95,7 +95,7 @@ class ClientServer:
         assert "capabilities" in response
         self.client.lsp.notify(INITIALIZED)
 
-        return
+        return response
 
     async def stop(self):
         response = await self.client.lsp.send_request_async(SHUTDOWN)
