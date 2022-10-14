@@ -1,0 +1,2 @@
+- Check that server provided for testing doesn't crash within the first 0.1 seconds
+- Return `INITIALIZE` response from `ClientServer.start()`. This allows tests to assert against the server's `INITIALIZE` response without resending the `INITIALIZE` request in the actual test.
