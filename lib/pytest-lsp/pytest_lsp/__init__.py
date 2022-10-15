@@ -7,7 +7,7 @@ from .plugin import pytest_runtest_makereport
 from .plugin import ClientServer
 from .plugin import ClientServerConfig
 
-__version__ = "0.1.2"
+__version__ = "0.1.3"
 
 __all__ = [
     "Client",

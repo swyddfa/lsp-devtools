@@ -1,3 +1,13 @@
+v0.1.3 - 2022-10-15
+-------------------
+
+Fixes
+^^^^^
+
+- - Check that server provided for testing doesn't crash within the first 0.1 seconds
+  - Return `INITIALIZE` response from `ClientServer.start()`. This allows tests to assert against the server's `INITIALIZE` response without resending the `INITIALIZE` request in the actual test. (`#22 <https://github.com/alcarney/lsp-devtools/issues/22>`_)
+
+
 v0.1.2 - 2022-07-18
 -------------------
 
