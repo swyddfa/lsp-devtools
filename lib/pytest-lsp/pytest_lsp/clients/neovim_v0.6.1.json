@@ -1,23 +1,17 @@
 {
   "workspace": {
-    "apply_edit": true,
-    "workspace_edit": {
-      "document_changes": null,
-      "resource_operations": [
+    "applyEdit": true,
+    "workspaceEdit": {
+      "resourceOperations": [
         "rename",
         "create",
         "delete"
-      ],
-      "failure_handling": null,
-      "normalizes_line_endings": null,
-      "change_annotation_support": null
+      ]
     },
-    "did_change_configuration": null,
-    "did_change_watched_files": null,
     "symbol": {
-      "dynamic_registration": false,
-      "symbol_kind": {
-        "value_set": [
+      "dynamicRegistration": false,
+      "symbolKind": {
+        "valueSet": [
           1,
           2,
           3,
@@ -45,41 +39,32 @@
           25,
           26
         ]
-      },
-      "tag_support": null
+      }
     },
-    "execute_command": null,
-    "workspace_folders": true,
-    "configuration": true,
-    "semantic_tokens": null,
-    "code_lens": null,
-    "file_operations": null
+    "workspaceFolders": true,
+    "configuration": true
   },
-  "text_document": {
+  "textDocument": {
     "synchronization": {
-      "dynamic_registration": false,
-      "will_save": false,
-      "will_save_wait_until": false,
-      "did_save": true
+      "dynamicRegistration": false,
+      "willSave": false,
+      "willSaveWaitUntil": false,
+      "didSave": true
     },
     "completion": {
-      "dynamic_registration": false,
-      "completion_item": {
-        "snippet_support": false,
-        "commit_characters_support": false,
-        "documentation_format": [
+      "dynamicRegistration": false,
+      "completionItem": {
+        "snippetSupport": false,
+        "commitCharactersSupport": false,
+        "documentationFormat": [
           "markdown",
           "plaintext"
         ],
-        "deprecated_support": false,
-        "preselect_support": false,
-        "tag_support": null,
-        "insert_replace_support": null,
-        "resolve_support": null,
-        "insert_text_mode_support": null
+        "deprecatedSupport": false,
+        "preselectSupport": false
       },
-      "completion_item_kind": {
-        "value_set": [
+      "completionItemKind": {
+        "valueSet": [
           1,
           2,
           3,
@@ -107,55 +92,50 @@
           25
         ]
       },
-      "context_support": false
+      "contextSupport": false
     },
     "hover": {
-      "dynamic_registration": false,
-      "content_format": [
+      "dynamicRegistration": false,
+      "contentFormat": [
         "markdown",
         "plaintext"
       ]
     },
-    "signature_help": {
-      "dynamic_registration": false,
-      "signature_information": {
-        "documentation_format": [
+    "signatureHelp": {
+      "dynamicRegistration": false,
+      "signatureInformation": {
+        "documentationFormat": [
           "markdown",
           "plaintext"
         ],
-        "parameter_information": {
-          "label_offset_support": true
+        "parameterInformation": {
+          "labelOffsetSupport": true
         },
-        "active_parameter_support": true
-      },
-      "context_support": null
+        "activeParameterSupport": true
+      }
     },
     "declaration": {
-      "dynamic_registration": null,
-      "link_support": true
+      "linkSupport": true
     },
     "definition": {
-      "dynamic_registration": null,
-      "link_support": true
+      "linkSupport": true
     },
-    "type_definition": {
-      "dynamic_registration": null,
-      "link_support": true
+    "typeDefinition": {
+      "linkSupport": true
     },
     "implementation": {
-      "dynamic_registration": null,
-      "link_support": true
+      "linkSupport": true
     },
     "references": {
-      "dynamic_registration": false
+      "dynamicRegistration": false
     },
-    "document_highlight": {
-      "dynamic_registration": false
+    "documentHighlight": {
+      "dynamicRegistration": false
     },
-    "document_symbol": {
-      "dynamic_registration": false,
-      "symbol_kind": {
-        "value_set": [
+    "documentSymbol": {
+      "dynamicRegistration": false,
+      "symbolKind": {
+        "valueSet": [
           1,
           2,
           3,
@@ -184,15 +164,13 @@
           26
         ]
       },
-      "hierarchical_document_symbol_support": true,
-      "tag_support": null,
-      "label_support": null
+      "hierarchicalDocumentSymbolSupport": true
     },
-    "code_action": {
-      "dynamic_registration": false,
-      "code_action_literal_support": {
-        "code_action_kind": {
-          "value_set": [
+    "codeAction": {
+      "dynamicRegistration": false,
+      "codeActionLiteralSupport": {
+        "codeActionKind": {
+          "valueSet": [
             "",
             "Empty",
             "QuickFix",
@@ -212,58 +190,36 @@
           ]
         }
       },
-      "is_preferred_support": null,
-      "disabled_support": null,
-      "data_support": true,
-      "resolve_support": {
+      "dataSupport": true,
+      "resolveSupport": {
         "properties": [
           "edit"
         ]
-      },
-      "honors_change_annotations": null
+      }
     },
-    "code_lens": null,
-    "document_link": null,
-    "color_provider": null,
-    "formatting": null,
-    "range_formatting": null,
-    "on_type_formatting": null,
     "rename": {
-      "dynamic_registration": false,
-      "prepare_support": true,
-      "prepare_support_default_behavior": null,
-      "honors_change_annotations": null
+      "dynamicRegistration": false,
+      "prepareSupport": true
     },
-    "publish_diagnostics": {
-      "related_information": true,
-      "tag_support": {
-        "value_set": [
+    "publishDiagnostics": {
+      "relatedInformation": true,
+      "tagSupport": {
+        "valueSet": [
           1,
           2
         ]
-      },
-      "version_support": null,
-      "code_description_support": null,
-      "data_support": null
-    },
-    "folding_range": null,
-    "selection_range": null,
-    "linked_editing_range": null,
-    "call_hierarchy": null,
-    "semantic_tokens": null,
-    "moniker": null
-  },
-  "window": {
-    "work_done_progress": true,
-    "show_message": {
-      "message_action_item": {
-        "additional_properties_support": false
       }
-    },
-    "show_document": {
-      "support": false
     }
   },
-  "general": null,
-  "experimental": null
+  "window": {
+    "workDoneProgress": true,
+    "showMessage": {
+      "messageActionItem": {
+        "additionalPropertiesSupport": false
+      }
+    },
+    "showDocument": {
+      "support": false
+    }
+  }
 }
