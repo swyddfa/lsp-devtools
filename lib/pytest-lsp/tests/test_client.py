@@ -61,13 +61,16 @@ async def client(client_):
         f"""
 import json
 import pytest
+from lsprotocol.types import ExecuteCommandParams
 
 @pytest.mark.asyncio
 async def test_capabilities(client):
-    actual = await client.execute_command_request("return.client.capabilities")
+    actual = await client.workspace_execute_command_request(
+        ExecuteCommandParams(command="return.client.capabilities")
+    )
     assert actual == json.loads('{expected}')
     """
     )
 
-    results = pytester.runpytest()
+    results = pytester.runpytest('-vv')
     results.assert_outcomes(passed=1)
