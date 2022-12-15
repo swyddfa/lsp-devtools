@@ -1,17 +1,57 @@
 import asyncio
 import logging
+import traceback
 from concurrent.futures import Future
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Type
 from typing import Union
 
+from lsprotocol.types import CANCEL_REQUEST, ExecuteCommandParams, LSPAny, ProgressToken, VersionedTextDocumentIdentifier
+from lsprotocol.types import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
+from lsprotocol.types import WINDOW_LOG_MESSAGE
+from lsprotocol.types import WINDOW_SHOW_DOCUMENT
+from lsprotocol.types import WINDOW_SHOW_MESSAGE
+from lsprotocol.types import ClientCapabilities
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionList
+from lsprotocol.types import CompletionParams
+from lsprotocol.types import DefinitionParams
+from lsprotocol.types import DeleteFilesParams
+from lsprotocol.types import DidCloseTextDocumentParams
+from lsprotocol.types import DidChangeTextDocumentParams
+from lsprotocol.types import DidOpenTextDocumentParams
+from lsprotocol.types import DidSaveTextDocumentParams
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import DocumentLinkParams
+from lsprotocol.types import DocumentSymbol
+from lsprotocol.types import DocumentSymbolParams
+from lsprotocol.types import Diagnostic
+from lsprotocol.types import FileDelete
+from lsprotocol.types import Hover
+from lsprotocol.types import HoverParams
+from lsprotocol.types import ImplementationParams
+from lsprotocol.types import Location
+from lsprotocol.types import LocationLink
+from lsprotocol.types import LogMessageParams
+from lsprotocol.types import Position
+from lsprotocol.types import PublishDiagnosticsParams
+from lsprotocol.types import Range
+from lsprotocol.types import ShowDocumentParams
+from lsprotocol.types import ShowMessageParams
+from lsprotocol.types import SymbolInformation
+from lsprotocol.types import TextDocumentContentChangeEvent_Type1
+from lsprotocol.types import TextDocumentContentChangeEvent_Type2
+from lsprotocol.types import TextDocumentItem
+from lsprotocol.types import TextDocumentIdentifier
 from pygls.exceptions import JsonRpcMethodNotFound
-from pygls.lsp.methods import *
-from pygls.lsp.types import *
+from pygls.protocol import default_converter
 from pygls.protocol import LanguageServerProtocol
-from pygls.server import LanguageServer
+
+from .gen import Client
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +84,13 @@ class ClientProtocol(LanguageServerProtocol):
                 "Failed to handle notification '%s': %s", method_name, params
             )
 
+    def user_error_handler(self, exctype, value, tb):
+        breakpoint()
+        self._server._control_loop.call_soon_threadsafe(
+            cancel_all_tasks,
+            f"Error: {value}\n{traceback.format_exception(exctype, value, tb)}",
+        )
+
     def wait_for_notification(self, method, callback=None):
 
         future = Future()
@@ -63,19 +110,28 @@ class ClientProtocol(LanguageServerProtocol):
         return asyncio.wrap_future(future)
 
 
-class Client(LanguageServer):
+class LanguageClient(Client):
     """Used to drive language servers under test."""
 
     def __init__(
         self, capabilities: ClientCapabilities, root_uri: str, *args, **kwargs
     ):
+        """
+        Parameters
+        ----------
+        capabilities
+           The client's capabilities
+
+        root_uri
+           THe root uri of the client's workspace.
+        """
+        self.name = "pytest-test-client"
+        self.version = None
+
         super().__init__(*args, **kwargs)
 
-        self.capabilities: ClientCapabilities = capabilities
-        """The client's capabilities."""
-
-        self.root_uri: str = root_uri
-        """The root uri of the client's workspace."""
+        self.capabilities = capabilities
+        self.root_uri = root_uri
 
         self.open_documents: Dict[str, int] = {}
         """Used to keep track of the documents that the client has opened."""
@@ -93,19 +149,41 @@ class Client(LanguageServer):
         self.diagnostics: Dict[str, List[Diagnostic]] = {}
         """Used to hold any recieved diagnostics."""
 
+        self.error: Optional[Exception] = None
+        """Indicates if the client encountered an error."""
+
         self._setup_log_index = 0
         """Used to keep track of which log messages occurred during startup."""
 
         self._last_log_index = 0
         """Used to keep track of which log messages correspond with which test case."""
 
+    def feature(
+        self, feature_name: str, options: Optional[Any] = None,
+    ):
+        return self.lsp.fm.feature(feature_name, options)
+
+    def _report_server_error(self, error: Exception, source: Type[Exception]):
+
+        # This may wind up being a mistake, but let's ignore broken pipe errors...
+        # If the server process has exited, the watchdog thread will give us a better
+        # error message.
+        if isinstance(error, BrokenPipeError):
+            return
+
+        self.error = error
+        tb = "".join(traceback.format_exception(error))
+
+        message = f"{source.__name__}: {error}\n{tb}"
+        self._control_loop.call_soon_threadsafe(cancel_all_tasks, message)
+
     async def completion_request(
-        self,
-        uri: str,
-        line: int,
-        character: int,
-    ) -> Optional[Union[CompletionList, List[CompletionItem]]]:
-        """Send a ``textDocument/completion`` request.
+        self, uri: str, line: int, character: int
+    ) -> Union[List[CompletionItem], CompletionList, None]:
+        """Make a ``textDocument/completion`` request.
+
+        Helper method for :meth:`~LanguageClient.text_document_completion_request` that
+        reduces the amount of boilerplate required to construct the parameters object.
 
         Parameters
         ----------
@@ -116,208 +194,156 @@ class Client(LanguageServer):
         character
            The character column to make the completion request from.
 
-        Return
-        ------
-        Optional[Union[CompletionList, List[CompletionItem]]]
-           Either a list of CompletionItem, a CompletionList or None
-           based on the response of the language server, corresponding
-           to 'CompletionItem[] | CompletionList | null'.
         """
 
-        response = await self.lsp.send_request_async(
-            COMPLETION,
-            CompletionParams(
-                text_document=TextDocumentIdentifier(uri=uri),
-                position=Position(line=line, character=character),
-            ),
+        params = CompletionParams(
+            text_document=TextDocumentIdentifier(uri=uri),
+            position=Position(line=line, character=character),
         )
 
-        if isinstance(response, dict):
-            return CompletionList(**response)
-        elif isinstance(response, list):
-            return [CompletionItem(**item) for item in response]
-        else:
-            return None
-
-    async def completion_resolve_request(self, item: CompletionItem) -> CompletionItem:
-        """Make a ``completionItem/resolve`` request to a language server.
-
-        Parameters
-        ----------
-        item
-           The ``CompletionItem`` to be resolved.
-
-        Return
-        ------
-        CompletionItem
-           The resolved completion item.
-        """
-
-        response = await self.lsp.send_request_async(COMPLETION_ITEM_RESOLVE, item)
-        return CompletionItem(**response)
+        return await self.text_document_completion_request(params)
 
     async def definition_request(
-        self, uri: str, position: Position
-    ) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
-        """Make a ``textDocument/definition`` request to a language server.
+        self, uri: str, line: int, character: int
+    ) -> Union[Location, List[Location], List[LocationLink], None]:
+        """Make a ``textDocument/definition`` request.
+
+        Helper method for :meth:`~LanguageClient.text_document_definition_request`
+        that reduces the amount of boilerplate required to construct the parameters
+        object.
 
         Parameters
         ----------
         uri
            The uri of the document to make the request within.
-        position
-           The position of the definition request.
 
-        Return
-        ------
-        Optional[Union[Location, List[Location], List[LocationLink]]]
-           Either a Location, list of Location, a list of LocationLink
-           or None based on the response of the language server,
-           corresponding to 'Location | Location[] | LocationLink[] | null'.
+        line
+           The line number to make the definition request from
+
+        character
+           The character column to make the definition request from
         """
-        response = await self.lsp.send_request_async(
-            DEFINITION,
-            DefinitionParams(
-                text_document=TextDocumentIdentifier(uri=uri), position=position
-            ),
+        params = DefinitionParams(
+            text_document=TextDocumentIdentifier(uri=uri),
+            position=Position(line=line, character=character),
         )
 
-        if isinstance(response, list):
-            return [
-                LocationLink(**obj) if "targetUri" in obj else Location(**obj)
-                for obj in response
-            ]
-        elif isinstance(response, dict):
-            return Location(**response)
-        else:
-            return None
+        return await self.text_document_definition_request(params)
 
     async def document_link_request(self, uri: str) -> Optional[List[DocumentLink]]:
         """Make a ``textDocument/documentLink`` request
 
+        Helper method for :meth:`~LanguageClient.text_document_document_link_request`
+        that reduces the amount of boilerplate required to construct the parameters
+        object.
+
         Parameters
         ----------
         uri
            The uri of the document to make the request for.
-
-        Return
-        ------
-        Optional[List[DocumentLink]]
-           Either a list of DocumentLink or None based on the response of the
-           language server, corresponding to 'DocumentLink[] | null'.
         """
 
-        response = await self.lsp.send_request_async(
-            DOCUMENT_LINK,
-            DocumentLinkParams(text_document=TextDocumentIdentifier(uri=uri)),
-        )
-
-        if response:
-            return [DocumentLink(**obj) for obj in response]
-        else:
-            return None
+        params = DocumentLinkParams(text_document=TextDocumentIdentifier(uri=uri))
+        return await self.text_document_document_link_request(params)
 
     async def document_symbols_request(
         self, uri: str
-    ) -> Optional[Union[List[DocumentSymbol], List[SymbolInformation]]]:
+    ) -> Union[List[SymbolInformation], List[DocumentSymbol], None]:
         """Make a ``textDocument/documentSymbol`` request
 
+        Helper method for :meth:`~LanguageClient.text_document_document_symbol_request`
+        that reduces the amount of boilerplate required to construct the parameters
+        object.
+
         Parameters
         ----------
         uri
            The uri of the document to make the request for.
-
-        Return
-        ------
-        Optional[Union[List[DocumentSymbol], List[SymbolInformation]]]
-           Either a list of DocumentSymbol, a list of SymbolInformation
-           or None based on the response of the language server, corresponding
-           to 'DocumentSymbol[] | SymbolInformation[] | null'.
         """
 
-        response = await self.lsp.send_request_async(
-            DOCUMENT_SYMBOL,
-            DocumentSymbolParams(text_document=TextDocumentIdentifier(uri=uri)),
+        params = DocumentSymbolParams(text_document=TextDocumentIdentifier(uri=uri))
+        return await self.text_document_document_symbol_request(params)
+
+    async def execute_command_request(
+        self,
+        command: str,
+        *args: LSPAny,
+        work_done_token: Optional[ProgressToken] = None
+    ):
+        """Make a ``workspace/executeCommand`` request.
+
+        Helper method for :meth:`~LanguageClient.workspace_execute_command_request`
+        that reduces the amount of boilerplate required to construct the parameters
+        object.
+
+        Parameters
+        ----------
+        command
+           The command name to execute
+
+        args
+           Any arguments to pass to the server
+
+        work_done_token
+           An optional progress token
+        """
+        arguments = None if not args else list(args)
+        params = ExecuteCommandParams(
+            command=command, arguments=arguments, work_done_token=work_done_token
         )
+        return await self.workspace_execute_command_request(params)
 
-        if response:
-            return [
-                DocumentSymbol(**obj) if "range" in obj else SymbolInformation(**obj)
-                for obj in response
-            ]
-        else:
-            return None
-
-    async def hover_request(self, uri: str, position: Position) -> Optional[Hover]:
+    async def hover_request(
+        self, uri: str, line: int, character: int
+    ) -> Optional[Hover]:
         """Make a ``textDocument/hover`` request.
 
+        Helper
+
         Parameters
         ----------
         uri
            The uri of the document to make the request for.
-        position
-           The position of the hover request
+        line
+           The line number to make the request from
 
-        Return
-        ------
-        Optional[Hover]
-           A Hover or None based on the response of the language server,
-           corresponding to 'Hover | null'.
+        character
+           The character column to make the request from
         """
 
-        response = await self.lsp.send_request_async(
-            HOVER,
-            HoverParams(
-                text_document=TextDocumentIdentifier(uri=uri), position=position
-            ),
+        params = HoverParams(
+            text_document=TextDocumentIdentifier(uri=uri),
+            position=Position(line=line, character=character),
         )
 
-        if response:
-            return Hover(**response)
-        else:
-            return None
+        return await self.text_document_hover_request(params)
 
     async def implementation_request(
-        self, uri: str, position: Position
-    ) -> Optional[Union[Location, List[Location], List[LocationLink]]]:
+        self, uri: str, line: int, character: int
+    ) -> Union[Location, List[Location], List[LocationLink], None]:
         """Make a ``textDocument/implementation`` request to a language server.
+
+        Helper method for :meth:`LanguageClient.text_document_implementation_request`
+        that reduces the amount of boilerplate needed to construct the parameters
+        object.
 
         Parameters
         ----------
         uri
            The uri of the document to make the request within.
-        position
-           The position of the implementation request.
 
-        Return
-        ------
-        Optional[Union[Location, List[Location], List[LocationLink]]]
-           Either a Location, list of Location, a list of LocationLink
-           or None based on the response of the language server,
-           corresponding to 'Location | Location[] | LocationLink[] | null'.
+        line
+           The line to make the implementation request from
+
+        character
+           The character column to make the implementation request from
         """
-        response = await self.lsp.send_request_async(
-            IMPLEMENTATION,
-            ImplementationParams(
-                text_document=TextDocumentIdentifier(uri=uri), position=position
-            ),
+        params = ImplementationParams(
+            text_document=TextDocumentIdentifier(uri=uri),
+            position=Position(line=line, character=character),
         )
 
-        if isinstance(response, list):
-            return [
-                LocationLink(**obj) if "targetUri" in obj else Location(**obj)
-                for obj in response
-            ]
-        elif isinstance(response, dict):
-            return Location(**response)
-        else:
-            return None
-
-    async def execute_command_request(self, command: str, *args: Any):
-        return await self.lsp.send_request_async(
-            WORKSPACE_EXECUTE_COMMAND,
-            ExecuteCommandParams(command=command, arguments=list(args)),
-        )
+        return await self.text_document_implementation_request(params)
 
     def notify_did_change(
         self,
@@ -326,7 +352,18 @@ class Client(LanguageServer):
         line: Optional[int] = None,
         character: Optional[int] = None,
     ):
-        """Notify the server that a text document was changed.
+        """Send a ``textDocument/didChange`` notification.
+
+        Helper method for :meth:`~LanguageClient.notify_text_document_did_change` that
+        automatically sends the correct notification type depending on the given
+        arguments. It also does some extra book keeping client side to make sure text
+        synchronization is being done in a consistent manner.
+
+        If ``line`` and ``character`` are given, this method will interpret them as the
+        position at which the change starts and will automatically compute the end range
+        from the lenth of ``text``, before sending a delta update.
+
+        Otherwise it assumes the entire text document is being replaced with ``text``.
 
         Parameters
         ----------
@@ -360,7 +397,7 @@ class Client(LanguageServer):
             else:
                 end_char = character + num_chars
 
-            change_event = TextDocumentContentChangeEvent(
+            change_event = TextDocumentContentChangeEvent_Type1(
                 text=text,
                 range=Range(
                     start=Position(line=line, character=character),
@@ -368,18 +405,23 @@ class Client(LanguageServer):
                 ),
             )
         else:
-            change_event = TextDocumentContentChangeTextEvent(text=text)
+            change_event = TextDocumentContentChangeEvent_Type2(text=text)
 
-        self.lsp.notify(
-            TEXT_DOCUMENT_DID_CHANGE,
-            DidChangeTextDocumentParams(
-                text_document=VersionedTextDocumentIdentifier(uri=uri, version=version),
-                content_changes=[change_event],
+        params = DidChangeTextDocumentParams(
+            text_document=VersionedTextDocumentIdentifier(
+                uri=uri,
+                version=version
             ),
+            content_changes=[change_event]
         )
+        self.notify_text_document_did_change(params)
 
     def notify_did_close(self, uri: str):
-        """Notify the server that a text document was closed.
+        """Send a ``textDocument/didClose`` notification.
+
+        Wrapper method for :meth:`~LanguageClient.notify_did_close` that performs some
+        extra book keeping client side to help ensure text syncronization is being done
+        in a consistent manner.
 
         Parameters
         ----------
@@ -390,17 +432,19 @@ class Client(LanguageServer):
         if uri not in self.open_documents:
             raise RuntimeError(f"The document '{uri}' is not open")
 
-        self.lsp.notify(
-            TEXT_DOCUMENT_DID_CLOSE,
-            DidCloseTextDocumentParams(text_document=TextDocumentIdentifier(uri=uri)),
+        params = DidCloseTextDocumentParams(
+            text_document=TextDocumentIdentifier(uri=uri)
         )
 
-        del self.open_documents[uri]
+        self.notify_text_document_did_close(params)
+        self.open_documents.pop(uri)
 
-    def notify_did_open(
-        self, uri: str, language: str, contents: str, version: NumType = 1
-    ):
-        """Notify the server that a text document was opened.
+    def notify_did_open(self, uri: str, language: str, contents: str, version: int = 1):
+        """Send a ``textDocument/didOpen`` notification.
+
+        Wrapper method for :meth:`~LanguageClient.notify_text_document_did_open` that
+        does some extra book keeping client side to help ensure that text syncronization
+        is being done in a consistent manner.
 
         Parameters
         ----------
@@ -420,19 +464,21 @@ class Client(LanguageServer):
         if uri in self.open_documents:
             raise RuntimeError(f"The document '{uri}' is already open")
 
-        self.lsp.notify(
-            TEXT_DOCUMENT_DID_OPEN,
-            DidOpenTextDocumentParams(
-                text_document=TextDocumentItem(
-                    uri=uri, language_id=language, version=version, text=contents
-                )
-            ),
+        params = DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=uri, language_id=language, version=version, text=contents
+            )
         )
 
+        self.notify_text_document_did_open(params)
         self.open_documents[uri] = version
 
     def notify_did_save(self, uri: str, text: str):
-        """Notify the server that a document was saved.
+        """Send a ``textDocument/didSave`` notification
+
+        Wrapper for :meth:`~LanguageClient.notify_did_save` that does some extra book
+        keeping client side to help ensure that text syncronization is done in a
+        consistent manner.
 
         Parameters
         ----------
@@ -446,15 +492,17 @@ class Client(LanguageServer):
         if uri not in self.open_documents:
             raise RuntimeError(f"The document '{uri}' is not open")
 
-        self.lsp.notify(
-            TEXT_DOCUMENT_DID_SAVE,
-            DidSaveTextDocumentParams(
-                text_document=TextDocumentIdentifier(uri=uri), text=text
-            ),
+        params = DidSaveTextDocumentParams(
+            text_document=TextDocumentIdentifier(uri=uri), text=text
         )
 
+        self.notify_text_document_did_save(params)
+
     async def notify_did_delete_files(self, *uris: str):
-        """Notify the server that files were deleted.
+        """Send a ``workspace/didDeleteFiles`` notification
+
+        Helper for :meth:`~LanguageClient.notify_workspace_did_delete_files` the reduces
+        the amount of boilerplate required to construct the parameters object.
 
         Parameters
         ----------
@@ -462,59 +510,50 @@ class Client(LanguageServer):
            The uris of the files that were deleted.
         """
 
-        self.lsp.notify(
-            WORKSPACE_DID_DELETE_FILES,
-            DeleteFilesParams(files=[FileDelete(uri=uri) for uri in uris]),
-        )
-
-    async def send_request(self, *args, **kwargs):
-        """Generic send request method."""
-        return await self.lsp.send_request_async(*args, **kwargs)
+        params = DeleteFilesParams(files=[FileDelete(uri=uri) for uri in uris])
+        self.notify_workspace_did_delete_files(params)
 
     async def wait_for_notification(self, *args, **kwargs):
         return await self.lsp.wait_for_notification_async(*args, **kwargs)
 
 
-def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> Client:
-    """Construct a new test client instance with the handlers needed to capture additional
-    responses from the server."""
+def cancel_all_tasks(message: str):
+    """Called by the watchdog thread to cancel all awaited tasks."""
 
-    client = Client(
+    for task in asyncio.all_tasks():
+        task.cancel(message)
+
+
+def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> LanguageClient:
+    """Construct a new test client instance with the handlers needed to capture
+    additional responses from the server."""
+
+    client = LanguageClient(
         capabilities,
         root_uri,
         protocol_cls=ClientProtocol,
+        converter_factory=default_converter,
         loop=asyncio.new_event_loop(),
     )
 
     @client.feature(TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
-    def publish_diagnostics(client: Client, params: PublishDiagnosticsParams):
-        client.diagnostics[params.uri] = [
-            Diagnostic(**object_to_dict(obj)) for obj in params.diagnostics
-        ]
+    def publish_diagnostics(client: LanguageClient, params: PublishDiagnosticsParams):
+        client.diagnostics[params.uri] = params.diagnostics
 
     @client.feature(WINDOW_LOG_MESSAGE)
-    def log_message(client: Client, params):
-        log = LogMessageParams(**object_to_dict(params))
-        client.log_messages.append(log)
+    def log_message(client: LanguageClient, params: LogMessageParams):
+        client.log_messages.append(params)
 
         levels = [logger.error, logger.warning, logger.info, logger.debug]
-        levels[log.type - 1](log.message)
+        levels[params.type.value - 1](params.message)
 
     @client.feature(WINDOW_SHOW_MESSAGE)
-    def show_message(client: Client, params):
+    def show_message(client: LanguageClient, params):
         client.messages.append(params)
 
     @client.feature(WINDOW_SHOW_DOCUMENT)
-    def show_document(client: Client, params: ShowDocumentParams):
+    def show_document(client: LanguageClient, params: ShowDocumentParams):
         client.shown_documents.append(params)
 
     return client
 
-
-def object_to_dict(obj) -> Dict[str, Any]:
-    """Convert a pygls.protocol.Object to a dictionary."""
-
-    if hasattr(obj, "_asdict"):
-        return {k: object_to_dict(v) for k, v in obj._asdict().items()}
-
-    return obj

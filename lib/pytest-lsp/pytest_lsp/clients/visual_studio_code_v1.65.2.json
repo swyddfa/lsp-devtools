@@ -1,29 +1,29 @@
 {
   "workspace": {
-    "apply_edit": true,
-    "workspace_edit": {
-      "document_changes": true,
-      "resource_operations": [
+    "applyEdit": true,
+    "workspaceEdit": {
+      "documentChanges": true,
+      "resourceOperations": [
         "create",
         "rename",
         "delete"
       ],
-      "failure_handling": "textOnlyTransactional",
-      "normalizes_line_endings": true,
-      "change_annotation_support": {
-        "groups_on_label": true
+      "failureHandling": "textOnlyTransactional",
+      "normalizesLineEndings": true,
+      "changeAnnotationSupport": {
+        "groupsOnLabel": true
       }
     },
-    "did_change_configuration": {
-      "dynamic_registration": true
+    "didChangeConfiguration": {
+      "dynamicRegistration": true
     },
-    "did_change_watched_files": {
-      "dynamic_registration": true
+    "didChangeWatchedFiles": {
+      "dynamicRegistration": true
     },
     "symbol": {
-      "dynamic_registration": true,
-      "symbol_kind": {
-        "value_set": [
+      "dynamicRegistration": true,
+      "symbolKind": {
+        "valueSet": [
           1,
           2,
           3,
@@ -52,73 +52,73 @@
           26
         ]
       },
-      "tag_support": {
-        "value_set": [
+      "tagSupport": {
+        "valueSet": [
           1
         ]
       }
     },
-    "execute_command": {
-      "dynamic_registration": true
+    "executeCommand": {
+      "dynamicRegistration": true
     },
-    "workspace_folders": true,
+    "workspaceFolders": true,
     "configuration": true,
-    "semantic_tokens": {
-      "refresh_support": true
+    "semanticTokens": {
+      "refreshSupport": true
     },
-    "code_lens": {
-      "refresh_support": true
+    "codeLens": {
+      "refreshSupport": true
     },
-    "file_operations": {
-      "dynamic_registration": true,
-      "did_create": true,
-      "will_create": true,
-      "did_rename": true,
-      "will_rename": true,
-      "did_delete": true,
-      "will_delete": true
+    "fileOperations": {
+      "dynamicRegistration": true,
+      "didCreate": true,
+      "willCreate": true,
+      "didRename": true,
+      "willRename": true,
+      "didDelete": true,
+      "willDelete": true
     }
   },
-  "text_document": {
+  "textDocument": {
     "synchronization": {
-      "dynamic_registration": true,
-      "will_save": true,
-      "will_save_wait_until": true,
-      "did_save": true
+      "dynamicRegistration": true,
+      "willSave": true,
+      "willSaveWaitUntil": true,
+      "didSave": true
     },
     "completion": {
-      "dynamic_registration": true,
-      "completion_item": {
-        "snippet_support": true,
-        "commit_characters_support": true,
-        "documentation_format": [
+      "dynamicRegistration": true,
+      "completionItem": {
+        "snippetSupport": true,
+        "commitCharactersSupport": true,
+        "documentationFormat": [
           "markdown",
           "plaintext"
         ],
-        "deprecated_support": true,
-        "preselect_support": true,
-        "tag_support": {
-          "value_set": [
+        "deprecatedSupport": true,
+        "preselectSupport": true,
+        "tagSupport": {
+          "valueSet": [
             1
           ]
         },
-        "insert_replace_support": true,
-        "resolve_support": {
+        "insertReplaceSupport": true,
+        "resolveSupport": {
           "properties": [
             "documentation",
             "detail",
             "additionalTextEdits"
           ]
         },
-        "insert_text_mode_support": {
-          "value_set": [
+        "insertTextModeSupport": {
+          "valueSet": [
             1,
             2
           ]
         }
       },
-      "completion_item_kind": {
-        "value_set": [
+      "completionItemKind": {
+        "valueSet": [
           1,
           2,
           3,
@@ -146,55 +146,55 @@
           25
         ]
       },
-      "context_support": true
+      "contextSupport": true
     },
     "hover": {
-      "dynamic_registration": true,
-      "content_format": [
+      "dynamicRegistration": true,
+      "contentFormat": [
         "markdown",
         "plaintext"
       ]
     },
-    "signature_help": {
-      "dynamic_registration": true,
-      "signature_information": {
-        "documentation_format": [
+    "signatureHelp": {
+      "dynamicRegistration": true,
+      "signatureInformation": {
+        "documentationFormat": [
           "markdown",
           "plaintext"
         ],
-        "parameter_information": {
-          "label_offset_support": true
+        "parameterInformation": {
+          "labelOffsetSupport": true
         },
-        "active_parameter_support": true
+        "activeParameterSupport": true
       },
-      "context_support": true
+      "contextSupport": true
     },
     "declaration": {
-      "dynamic_registration": true,
-      "link_support": true
+      "dynamicRegistration": true,
+      "linkSupport": true
     },
     "definition": {
-      "dynamic_registration": true,
-      "link_support": true
+      "dynamicRegistration": true,
+      "linkSupport": true
     },
-    "type_definition": {
-      "dynamic_registration": true,
-      "link_support": true
+    "typeDefinition": {
+      "dynamicRegistration": true,
+      "linkSupport": true
     },
     "implementation": {
-      "dynamic_registration": true,
-      "link_support": true
+      "dynamicRegistration": true,
+      "linkSupport": true
     },
     "references": {
-      "dynamic_registration": true
+      "dynamicRegistration": true
     },
-    "document_highlight": {
-      "dynamic_registration": true
+    "documentHighlight": {
+      "dynamicRegistration": true
     },
-    "document_symbol": {
-      "dynamic_registration": true,
-      "symbol_kind": {
-        "value_set": [
+    "documentSymbol": {
+      "dynamicRegistration": true,
+      "symbolKind": {
+        "valueSet": [
           1,
           2,
           3,
@@ -223,19 +223,19 @@
           26
         ]
       },
-      "hierarchical_document_symbol_support": true,
-      "tag_support": {
-        "value_set": [
+      "hierarchicalDocumentSymbolSupport": true,
+      "tagSupport": {
+        "valueSet": [
           1
         ]
       },
-      "label_support": true
+      "labelSupport": true
     },
-    "code_action": {
-      "dynamic_registration": true,
-      "code_action_literal_support": {
-        "code_action_kind": {
-          "value_set": [
+    "codeAction": {
+      "dynamicRegistration": true,
+      "codeActionLiteralSupport": {
+        "codeActionKind": {
+          "valueSet": [
             "",
             "quickfix",
             "refactor",
@@ -247,75 +247,75 @@
           ]
         }
       },
-      "is_preferred_support": true,
-      "disabled_support": true,
-      "data_support": true,
-      "resolve_support": {
+      "isPreferredSupport": true,
+      "disabledSupport": true,
+      "dataSupport": true,
+      "resolveSupport": {
         "properties": [
           "edit"
         ]
       },
-      "honors_change_annotations": false
+      "honorsChangeAnnotations": false
     },
-    "code_lens": {
-      "dynamic_registration": true
+    "codeLens": {
+      "dynamicRegistration": true
     },
-    "document_link": {
-      "dynamic_registration": true,
-      "tooltip_support": true
+    "documentLink": {
+      "dynamicRegistration": true,
+      "tooltipSupport": true
     },
-    "color_provider": {
-      "dynamic_registration": true
+    "colorProvider": {
+      "dynamicRegistration": true
     },
     "formatting": {
-      "dynamic_registration": true
+      "dynamicRegistration": true
     },
-    "range_formatting": {
-      "dynamic_registration": true
+    "rangeFormatting": {
+      "dynamicRegistration": true
     },
-    "on_type_formatting": {
-      "dynamic_registration": true
+    "onTypeFormatting": {
+      "dynamicRegistration": true
     },
     "rename": {
-      "dynamic_registration": true,
-      "prepare_support": true,
-      "prepare_support_default_behavior": 1,
-      "honors_change_annotations": true
+      "dynamicRegistration": true,
+      "prepareSupport": true,
+      "prepareSupportDefaultBehavior": 1,
+      "honorsChangeAnnotations": true
     },
-    "publish_diagnostics": {
-      "related_information": true,
-      "tag_support": {
-        "value_set": [
+    "publishDiagnostics": {
+      "relatedInformation": true,
+      "tagSupport": {
+        "valueSet": [
           1,
           2
         ]
       },
-      "version_support": false,
-      "code_description_support": true,
-      "data_support": true
+      "versionSupport": false,
+      "codeDescriptionSupport": true,
+      "dataSupport": true
     },
-    "folding_range": {
-      "dynamic_registration": true,
-      "range_limit": 5000,
-      "line_folding_only": true
+    "foldingRange": {
+      "dynamicRegistration": true,
+      "rangeLimit": 5000,
+      "lineFoldingOnly": true
     },
-    "selection_range": {
-      "dynamic_registration": true
+    "selectionRange": {
+      "dynamicRegistration": true
     },
-    "linked_editing_range": {
-      "dynamic_registration": true
+    "linkedEditingRange": {
+      "dynamicRegistration": true
     },
-    "call_hierarchy": {
-      "dynamic_registration": true
+    "callHierarchy": {
+      "dynamicRegistration": true
     },
-    "semantic_tokens": {
+    "semanticTokens": {
       "requests": {
         "range": true,
         "full": {
           "delta": true
         }
       },
-      "token_types": [
+      "tokenTypes": [
         "namespace",
         "type",
         "class",
@@ -339,7 +339,7 @@
         "regexp",
         "operator"
       ],
-      "token_modifiers": [
+      "tokenModifiers": [
         "declaration",
         "definition",
         "readonly",
@@ -354,25 +354,24 @@
       "formats": [
         "relative"
       ],
-      "overlapping_token_support": false,
-      "multiline_token_support": false,
-      "dynamic_registration": true
-    },
-    "moniker": null
+      "overlappingTokenSupport": false,
+      "multilineTokenSupport": false,
+      "dynamicRegistration": true
+    }
   },
   "window": {
-    "work_done_progress": true,
-    "show_message": {
-      "message_action_item": {
-        "additional_properties_support": true
+    "workDoneProgress": true,
+    "showMessage": {
+      "messageActionItem": {
+        "additionalPropertiesSupport": true
       }
     },
-    "show_document": {
+    "showDocument": {
       "support": true
     }
   },
   "general": {
-    "regular_expressions": {
+    "regularExpressions": {
       "engine": "ECMAScript",
       "version": "ES2020"
     },
@@ -380,6 +379,5 @@
       "parser": "marked",
       "version": "1.1.0"
     }
-  },
-  "experimental": null
+  }
 }
