@@ -59,9 +59,13 @@ async def test_capabilities(client):
     results = pytester.runpytest('-vv')
 
     results.assert_outcomes(errors=1)
-    results.stdout.fnmatch_lines(
-        "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"
-    )
+
+    if sys.version_info.minor < 9:
+        message = "E*CancelledError"
+    else:
+        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"
+
+    results.stdout.fnmatch_lines(message)
 
 
 def test_detect_server_exit_mid_request(pytester: pytest.Pytester):
@@ -91,9 +95,13 @@ async def test_capabilities(client):
     results = pytester.runpytest('-vv')
 
     results.assert_outcomes(errors=1)
-    results.stdout.fnmatch_lines(
-        "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"
-    )
+
+    if sys.version_info.minor < 9:
+        message = "E*CancelledError"
+    else:
+        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"
+
+    results.stdout.fnmatch_lines(message)
 
 
 def test_detect_server_crash(pytester: pytest.Pytester):
@@ -111,10 +119,16 @@ async def test_capabilities(client):
     results = pytester.runpytest("-vv")
 
     results.assert_outcomes(errors=1)
-    results.stdout.fnmatch_lines(
-        ["E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 1",
-         "E*ZeroDivisionError: division by zero"]
-    )
+
+    if sys.version_info.minor < 9:
+        message = "E*CancelledError"
+    else:
+        message = [
+            "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 1",
+            "E*ZeroDivisionError: division by zero"
+        ]
+
+    results.stdout.fnmatch_lines(message)
 
 
 def test_detect_invalid_json(pytester: pytest.Pytester):
@@ -145,6 +159,10 @@ async def test_capabilities(client):
     results = pytester.runpytest('-vv')
 
     results.assert_outcomes(failed=1)
-    results.stdout.fnmatch_lines(
-        "E*asyncio.exceptions.CancelledError: JsonRpcInternalError: *"
-    )
+
+    if sys.version_info.minor < 9:
+        message = "E*CancelledError"
+    else:
+        message = "E*asyncio.exceptions.CancelledError: JsonRpcInternalError: *"
+
+    results.stdout.fnmatch_lines(message)

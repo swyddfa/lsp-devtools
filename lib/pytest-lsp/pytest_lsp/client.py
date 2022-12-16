@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 import traceback
 from concurrent.futures import Future
 from typing import Any
@@ -172,7 +173,7 @@ class LanguageClient(Client):
             return
 
         self.error = error
-        tb = "".join(traceback.format_exception(error))
+        tb = "".join(traceback.format_exc())
 
         message = f"{source.__name__}: {error}\n{tb}"
         self._control_loop.call_soon_threadsafe(cancel_all_tasks, message)
@@ -521,7 +522,10 @@ def cancel_all_tasks(message: str):
     """Called by the watchdog thread to cancel all awaited tasks."""
 
     for task in asyncio.all_tasks():
-        task.cancel(message)
+        if sys.version_info.minor < 9:
+            task.cancel()
+        else:
+            task.cancel(message)
 
 
 def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> LanguageClient:
