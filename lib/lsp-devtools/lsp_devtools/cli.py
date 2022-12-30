@@ -13,6 +13,7 @@ BUILTIN_COMMANDS = [
     "lsp_devtools.cmds.agent",
     "lsp_devtools.cmds.capabilities",
     "lsp_devtools.cmds.record",
+    "lsp_devtools.cmds.tui",
 ]
 
 
