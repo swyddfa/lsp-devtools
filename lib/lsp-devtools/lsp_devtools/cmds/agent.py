@@ -7,7 +7,7 @@ from typing import List
 from pygls.protocol import JsonRPCProtocol
 from pygls.server import Server
 
-from lsp_devtools.agent import Agent
+from lsp_devtools.agent import LSPAgent
 from lsp_devtools.agent import logger
 from lsp_devtools.handlers import LspHandler
 from lsp_devtools.handlers import LspMessage
@@ -53,7 +53,7 @@ def agent(args, extra: List[str]):
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
 
-    agent = Agent(process, sys.stdin.buffer, sys.stdout.buffer)
+    agent = LSPAgent(process, sys.stdin.buffer, sys.stdout.buffer)
     agent.start()
 
     server.start_ws(args.host, args.port)

@@ -5,7 +5,7 @@ import subprocess
 import sys
 from typing import List
 
-from lsp_devtools.agent import Agent
+from lsp_devtools.agent import LSPAgent
 from lsp_devtools.agent import logger
 
 
@@ -36,7 +36,7 @@ def record(args, extra: List[str]):
 
     logger.addHandler(handler)
 
-    agent = Agent(process, sys.stdin.buffer, sys.stdout.buffer)
+    agent = LSPAgent(process, sys.stdin.buffer, sys.stdout.buffer)
     agent.start()
     agent.join()
 
