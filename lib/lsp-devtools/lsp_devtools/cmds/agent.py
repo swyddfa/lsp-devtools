@@ -60,14 +60,14 @@ def agent(args, extra: List[str]):
 
 
 def cli(commands: argparse._SubParsersAction):
-    cmd = commands.add_parser(
+    cmd: argparse.ArgumentParser = commands.add_parser(
         "agent",
         help="instrument an LSP session",
         description="""\
 This command runs the given language server as a subprocess, wrapping it in a websocket
 server allowing all traffic to be inspected by some client.
 """,
-    )  # type: argparse.ArgumentParser
+    )
 
     cmd.add_argument(
         "--host",

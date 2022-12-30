@@ -1,38 +1,37 @@
-import argparse
-import asyncio
-import json
-import logging
-import os
-import pathlib
-import subprocess
-import sys
-import threading
-from typing import BinaryIO
-from typing import List
+"""
+This module is what enables the majority of lsp-devtools suite of tools.
 
-import appdirs
-from pygls.protocol import JsonRPCProtocol, default_converter
-from pygls.server import Server
-
-from lsp_devtools.handlers.sql import SqlHandler
-
-logger = logging.getLogger(__name__)
-
-
-class LSPAgent:
-    """The Agent sits between a language server and its client, listening to messages
-    enabling them to be recorded ::
-
-       +---- LSP Client ---+        +------ Agent ------+        +---- LSP Server ---+
+       +---- LSP Client ---+        +---- LSP Agent ----+        +---- LSP Server ---+
        |                   |        | +---------------+ |        |                   |
        |                out|--------|>|in  Server  out|-|------->|in                 |
        |                   |        | +---------------+ |        |                   |
        |                 in|<-------|-|out Server   in|<|--------|out                |
        |                   |        | +---------------+ |        |                   |
        +-------------------+        +-------------------+        +-------------------+
+"""
+
+import asyncio
+import json
+import logging
+import subprocess
+import threading
+from json.decoder import JSONDecodeError
+from threading import Event
+from typing import Any
+from typing import BinaryIO
+
+import websockets
+from pygls.protocol import JsonRPCProtocol, default_converter
+from pygls.server import Server
+from websockets.client import WebSocketClientProtocol
 
 
-    """
+logger = logging.getLogger(__name__)
+
+
+class LSPAgent:
+    """The Agent sits between a language server and its client, listening to messages
+    enabling them to be recorded."""
 
     def __init__(self, server: subprocess.Popen, stdin: BinaryIO, stdout: BinaryIO):
         self.stdin = stdin
@@ -75,7 +74,7 @@ class LSPAgent:
 
 
 class Passthrough(JsonRPCProtocol):
-    """A JsonRPCProtocol implementation that simpy forwards the messages it recevies
+    """A JsonRPCProtocol implementation that simply forwards the messages it recevies
     while also logging them."""
 
     source: str
@@ -122,44 +121,74 @@ class Passthrough(JsonRPCProtocol):
             )
 
 
-def agent(args, extra: List[str]):
-    """Run the LSP agent."""
+class WebSocketClientTransportAdapter:
+    """Protocol adapter for the WebSocket client interface."""
 
-    if extra is None:
-        print("Missing server start command", file=sys.stderr)
-        return 1
+    def __init__(
+        self, ws: WebSocketClientProtocol, loop: asyncio.AbstractEventLoop
+    ):
+        self._ws = ws
+        self._loop = loop
 
-    dbpath = pathlib.Path(args.db)
-    if not dbpath.parent.exists():
-        dbpath.parent.mkdir(parents=True)
+    def close(self) -> None:
+        """Stop the WebSocket server."""
+        print("-- CLOSING --")
+        self._loop.create_task(self._ws.close())
 
-    server_process = subprocess.Popen(
-        extra, stdin=subprocess.PIPE, stdout=subprocess.PIPE
-    )
-
-    logger = logging.getLogger("lsp_devtools.agent")
-    logger.setLevel(logging.INFO)
-
-    sql_handler = SqlHandler(dbpath)
-    sql_handler.setLevel(logging.INFO)
-
-    logger.addHandler(sql_handler)
-
-    agent = LSPAgent(server_process, sys.stdin.buffer, sys.stdout.buffer)
-    agent.start()
-    agent.join()
+    def write(self, data: Any) -> None:
+        """Create a task to write specified data into a WebSocket."""
+        asyncio.ensure_future(self._ws.send(data))
 
 
-def cli(commands: argparse._SubParsersAction):
-    cmd = commands.add_parser(
-        "agent",
-        help="agent for recording communications between an LSP client and server.",
-    )
-    cmd.add_argument(
-        "--db",
-        help="path to use for the database",
-        default=os.path.join(
-            appdirs.user_data_dir(appname="lsp-devtools"), "lsp_sessions.db"
-        ),
-    )
-    cmd.set_defaults(run=agent)
+
+class LSPAgentClient(Server):
+    """Client for connecting to an LSPAgent instance."""
+
+    def __init__(self):
+        super().__init__(
+            protocol_cls=JsonRPCProtocol, converter_factory=default_converter
+        )
+
+    def _report_server_error(self, error, source):
+        # Bail on error
+        self._stop_event.set()
+
+
+    def start_ws_client(self, host: str, port: int):
+        """Similar to ``start_ws``, but where we create a client connection rather than
+        host a server."""
+
+        self._stop_event = Event()
+        self.lsp._send_only_body = True  # Don't send headers within the payload
+
+        async def client_connection(host: str, port: int):
+            """Create and run a client connection."""
+
+            self._client = await websockets.connect(f"ws://{host}:{port}")
+            self.lsp.transport = WebSocketClientTransportAdapter(self._client, self.loop)
+            message = None
+
+            try:
+                while not self._stop_event.is_set():
+                    try:
+                        message = await asyncio.wait_for(self._client.recv(), timeout=0.5)
+                        self.lsp._procedure_handler(
+                            json.loads(message, object_hook=self.lsp._deserialize_message)
+                        )
+                    except JSONDecodeError:
+                        print(message or "-- message not found --")
+                        raise
+                    except TimeoutError:
+                        pass
+                    except Exception:
+                        raise
+
+            finally:
+                await self._client.close()
+
+        try:
+            asyncio.run(client_connection(host, port))
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.shutdown()
