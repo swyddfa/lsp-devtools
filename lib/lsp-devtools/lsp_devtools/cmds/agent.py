@@ -4,7 +4,7 @@ import subprocess
 import sys
 from typing import List
 
-from pygls.protocol import JsonRPCProtocol
+from pygls.protocol import JsonRPCProtocol, default_converter
 from pygls.server import Server
 
 from lsp_devtools.agent import LSPAgent
@@ -45,7 +45,7 @@ def agent(args, extra: List[str]):
 
     process = subprocess.Popen(extra, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
-    server = Server(protocol_cls=JsonRPCProtocol)
+    server = Server(protocol_cls=JsonRPCProtocol, converter_factory=default_converter)
 
     handler = WSHandler(server)
     handler.setLevel(logging.INFO)
@@ -62,10 +62,10 @@ def agent(args, extra: List[str]):
 def cli(commands: argparse._SubParsersAction):
     cmd = commands.add_parser(
         "agent",
-        help="interactively inspect an LSP session",
+        help="instrument an LSP session",
         description="""\
 This command runs the given language server as a subprocess, wrapping it in a websocket
-server that can be used to inspect and manipulate the session interactively.
+server allowing all traffic to be inspected by some client.
 """,
     )  # type: argparse.ArgumentParser
 

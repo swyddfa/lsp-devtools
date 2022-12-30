@@ -11,7 +11,7 @@ from typing import BinaryIO
 from typing import List
 
 import appdirs
-from pygls.protocol import JsonRPCProtocol
+from pygls.protocol import JsonRPCProtocol, default_converter
 from pygls.server import Server
 
 from lsp_devtools.handlers.sql import SqlHandler
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class LSPAgent:
     """The Agent sits between a language server and its client, listening to messages
-    enabling them to be recorded in a SQLite database::
+    enabling them to be recorded ::
 
        +---- LSP Client ---+        +------ Agent ------+        +---- LSP Server ---+
        |                   |        | +---------------+ |        |                   |
@@ -42,7 +42,9 @@ class LSPAgent:
     def start(self):
         """Setup the connections between client and server and start it all running."""
 
-        self.client_to_server = Server(protocol_cls=Passthrough)
+        self.client_to_server = Server(
+            protocol_cls=Passthrough, converter_factory=default_converter
+        )
         self.client_to_server.lsp.source = "client"
         self.client_to_server_thread = threading.Thread(
             name="Client -> Server",
@@ -52,7 +54,9 @@ class LSPAgent:
         self.client_to_server_thread.daemon = True
 
         self.server_to_client = Server(
-            protocol_cls=Passthrough, loop=asyncio.new_event_loop()
+            protocol_cls=Passthrough,
+            loop=asyncio.new_event_loop(),
+            converter_factory=default_converter,
         )
         self.server_to_client.lsp.source = "server"
         self.server_to_client_thread = threading.Thread(
