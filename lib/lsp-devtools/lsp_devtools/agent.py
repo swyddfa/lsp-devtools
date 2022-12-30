@@ -19,7 +19,7 @@ from lsp_devtools.handlers.sql import SqlHandler
 logger = logging.getLogger(__name__)
 
 
-class Agent:
+class LSPAgent:
     """The Agent sits between a language server and its client, listening to messages
     enabling them to be recorded in a SQLite database::
 
@@ -141,7 +141,7 @@ def agent(args, extra: List[str]):
 
     logger.addHandler(sql_handler)
 
-    agent = Agent(server_process, sys.stdin.buffer, sys.stdout.buffer)
+    agent = LSPAgent(server_process, sys.stdin.buffer, sys.stdout.buffer)
     agent.start()
     agent.join()
 
