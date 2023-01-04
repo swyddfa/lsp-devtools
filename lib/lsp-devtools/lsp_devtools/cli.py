@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 BUILTIN_COMMANDS = [
     "lsp_devtools.agent",
     "lsp_devtools.cmds.capabilities",
-    "lsp_devtools.cmds.record",
+    "lsp_devtools.record",
     "lsp_devtools.cmds.tui",
 ]
 
