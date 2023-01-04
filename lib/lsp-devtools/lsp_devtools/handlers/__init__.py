@@ -1,48 +1,59 @@
 import logging
 from typing import Any
-from typing import Dict
-from typing import List
+from typing import Literal
 from typing import Mapping
 from typing import Optional
-from typing import Union
 from uuid import uuid4
 
-LspParams = Union[Dict[str, Any], List[Any]]
-LspResult = Union[Dict[str, Any], bool, float, str]
+import attrs
 
+MessageSource = Literal['client', 'server']
 
+@attrs.define
 class LspMessage:
     """A container that holds a message from the LSP protocol, with some additional metadata."""
 
-    def __init__(
-        self, session: str, timestamp: float, source: str, message: Mapping[str, object]
+    Source = MessageSource
+
+    session: str
+    """An id representing the session the message is a part of."""
+
+    timestamp: float
+    """When the message was sent."""
+
+    source: MessageSource
+    """Indicates if the message was sent by the client or the server."""
+
+    id: Optional[str]
+    """The ``id`` field, if it exists."""
+
+    method: Optional[str]
+    """The ``method`` field, if it exists."""
+
+    params: Optional[Any]
+    """The ``params`` field, if it exists."""
+
+    result: Optional[Any]
+    """The ``result`` field, if it exists."""
+
+    error: Optional[Any]
+    """The ``error`` field, if it exists."""
+
+    @classmethod
+    def from_rpc(
+        cls, session: str, timestamp: float, source: str, message: Mapping[str, Any]
     ):
-        self.session: str = session
-        """An id representing the session the message is a part of."""
-
-        self.timestamp: float = timestamp
-        """When the message was sent (seconds since the epoch)."""
-
-        self.source: str = source
-        """Indicates if the message was sent by the client or the server."""
-
-        self.message: Mapping[str, object] = message
-        """The actual message sent over the lsp protocol."""
-
-        self.id: Optional[str] = message.get("id", None)  # type: ignore
-        """The ``id`` field, if it exists."""
-
-        self.method: Optional[str] = message.get("method", None)  # type: ignore
-        """The ``method`` field, if it exists."""
-
-        self.params: Optional[LspParams] = message.get("params", None)  # type: ignore
-        """The ``params`` field, if it exists."""
-
-        self.result: Optional[LspResult] = message.get("result", None)  # type: ignore
-        """The ``result`` field, if it exists."""
-
-        self.error: Optional[Dict[str, Any]] = message.get("error", None)  # type: ignore
-        """The ``error`` field, if it exists."""
+        """Create an instance from a JSON-RPC message."""
+        return cls(
+            session=session,
+            timestamp=timestamp,
+            source=source,  # type: ignore
+            id=message.get("id", None),
+            method=message.get("method", None),
+            params=message.get("params", None),
+            result=message.get("result", None),
+            error=message.get("error", None),
+        )
 
     @property
     def is_request(self) -> bool:
@@ -63,8 +74,7 @@ class LspHandler(logging.Handler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.session_id = None
+        self.session_id = ''
 
     def handle_message(self, message: LspMessage):
         """Called each time a message is processed."""
@@ -81,7 +91,8 @@ class LspHandler(logging.Handler):
         if message.get("method", None) == "initialize":
             self.session_id = str(uuid4())
 
-        lsp_message = LspMessage(
-            session=self.session_id, timestamp=timestamp, source=source, message=message
+        self.handle_message(
+            LspMessage.from_rpc(
+                session=self.session_id, timestamp=timestamp, source=source, message=message
+            )
         )
-        self.handle_message(lsp_message)
