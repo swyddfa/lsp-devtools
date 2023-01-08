@@ -34,7 +34,7 @@ class WSHandler(logging.Handler):
 
     def emit(self, record: logging.LogRecord):
         message = MessageText(
-            text=record.args[0],
+            text=record.args[0],  # type: ignore
             source=record.__dict__['source'],
         )
         self.server.lsp.message_text_notification(message)

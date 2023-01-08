@@ -103,5 +103,8 @@ class Agent:
             self.server_process.kill()
 
         # Need to close these to prevent open file warnings
-        self.server_process.stdin.close()
-        self.server_process.stdout.close()
+        if self.server_process.stdin is not None:
+            self.server_process.stdin.close()
+
+        if self.server_process.stdout is not None:
+            self.server_process.stdout.close()

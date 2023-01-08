@@ -15,7 +15,7 @@ MessageType = Literal["request", "response", "result", "error", "notification"]
 
 
 @attrs.define
-class LSPFilter:
+class LSPFilter(logging.Filter):
     """Logging filter for LSP messages."""
 
     message_source: MessageSource = attrs.field(default="both")
@@ -33,7 +33,7 @@ class LSPFilter:
     exclude_methods: Set[str] = attrs.field(factory=set, converter=set)
     """Exclude messages associated with the given method."""
 
-    formatter: FormatString = attrs.field(default="", converter=FormatString)
+    formatter: FormatString = attrs.field(default="", converter=FormatString) # type: ignore
     """Format messages according to the given string"""
 
     _response_method_map: Dict[Union[int, str], str] = attrs.field(factory=dict)
@@ -41,6 +41,9 @@ class LSPFilter:
 
     def filter(self, record: logging.LogRecord) -> bool:
         message = record.args
+        if not isinstance(message, dict):
+            return False
+
         source = record.__dict__["source"]
         message_type = get_message_type(message)
         message_method = self._get_message_method(message_type, message)
@@ -69,7 +72,7 @@ class LSPFilter:
                 record.msg = self.formatter.format(message)
             except Exception:
                 logger.debug(
-                    "Skipping message that failed to format: %s", message, exc_info=1
+                    "Skipping message that failed to format: %s", message, exc_info=True
                 )
                 return False
 
@@ -89,11 +92,11 @@ class LSPFilter:
         return self._response_method_map[message["id"]]
 
 
-def message_matches_type(message_type: str, types: Set[str]) -> bool:
+def message_matches_type(message_type: str, types: Set[MessageType]) -> bool:
     """Determine if the type of message is included in the given set of types"""
 
     if message_type == "result":
-        return len({"result", "response"} & types)
+        return len({"result", "response"} & types) > 0
 
     if message_type == "error":
         return len({"error", "response"} & types) > 0

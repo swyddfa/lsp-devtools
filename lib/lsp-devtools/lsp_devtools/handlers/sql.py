@@ -10,7 +10,7 @@ from lsp_devtools.handlers import LspMessage
 if sys.version_info.minor < 9:
     import importlib_resources as resources
 else:
-    import importlib.resources as resources
+    import importlib.resources as resources  # type: ignore[no-redef]
 
 
 class SqlHandler(LspHandler):

@@ -46,7 +46,7 @@ class RichLSPHandler(RichHandler):
         # Abuse the log level column to display the source of the message,
         source = record.__dict__["source"]
         color = "red" if source == "client" else "blue"
-        res.columns[1]._cells[0] = f"[bold][{color}]{source.upper()}[/{color}][/bold]"
+        res.columns[1]._cells[0] = f"[bold][{color}]{source.upper()}[/{color}][/bold]" # type: ignore
 
         return res
 
@@ -83,7 +83,7 @@ def log_rpc_message(ls: AgentClient, message: MessageText):
         msg = "".join(message_buf)
         found = MESSAGE_PATTERN.fullmatch(msg)
 
-        body = found.group("body") if found else b""
+        body = found.group("body") if found else ""
         length = int(found.group("length")) if found else 1
 
         if len(body) < length:
