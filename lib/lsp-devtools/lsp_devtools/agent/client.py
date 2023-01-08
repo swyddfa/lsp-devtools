@@ -43,6 +43,7 @@ class AgentClient(Server):
         )
         self._client_buf = []
         self._server_buf = []
+        self._stop_event: Event = Event()
 
     def _report_server_error(self, error, source):
         # Bail on error
@@ -56,13 +57,12 @@ class AgentClient(Server):
         """Similar to ``start_ws``, but where we create a client connection rather than
         host a server."""
 
-        self._stop_event = Event()
         self.lsp._send_only_body = True  # Don't send headers within the payload
 
         async def client_connection(host: str, port: int):
             """Create and run a client connection."""
 
-            self._client = await websockets.connect(f"ws://{host}:{port}")
+            self._client = await websockets.connect(f"ws://{host}:{port}")  # type: ignore
             self.lsp.transport = WebSocketClientTransportAdapter(self._client, self.loop)
             message = None
 

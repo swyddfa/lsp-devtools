@@ -11,9 +11,11 @@ class AgentServer(Server):
     lsp: AgentProtocol
 
     def __init__(self, *args, **kwargs):
-        super().__init__(
-            *args,
-            protocol_cls=AgentProtocol,
-            converter_factory=default_converter,
-            **kwargs
-        )
+
+        if 'protocol_cls' not in kwargs:
+            kwargs['protocol_cls'] = AgentProtocol
+
+        if 'converter_factory' not in kwargs:
+            kwargs['converter_factory'] = default_converter
+
+        super().__init__(*args, **kwargs)

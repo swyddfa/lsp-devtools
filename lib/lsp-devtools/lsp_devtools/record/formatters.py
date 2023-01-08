@@ -2,6 +2,7 @@ import re
 from functools import cache
 from typing import Any
 from typing import Callable
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -35,7 +36,7 @@ def get_formatter(fmt: str) -> Callable[[Any], str]:
     if enum is not None:
 
         def fn(v: int) -> str:
-            return enum(v).name
+            return enum(v).name  # type: ignore
 
         return fn
 
@@ -96,8 +97,8 @@ def get_separator_index(separator: str) -> Tuple[str, Union[int, slice, None]]:
         return "\n", None
 
     if "#" in separator:
-        index, sep = separator.split("#")
-        return get_separator(sep), get_index(index)
+        idx, sep = separator.split("#")
+        return get_separator(sep), get_index(idx)
 
     # Try parsing as an index
     index = get_index(separator)
@@ -147,7 +148,7 @@ class FormatString:
 
     def _parse(self):
         idx = 0
-        parts = []
+        parts: List[Union[str, Value]] = []
 
         for match in self.VARIABLE.finditer(self.pattern):
             start, end = match.span()
