@@ -1,18 +1,18 @@
 import argparse
 import asyncio
 import logging
-import threading
 import subprocess
 import sys
+import threading
 from typing import List
 
 from .agent import Agent
 from .agent import logger
+from .client import AgentClient
+from .client import parse_rpc_message
 from .protocol import MESSAGE_TEXT_NOTIFICATION
 from .protocol import MessageText
 from .server import AgentServer
-from .client import AgentClient
-
 
 __all__ = [
     "Agent",
@@ -21,6 +21,7 @@ __all__ = [
     "logger",
     "MESSAGE_TEXT_NOTIFICATION",
     "MessageText",
+    "parse_rpc_message",
 ]
 
 
@@ -35,7 +36,7 @@ class WSHandler(logging.Handler):
     def emit(self, record: logging.LogRecord):
         message = MessageText(
             text=record.args[0],  # type: ignore
-            source=record.__dict__['source'],
+            source=record.__dict__["source"],
         )
         self.server.lsp.message_text_notification(message)
 
