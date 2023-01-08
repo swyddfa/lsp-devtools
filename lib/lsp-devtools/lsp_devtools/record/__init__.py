@@ -6,6 +6,7 @@ import re
 from typing import List
 from typing import Optional
 
+from pygls.protocol import partial
 from rich.console import ConsoleRenderable
 from rich.logging import RichHandler
 from rich.traceback import Traceback
@@ -13,6 +14,7 @@ from rich.traceback import Traceback
 from lsp_devtools.agent import MESSAGE_TEXT_NOTIFICATION
 from lsp_devtools.agent import AgentClient
 from lsp_devtools.agent import MessageText
+from lsp_devtools.agent import parse_rpc_message
 from lsp_devtools.handlers.sql import SqlHandler
 
 from .filters import LSPFilter
@@ -46,7 +48,7 @@ class RichLSPHandler(RichHandler):
         # Abuse the log level column to display the source of the message,
         source = record.__dict__["source"]
         color = "red" if source == "client" else "blue"
-        res.columns[1]._cells[0] = f"[bold][{color}]{source.upper()}[/{color}][/bold]" # type: ignore
+        res.columns[1]._cells[0] = f"[bold][{color}]{source.upper()}[/{color}][/bold]"  # type: ignore
 
         return res
 
@@ -56,52 +58,11 @@ def log_raw_message(ls: AgentClient, message: MessageText):
     logger.info(message.text, extra={"source": message.source})
 
 
-MESSAGE_PATTERN = re.compile(
-    r"^(?:[^\r\n]+\r\n)*"
-    + r"Content-Length: (?P<length>\d+)\r\n"
-    + r"(?:[^\r\n]+\r\n)*\r\n"
-    + r"(?P<body>{.*)",
-    re.DOTALL,
-)
-
-
 def log_rpc_message(ls: AgentClient, message: MessageText):
-    """Push parsed json-rpc messages through the logging system.
+    """Push parsed json-rpc messages through the logging system"""
 
-    Originally adatped from the ``data_received`` method on pygls' ``JsonRPCProtocol``
-    class.
-    """
-    data = message.text
-    message_buf = ls._client_buf if message.source == "client" else ls._server_buf
-
-    while len(data):
-
-        # Append the incoming chunk to the message buffer
-        message_buf.append(data)
-
-        # Look for the body of the message
-        msg = "".join(message_buf)
-        found = MESSAGE_PATTERN.fullmatch(msg)
-
-        body = found.group("body") if found else ""
-        length = int(found.group("length")) if found else 1
-
-        if len(body) < length:
-            # Message is incomplete; bail until more data arrives
-            return
-
-        # Message is complete;
-        # extract the body and any remaining data,
-        # and reset the buffer for the next message
-        body, data = body[:length], body[length:]
-        message_buf.clear()
-
-        # Log the full message
-        logger.info(
-            "%s",
-            json.loads(body),
-            extra={"source": message.source},
-        )
+    logfn = partial(logger.info, "%s", extra={"source": message.source})
+    parse_rpc_message(ls, message, logfn)
 
 
 def setup_stdout_output(args):

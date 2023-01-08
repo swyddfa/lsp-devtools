@@ -1,8 +1,10 @@
 import asyncio
 import json
+import re
 from json.decoder import JSONDecodeError
 from threading import Event
 from typing import Any
+from typing import Callable
 from typing import Optional
 
 import websockets
@@ -11,14 +13,13 @@ from pygls.server import Server
 from websockets.client import WebSocketClientProtocol
 
 from lsp_devtools.agent.protocol import AgentProtocol
+from lsp_devtools.agent.protocol import MessageText
 
 
 class WebSocketClientTransportAdapter:
     """Protocol adapter for the WebSocket client interface."""
 
-    def __init__(
-        self, ws: WebSocketClientProtocol, loop: asyncio.AbstractEventLoop
-    ):
+    def __init__(self, ws: WebSocketClientProtocol, loop: asyncio.AbstractEventLoop):
         self._ws = ws
         self._loop = loop
 
@@ -30,6 +31,51 @@ class WebSocketClientTransportAdapter:
     def write(self, data: Any) -> None:
         """Create a task to write specified data into a WebSocket."""
         asyncio.ensure_future(self._ws.send(data))
+
+
+MESSAGE_PATTERN = re.compile(
+    r"^(?:[^\r\n]+\r\n)*"
+    + r"Content-Length: (?P<length>\d+)\r\n"
+    + r"(?:[^\r\n]+\r\n)*\r\n"
+    + r"(?P<body>{.*)",
+    re.DOTALL,
+)
+
+
+def parse_rpc_message(
+    ls: "AgentClient", message: MessageText, callback: Callable[[str], None]
+):
+    """Parse json-rpc messages coming from the agent.
+
+    Originally adatped from the ``data_received`` method on pygls' ``JsonRPCProtocol``
+    class.
+    """
+    data = message.text
+    message_buf = ls._client_buf if message.source == "client" else ls._server_buf
+
+    while len(data):
+
+        # Append the incoming chunk to the message buffer
+        message_buf.append(data)
+
+        # Look for the body of the message
+        msg = "".join(message_buf)
+        found = MESSAGE_PATTERN.fullmatch(msg)
+
+        body = found.group("body") if found else ""
+        length = int(found.group("length")) if found else 1
+
+        if len(body) < length:
+            # Message is incomplete; bail until more data arrives
+            return
+
+        # Message is complete;
+        # extract the body and any remaining data,
+        # and reset the buffer for the next message
+        body, data = body[:length], body[length:]
+        message_buf.clear()
+
+        callback(json.loads(body))
 
 
 class AgentClient(Server):
@@ -63,15 +109,21 @@ class AgentClient(Server):
             """Create and run a client connection."""
 
             self._client = await websockets.connect(f"ws://{host}:{port}")  # type: ignore
-            self.lsp.transport = WebSocketClientTransportAdapter(self._client, self.loop)
+            self.lsp.transport = WebSocketClientTransportAdapter(
+                self._client, self.loop
+            )
             message = None
 
             try:
                 while not self._stop_event.is_set():
                     try:
-                        message = await asyncio.wait_for(self._client.recv(), timeout=0.5)
+                        message = await asyncio.wait_for(
+                            self._client.recv(), timeout=0.5
+                        )
                         self.lsp._procedure_handler(
-                            json.loads(message, object_hook=self.lsp._deserialize_message)
+                            json.loads(
+                                message, object_hook=self.lsp._deserialize_message
+                            )
                         )
                     except JSONDecodeError:
                         print(message or "-- message not found --")
