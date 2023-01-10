@@ -43,7 +43,7 @@ MESSAGE_PATTERN = re.compile(
 
 
 def parse_rpc_message(
-    ls: "AgentClient", message: MessageText, callback: Callable[[str], None]
+    ls: "AgentClient", message: MessageText, callback: Callable[[dict], None]
 ):
     """Parse json-rpc messages coming from the agent.
 
