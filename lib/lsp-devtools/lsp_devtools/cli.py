@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 BUILTIN_COMMANDS = [
     "lsp_devtools.agent",
-    "lsp_devtools.cmds.capabilities",
+    "lsp_devtools.cmds.capabilities",  # TODO: Remove in favour of record + cli args
     "lsp_devtools.record",
-    "lsp_devtools.cmds.tui",
+    "lsp_devtools.tui",
 ]
 
 

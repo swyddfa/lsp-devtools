@@ -24,6 +24,7 @@ classifiers = [
 ]
 dependencies = [
     "appdirs",
+    "aiosqlite",
     "importlib-resources; python_version<\"3.9\"",
     "pygls[ws]",
     "textual"

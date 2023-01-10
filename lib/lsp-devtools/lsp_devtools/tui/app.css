@@ -1,0 +1,9 @@
+Sidebar {
+    width: 60;
+    dock: right;
+    background: $panel;
+    transition: offset 300ms out_cubic;
+}
+Sidebar.-hidden {
+    offset-x: 100%;
+}
