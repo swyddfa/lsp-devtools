@@ -1,5 +1,0 @@
-Add ``tui``command.
-
-A proof of concept devtools TUI implemented in textual, that live updates with the LSP messages sent between client and server!
-
-Requires the server be wrapped in an ``agent``.
