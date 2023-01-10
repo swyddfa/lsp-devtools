@@ -1,3 +1,22 @@
+v0.2.0 - 2023-01-10
+-------------------
+
+Features
+^^^^^^^^
+
+- The ``LanguageClient`` now exposes methods covering the full LSP spec thanks to autogenerating its client from type definitions provided by ``lsprotocol`` (`#25 <https://github.com/alcarney/lsp-devtools/issues/25>`_)
+
+
+Misc
+^^^^
+
+- Support for Python 3.6 has been dropped.
+
+  Support for Python 3.11 has been added.
+
+  Upgraded to pygls 1.0. (`#25 <https://github.com/alcarney/lsp-devtools/issues/25>`_)
+
+
 v0.1.3 - 2022-10-15
 -------------------
 

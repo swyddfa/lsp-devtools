@@ -1,1 +1,0 @@
-The ``LanguageClient`` now exposes methods covering the full LSP spec thanks to autogenerating its client from type definitions provided by ``lsprotocol``
