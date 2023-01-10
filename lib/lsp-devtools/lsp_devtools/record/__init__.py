@@ -138,41 +138,8 @@ def start_recording(args, extra: List[str]):
         raise
 
 
-def cli(commands: argparse._SubParsersAction):
-    cmd: argparse.ArgumentParser = commands.add_parser(
-        "record",
-        help="record an LSP session, requires the server be wrapped by an agent.",
-        description="""\
-This command connects to an LSP agent allowing for messages sent
-between client and server to be logged.
-""",
-    )
-
-    connect = cmd.add_argument_group(
-        title="connection options", description="how to connect to the LSP agent"
-    )
-    connect.add_argument(
-        "--host",
-        type=str,
-        default="localhost",
-        help="the host that is hosting the agent.",
-    )
-    connect.add_argument(
-        "-p", "--port", type=int, default=8765, help="the port to connect to."
-    )
-
-    capture = cmd.add_mutually_exclusive_group()
-    capture.add_argument(
-        "--capture-raw-output",
-        action="store_true",
-        help="capture the raw output from client and server.",
-    )
-    capture.add_argument(
-        "--capture-rpc-output",
-        default=True,
-        action="store_true",
-        help="capture the rpc messages sent between client and server.",
-    )
+def setup_filter_args(cmd: argparse.ArgumentParser):
+    """Add arguments that can be used to filter messages."""
 
     filter = cmd.add_argument_group(
         title="filter options",
@@ -220,6 +187,44 @@ between client and server to be logged.
         help="omit messages for the given method(s)",
     )
 
+
+def cli(commands: argparse._SubParsersAction):
+    cmd: argparse.ArgumentParser = commands.add_parser(
+        "record",
+        help="record an LSP session, requires the server be wrapped by an agent.",
+        description="""\
+This command connects to an LSP agent allowing for messages sent
+between client and server to be logged.
+""",
+    )
+
+    connect = cmd.add_argument_group(
+        title="connection options", description="how to connect to the LSP agent"
+    )
+    connect.add_argument(
+        "--host",
+        type=str,
+        default="localhost",
+        help="the host that is hosting the agent.",
+    )
+    connect.add_argument(
+        "-p", "--port", type=int, default=8765, help="the port to connect to."
+    )
+
+    capture = cmd.add_mutually_exclusive_group()
+    capture.add_argument(
+        "--capture-raw-output",
+        action="store_true",
+        help="capture the raw output from client and server.",
+    )
+    capture.add_argument(
+        "--capture-rpc-output",
+        default=True,
+        action="store_true",
+        help="capture the rpc messages sent between client and server.",
+    )
+
+    setup_filter_args(cmd)
     format = cmd.add_argument_group(
         title="formatting options",
         description=(
