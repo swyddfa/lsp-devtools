@@ -1,0 +1,5 @@
+Updated ``record`` command.
+
+It is now capable of live streaming messages sent between a client and server to stdout, plain text files or a SQLite database.
+
+It also offers a number of filters for selecting the messages you wish to record, as well as a (WIP!) format string syntax for controlling how messages are formatted.

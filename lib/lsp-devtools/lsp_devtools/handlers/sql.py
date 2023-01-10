@@ -1,13 +1,16 @@
 import json
 import pathlib
 import sqlite3
-
+import sys
 from contextlib import closing
-
-import pkg_resources
 
 from lsp_devtools.handlers import LspHandler
 from lsp_devtools.handlers import LspMessage
+
+if sys.version_info.minor < 9:
+    import importlib_resources as resources
+else:
+    import importlib.resources as resources  # type: ignore[no-redef]
 
 
 class SqlHandler(LspHandler):
@@ -18,8 +21,8 @@ class SqlHandler(LspHandler):
 
         self.dbpath = dbpath
 
-        resource = pkg_resources.resource_string(__name__, "dbinit.sql")
-        sql_script = resource.decode("utf8")
+        resource = resources.files("lsp_devtools.handlers").joinpath("dbinit.sql")
+        sql_script = resource.read_text(encoding="utf8")
 
         with closing(sqlite3.connect(self.dbpath)) as conn:
             conn.executescript(sql_script)

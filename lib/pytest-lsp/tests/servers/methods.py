@@ -1,17 +1,42 @@
 """Used for testing client's handling of return types."""
-from pygls.lsp.methods import *
-from pygls.lsp.types import *
+import logging
+
+from lsprotocol.types import COMPLETION_ITEM_RESOLVE
+from lsprotocol.types import TEXT_DOCUMENT_COMPLETION
+from lsprotocol.types import TEXT_DOCUMENT_DEFINITION
+from lsprotocol.types import TEXT_DOCUMENT_DOCUMENT_LINK
+from lsprotocol.types import TEXT_DOCUMENT_DOCUMENT_SYMBOL
+from lsprotocol.types import TEXT_DOCUMENT_HOVER
+from lsprotocol.types import TEXT_DOCUMENT_IMPLEMENTATION
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionList
+from lsprotocol.types import CompletionParams
+from lsprotocol.types import DefinitionParams
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import DocumentLinkParams
+from lsprotocol.types import DocumentSymbol
+from lsprotocol.types import DocumentSymbolParams
+from lsprotocol.types import Hover
+from lsprotocol.types import HoverParams
+from lsprotocol.types import ImplementationParams
+from lsprotocol.types import Location
+from lsprotocol.types import LocationLink
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import SymbolInformation
+from lsprotocol.types import SymbolKind
 from pygls.server import LanguageServer
 
-
-server = LanguageServer()
+server = LanguageServer(name="methods-server", version="v1.0")
 
 
 def arange(spec: str) -> Range:
 
-    start_line, start_char, end_line, end_char = [
+    start_line, start_char, end_line, end_char = (
         int(i) for item in spec.split("-") for i in item.split(":")
-    ]
+    )
 
     return Range(
         start=Position(line=start_line, character=start_char),
@@ -19,7 +44,7 @@ def arange(spec: str) -> Range:
     )
 
 
-@server.feature(COMPLETION)
+@server.feature(TEXT_DOCUMENT_COMPLETION)
 def on_complete(ls: LanguageServer, params: CompletionParams):
 
     line = params.position.line
@@ -42,7 +67,7 @@ def on_complete_resolve(ls: LanguageServer, item: CompletionItem):
     return item
 
 
-@server.feature(DEFINITION)
+@server.feature(TEXT_DOCUMENT_DEFINITION)
 def on_definition(ls: LanguageServer, params: DefinitionParams):
 
     line = params.position.line
@@ -68,7 +93,7 @@ def on_definition(ls: LanguageServer, params: DefinitionParams):
     ]
 
 
-@server.feature(DOCUMENT_LINK)
+@server.feature(TEXT_DOCUMENT_DOCUMENT_LINK)
 def on_document_link(ls: LanguageServer, params: DocumentLinkParams):
 
     doc = params.text_document.uri
@@ -83,7 +108,7 @@ def on_document_link(ls: LanguageServer, params: DocumentLinkParams):
         ]
 
 
-@server.feature(DOCUMENT_SYMBOL)
+@server.feature(TEXT_DOCUMENT_DOCUMENT_SYMBOL)
 def on_document_symbol(ls: LanguageServer, params: DocumentSymbolParams):
 
     doc = params.text_document.uri
@@ -119,7 +144,7 @@ def on_document_symbol(ls: LanguageServer, params: DocumentSymbolParams):
     ]
 
 
-@server.feature(HOVER)
+@server.feature(TEXT_DOCUMENT_HOVER)
 def on_hover(ls: LanguageServer, params: HoverParams):
 
     line = params.position.line
@@ -132,7 +157,7 @@ def on_hover(ls: LanguageServer, params: HoverParams):
     )
 
 
-@server.feature(IMPLEMENTATION)
+@server.feature(TEXT_DOCUMENT_IMPLEMENTATION)
 def on_implementation(ls: LanguageServer, params: ImplementationParams):
 
     line = params.position.line

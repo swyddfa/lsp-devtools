@@ -7,6 +7,7 @@ import subprocess
 import sys
 import textwrap
 import threading
+import time
 from typing import Any
 from typing import Callable
 from typing import Iterable
@@ -16,14 +17,15 @@ from typing import Union
 
 import pytest
 import pytest_asyncio
-from pygls.lsp.methods import EXIT
-from pygls.lsp.methods import INITIALIZE
-from pygls.lsp.methods import INITIALIZED
-from pygls.lsp.methods import SHUTDOWN
-from pygls.lsp.types import ClientCapabilities
-from pygls.lsp.types import InitializeParams
+from lsprotocol.converters import get_converter
+from lsprotocol.types import ClientCapabilities
+from lsprotocol.types import LSPAny
+from lsprotocol.types import InitializeParams
+from lsprotocol.types import InitializedParams
+from pygls.exceptions import JsonRpcInternalError
 
-from pytest_lsp.client import Client
+from pytest_lsp.client import LanguageClient
+from pytest_lsp.client import cancel_all_tasks
 from pytest_lsp.client import make_test_client
 
 if sys.version_info.minor < 9:
@@ -35,10 +37,27 @@ else:
 logger = logging.getLogger("client")
 
 
-if hasattr(pytest_asyncio, "fixture"):
-    make_fixture = pytest_asyncio.fixture
-else:
-    make_fixture = pytest.fixture
+def watch_server_process(
+    server: subprocess.Popen, stop: threading.Event, client: LanguageClient
+):
+    """Continously poll server process to see if it is still running."""
+    while True:
+        retcode = server.poll()
+
+        if stop.is_set():
+            break
+
+        if retcode is not None:
+
+            stderr = ""
+            if server.stderr is not None:
+                stderr = server.stderr.read().decode("utf8")
+
+            message = f"Server exited with return code: {retcode}\n{stderr}"
+            client._report_server_error(RuntimeError(message), RuntimeError)
+            break
+
+        time.sleep(0.1)
 
 
 class ClientServer:
@@ -46,17 +65,20 @@ class ClientServer:
 
     def __init__(
         self,
-        client: Client,
+        client: LanguageClient,
         server: subprocess.Popen,
         root_uri: str,
         client_capabilities: ClientCapabilities,
-        initialization_options: Optional[Any],
+        initialization_options: Optional[LSPAny],
     ):
 
         self._server = server
         """The process object running the server."""
 
+        control_loop = asyncio.get_running_loop()
+
         self.client = client
+        self.client._control_loop = control_loop
         """The client used to drive the test."""
 
         self.client_capabilities = client_capabilities
@@ -66,8 +88,17 @@ class ClientServer:
             name="Client Thread",
             target=self.client.start_io,
             args=(self._server.stdout, self._server.stdin),
+            daemon=True,
         )
-        self._client_thread.daemon = True
+
+        # Used to detect if the server crashes.
+        self._watchdog_stop = threading.Event()
+        self._watchdog_thread = threading.Thread(
+            name="Watchdog Thread",
+            target=watch_server_process,
+            args=(self._server, self._watchdog_stop, self.client),
+            daemon=True,
+        )
 
         self.initialization_options = initialization_options
         """The initialization options to pass to the server."""
@@ -76,38 +107,47 @@ class ClientServer:
         """The root uri to point the server at."""
 
     async def start(self):
+        self._watchdog_thread.start()
         self._client_thread.start()
 
         # Give the client some time to initialize
         while self.client.lsp.transport is None:
             await asyncio.sleep(0.1)
 
-        response = await self.client.lsp.send_request_async(
-            INITIALIZE,
+        response = await self.client.initialize_request(
             InitializeParams(
                 process_id=os.getpid(),
                 root_uri=self.root_uri,
                 capabilities=self.client_capabilities,
-                initialization_options=self.initialization_options or {},
+                initialization_options=self.initialization_options,
             ),
         )
 
-        assert "capabilities" in response
-        self.client.lsp.notify(INITIALIZED)
+        assert response.capabilities is not None
+        self.client.notify_initialized(InitializedParams())
 
         return response
 
     async def stop(self):
-        response = await self.client.lsp.send_request_async(SHUTDOWN)
-        assert response is None
 
-        self.client.lsp.notify(EXIT)
+        # Only attempt if there wasn't an error.
+        if self.client.error is None:
+            response = await self.client.shutdown_request(None)
+            assert response is None
+
+            self.client.notify_exit(None)
+        else:
+            self._server.terminate()
 
         self.client._stop_event.set()
+
         try:
             self.client.loop._signal_handlers.clear()
         except AttributeError:
             pass
+
+        self._watchdog_stop.set()
+        self._watchdog_thread.join()
 
         self._client_thread.join()
 
@@ -122,28 +162,40 @@ class ClientServerConfig:
         *,
         client: str = "",
         client_capabilities: Optional[ClientCapabilities] = None,
-        client_factory: Callable = make_test_client,
+        client_factory: Callable[..., LanguageClient] = make_test_client,
         initialization_options: Optional[Any] = None,
     ) -> None:
+        """
+        Parameters
+        ----------
+        server_command
+           The command to use to start the language server.
 
-        self.server_command: List[str] = server_command
-        """The command to use to start the language server."""
+        root_uri
+           The root uri to start the language server in
 
-        self.root_uri: str = root_uri
-        """The root uri to start the language server in"""
+        client
+           The name of the client profile to use
 
-        self.client: str = client
-        """The name of the client profile to use"""
+        client_capabilities
+           Use to use a specific set of client, capabilities.
+           Specifiying this will override ``client``.
 
-        self.client_capabilities: Optional[ClientCapabilities] = client_capabilities
-        """Use to use a specific set of client, capabilities. The setting overrides
-        ``client``."""
+        client_factory
+           Factory function to use when constructing the language client instance.
+           Defaults to :func:`pytest_lsp.make_test_client`
 
-        self.client_factory: Callable = client_factory
-        """The function to use to return a test client instance."""
+        initialization_options
+           The initialization options to pass to the server on start up.
 
+        """
+
+        self.server_command = server_command
+        self.root_uri = root_uri
+        self.client = client
+        self.client_capabilities = client_capabilities
+        self.client_factory = client_factory
         self.initialization_options = initialization_options
-        """The initialization options to pass to the server on start up."""
 
 
 def find_client_capabilities(client: str) -> ClientCapabilities:
@@ -168,28 +220,20 @@ def find_client_capabilities(client: str) -> ClientCapabilities:
     if not filename:
         raise ValueError(f"Unsupported client '{client}'")
 
-    return ClientCapabilities(**json.loads(filename.read_text()))
+    converter = get_converter()
+    capabilities = json.loads(filename.read_text())
+    return converter.structure(capabilities, ClientCapabilities)
 
 
 def make_client_server(config: ClientServerConfig) -> ClientServer:
     """Construct a new ``ClientServer`` instance."""
 
     server = subprocess.Popen(
-        config.server_command, stdin=subprocess.PIPE, stdout=subprocess.PIPE
+        config.server_command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
-
-    try:
-        # Timeout is arbitrary, because we'd also like to know if the server crashes
-        # in the future. But this is useful because if the server is going to crash
-        # it will most likely do it in the first few milliseconds of startup.
-        server.wait(timeout=0.1)
-    except subprocess.TimeoutExpired:
-        pass
-    finally:
-        if server.returncode is not None:
-            raise Exception(
-                f"{config.server_command} exited with exit code {server.returncode}"
-            )
 
     if config.client_capabilities:
         capabilities = config.client_capabilities
@@ -198,8 +242,10 @@ def make_client_server(config: ClientServerConfig) -> ClientServer:
     else:
         capabilities = ClientCapabilities()
 
+    client = config.client_factory(capabilities, config.root_uri)
+
     return ClientServer(
-        client=config.client_factory(capabilities, config.root_uri),
+        client=client,
         server=server,
         client_capabilities=capabilities,
         root_uri=config.root_uri,
@@ -209,10 +255,10 @@ def make_client_server(config: ClientServerConfig) -> ClientServer:
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     """Add any captured log messages to the report."""
-    client: Optional[Client] = None
+    client: Optional[LanguageClient] = None
 
     for arg in item.funcargs.values():
-        if isinstance(arg, Client):
+        if isinstance(arg, LanguageClient):
             client = arg
             break
 
@@ -228,7 +274,8 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
         client._last_log_index = len(client.log_messages)
 
     messages = [
-        f"{textwrap.indent(m.message, levels[m.type - 1])}" for m in captured_messages
+        f"{textwrap.indent(m.message, levels[m.type.value - 1])}"
+        for m in captured_messages
     ]
 
     if len(messages) > 0:
@@ -248,7 +295,7 @@ def fixture(
     ids = [conf.client or f"client{idx}" for idx, conf in enumerate(config)]
 
     def wrapper(fn):
-        @make_fixture(params=config, ids=ids, **kwargs)
+        @pytest_asyncio.fixture(params=config, ids=ids, **kwargs)
         async def the_fixture(request):
 
             lsp = make_client_server(request.param)

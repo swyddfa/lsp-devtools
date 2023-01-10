@@ -20,23 +20,35 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
-dependencies = ["appdirs", "pygls[ws]"]
+dependencies = [
+    "appdirs",
+    "aiosqlite",
+    "importlib-resources; python_version<\"3.9\"",
+    "pygls[ws]",
+    "textual"
+]
 
 [project.urls]
-"Bug Tracker" = "https://github.com/alcarney/lsp-devtools/issues"
-"Documentation" = "https://alcarney.github.io/lsp-devtools/"
-"Source Code" = "https://github.com/alcarney/lsp-devtools"
+"Bug Tracker" = "https://github.com/swyddfa/lsp-devtools/issues"
+"Documentation" = "https://swyddfa.github.io/lsp-devtools/"
+"Source Code" = "https://github.com/swyddfa/lsp-devtools"
 
 [project.optional-dependencies]
 dev = [
     "black",
-    "mypy",
     "flake8",
     "pre-commit",
+    "tox",
+]
+test=[
     "pytest-cov",
     "pytest-timeout",
-    "tox",
+]
+typecheck=[
+    "mypy",
+    "importlib_resources",
     "types-appdirs",
     "types-setuptools",
 ]
@@ -96,7 +108,7 @@ isolated_build = True
 skip_missing_interpreters = true
 
 [testenv:mypy]
-extras= dev
+extras= typecheck
 commands =
-    mypy -p lsp_devtools
+    mypy --check-untyped-defs -p lsp_devtools
 """

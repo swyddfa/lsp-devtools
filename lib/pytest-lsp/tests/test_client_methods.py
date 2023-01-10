@@ -4,20 +4,33 @@ import sys
 
 import pygls.uris as uri
 import pytest
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionList
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import DocumentSymbol
+from lsprotocol.types import Hover
+from lsprotocol.types import Location
+from lsprotocol.types import LocationLink
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import SymbolInformation
+from lsprotocol.types import SymbolKind
+
 import pytest_lsp
-from pygls.lsp.types import *
-from pytest_lsp import Client
+from pytest_lsp import LanguageClient
 from pytest_lsp import ClientServerConfig
 
-ROOT_URI = uri.from_fs_path(str(pathlib.Path(__file__).parent))
+ROOT_URI: str = uri.from_fs_path(str(pathlib.Path(__file__).parent))  # type: ignore
 TEST_URI = f"{ROOT_URI}/text.txt"
 
 
 def arange(spec: str) -> Range:
 
-    start_line, start_char, end_line, end_char = [
+    start_line, start_char, end_line, end_char = (
         int(i) for item in spec.split("-") for i in item.split(":")
-    ]
+    )
 
     return Range(
         start=Position(line=start_line, character=start_char),
@@ -66,19 +79,18 @@ async def client(client_):
         ),
     ],
 )
-async def test_client_completion(client: Client, line: int, expected):
+async def test_client_completion(client: LanguageClient, line: int, expected):
     """Ensure that the client can handle completion responses correctly"""
 
     response = await client.completion_request(TEST_URI, line, 0)
-
     assert response == expected
 
 
-async def test_client_completion_resolve(client: Client):
+async def test_client_completion_resolve(client: LanguageClient):
     """Ensure that the client can handle completion resolve responses correctly"""
 
     item = CompletionItem(label="item-one")
-    response = await client.completion_resolve_request(item)
+    response = await client.completion_item_resolve_request(item)
 
     assert response.documentation == "This is documented"
 
@@ -107,11 +119,11 @@ async def test_client_completion_resolve(client: Client):
         ),
     ],
 )
-async def test_client_definition(client: Client, line: int, expected):
+async def test_client_definition(client: LanguageClient, line: int, expected):
     """Ensure that the client can handle definition responses correctly"""
 
     response = await client.definition_request(
-        TEST_URI, Position(line=line, character=0)
+        TEST_URI, line=line, character=0
     )
 
     assert response == expected
@@ -130,7 +142,7 @@ async def test_client_definition(client: Client, line: int, expected):
         ),
     ],
 )
-async def test_client_document_link(client: Client, uri: str, expected):
+async def test_client_document_link(client: LanguageClient, uri: str, expected):
     """Ensure that the client can handle document link responses correctly"""
 
     response = await client.document_link_request(uri)
@@ -173,7 +185,7 @@ async def test_client_document_link(client: Client, uri: str, expected):
         ),
     ],
 )
-async def test_client_document_symbol(client: Client, uri: str, expected):
+async def test_client_document_symbol(client: LanguageClient, uri: str, expected):
     """Ensure that the client can handle document symbol responses correctly"""
 
     response = await client.document_symbols_request(uri)
@@ -192,10 +204,10 @@ async def test_client_document_symbol(client: Client, uri: str, expected):
         ),
     ],
 )
-async def test_client_hover(client: Client, line: int, expected):
+async def test_client_hover(client: LanguageClient, line: int, expected):
     """Ensure that the client can handle hover responses correctly"""
 
-    response = await client.hover_request(TEST_URI, Position(line=line, character=0))
+    response = await client.hover_request(TEST_URI, line=line, character=0)
     assert response == expected
 
 
@@ -223,11 +235,11 @@ async def test_client_hover(client: Client, line: int, expected):
         ),
     ],
 )
-async def test_client_implementation(client: Client, line: int, expected):
+async def test_client_implementation(client: LanguageClient, line: int, expected):
     """Ensure that the client can handle implementation responses correctly"""
 
     response = await client.implementation_request(
-        TEST_URI, Position(line=line, character=0)
+        TEST_URI, line=line, character=0
     )
 
     assert response == expected

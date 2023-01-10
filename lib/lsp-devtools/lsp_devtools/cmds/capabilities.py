@@ -1,17 +1,17 @@
 import argparse
 import json
 
-from pygls.lsp.methods import INITIALIZE
-from pygls.lsp.types import InitializeParams
+from lsprotocol.types import INITIALIZE
+from lsprotocol.types import InitializeParams
 from pygls.server import LanguageServer
 
 
 def capabilities(args, extra):
 
-    server = LanguageServer()
+    server = LanguageServer(name="capabilities-dumper", version="v1.0")
 
     @server.feature(INITIALIZE)
-    def on_initialize(ls, params: InitializeParams):
+    def on_initialize(ls: LanguageServer, params: InitializeParams):
         client_info = params.client_info
         if client_info:
             client_name = client_info.name.lower().replace(" ", "_")
@@ -22,7 +22,8 @@ def capabilities(args, extra):
 
         filename = f"{client_name}_v{client_version}.json"
         with open(filename, "w") as f:
-            json.dump(params.capabilities.dict(), f, indent=2)
+            obj = params.capabilities
+            json.dump(ls.lsp._converter, f, indent=2)
 
     server.start_io()
 
