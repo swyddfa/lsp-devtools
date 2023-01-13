@@ -19,13 +19,11 @@ import pytest
 import pytest_asyncio
 from lsprotocol.converters import get_converter
 from lsprotocol.types import ClientCapabilities
-from lsprotocol.types import LSPAny
-from lsprotocol.types import InitializeParams
 from lsprotocol.types import InitializedParams
-from pygls.exceptions import JsonRpcInternalError
+from lsprotocol.types import InitializeParams
+from lsprotocol.types import LSPAny
 
 from pytest_lsp.client import LanguageClient
-from pytest_lsp.client import cancel_all_tasks
 from pytest_lsp.client import make_test_client
 
 if sys.version_info.minor < 9:

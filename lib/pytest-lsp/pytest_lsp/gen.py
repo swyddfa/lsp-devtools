@@ -1,5 +1,6 @@
 # GENERATED FROM scripts/gen-client.py -- DO NOT EDIT
-# Last Modified: 2022-12-16 22:34:06.577067
+# Last Modified: 2023-01-13 19:50:12.916971
+# flake8: noqa
 import lsprotocol.types
 from lsprotocol.types import CallHierarchyIncomingCallsParams
 from lsprotocol.types import CallHierarchyOutgoingCallsParams

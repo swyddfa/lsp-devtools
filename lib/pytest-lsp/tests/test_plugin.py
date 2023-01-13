@@ -1,11 +1,8 @@
-import itertools
-import json
 import pathlib
 import sys
 
-import pytest
-import pytest_lsp
 import pygls.uris as uri
+import pytest
 
 
 def setup_test(pytester: pytest.Pytester, server_name: str, test_code: str):
@@ -56,14 +53,14 @@ async def test_capabilities(client):
 """
 
     setup_test(pytester, "hello.py", test_code)
-    results = pytester.runpytest('-vv')
+    results = pytester.runpytest("-vv")
 
     results.assert_outcomes(errors=1)
 
     if sys.version_info.minor < 9:
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"
+        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"  # noqa: E501
 
     results.stdout.fnmatch_lines(message)
 
@@ -87,19 +84,19 @@ async def test_capabilities(client):
             text_document=TextDocumentIdentifier(uri="file:///test.txt"),
             position=Position(line=0, character=0)
         )
-        items = await client.text_document_completion_request()
+        items = await client.text_document_completion_request(params)
         assert len({i.label for i in items} & expected) == len(items)
 """
 
     setup_test(pytester, "completion_exit.py", test_code)
-    results = pytester.runpytest('-vv')
+    results = pytester.runpytest("-vv")
 
-    results.assert_outcomes(errors=1)
+    results.assert_outcomes(failed=1)
 
     if sys.version_info.minor < 9:
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"
+        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"  # noqa: E501
 
     results.stdout.fnmatch_lines(message)
 
@@ -124,8 +121,8 @@ async def test_capabilities(client):
         message = "E*CancelledError"
     else:
         message = [
-            "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 1",
-            "E*ZeroDivisionError: division by zero"
+            "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 1",  # noqa: E501
+            "E*ZeroDivisionError: division by zero",
         ]
 
     results.stdout.fnmatch_lines(message)
@@ -156,7 +153,7 @@ async def test_capabilities(client):
 """
 
     setup_test(pytester, "invalid_json.py", test_code)
-    results = pytester.runpytest('-vv')
+    results = pytester.runpytest("-vv")
 
     results.assert_outcomes(failed=1)
 
