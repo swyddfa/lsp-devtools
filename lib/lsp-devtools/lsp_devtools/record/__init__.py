@@ -1,8 +1,6 @@
 import argparse
-import json
 import logging
 import pathlib
-import re
 from typing import List
 from typing import Optional
 
@@ -48,7 +46,8 @@ class RichLSPHandler(RichHandler):
         # Abuse the log level column to display the source of the message,
         source = record.__dict__["source"]
         color = "red" if source == "client" else "blue"
-        res.columns[1]._cells[0] = f"[bold][{color}]{source.upper()}[/{color}][/bold]"  # type: ignore
+        message_source = f"[bold][{color}]{source.upper()}[/{color}][/bold]"
+        res.columns[1]._cells[0] = message_source  # type: ignore
 
         return res
 
