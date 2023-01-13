@@ -10,7 +10,7 @@ from typing import Optional
 from typing import Type
 from typing import Union
 
-from lsprotocol.types import CANCEL_REQUEST, ExecuteCommandParams, LSPAny, ProgressToken, VersionedTextDocumentIdentifier
+from lsprotocol.types import CANCEL_REQUEST
 from lsprotocol.types import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
 from lsprotocol.types import WINDOW_LOG_MESSAGE
 from lsprotocol.types import WINDOW_SHOW_DOCUMENT
@@ -21,15 +21,16 @@ from lsprotocol.types import CompletionList
 from lsprotocol.types import CompletionParams
 from lsprotocol.types import DefinitionParams
 from lsprotocol.types import DeleteFilesParams
-from lsprotocol.types import DidCloseTextDocumentParams
+from lsprotocol.types import Diagnostic
 from lsprotocol.types import DidChangeTextDocumentParams
+from lsprotocol.types import DidCloseTextDocumentParams
 from lsprotocol.types import DidOpenTextDocumentParams
 from lsprotocol.types import DidSaveTextDocumentParams
 from lsprotocol.types import DocumentLink
 from lsprotocol.types import DocumentLinkParams
 from lsprotocol.types import DocumentSymbol
 from lsprotocol.types import DocumentSymbolParams
-from lsprotocol.types import Diagnostic
+from lsprotocol.types import ExecuteCommandParams
 from lsprotocol.types import FileDelete
 from lsprotocol.types import Hover
 from lsprotocol.types import HoverParams
@@ -37,22 +38,25 @@ from lsprotocol.types import ImplementationParams
 from lsprotocol.types import Location
 from lsprotocol.types import LocationLink
 from lsprotocol.types import LogMessageParams
+from lsprotocol.types import LSPAny
 from lsprotocol.types import Position
+from lsprotocol.types import ProgressToken
 from lsprotocol.types import PublishDiagnosticsParams
 from lsprotocol.types import Range
 from lsprotocol.types import ShowDocumentParams
+from lsprotocol.types import ShowDocumentResult
 from lsprotocol.types import ShowMessageParams
 from lsprotocol.types import SymbolInformation
 from lsprotocol.types import TextDocumentContentChangeEvent_Type1
 from lsprotocol.types import TextDocumentContentChangeEvent_Type2
-from lsprotocol.types import TextDocumentItem
 from lsprotocol.types import TextDocumentIdentifier
+from lsprotocol.types import TextDocumentItem
+from lsprotocol.types import VersionedTextDocumentIdentifier
 from pygls.exceptions import JsonRpcMethodNotFound
-from pygls.protocol import default_converter
 from pygls.protocol import LanguageServerProtocol
+from pygls.protocol import default_converter
 
 from .gen import Client
-
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +164,9 @@ class LanguageClient(Client):
         """Used to keep track of which log messages correspond with which test case."""
 
     def feature(
-        self, feature_name: str, options: Optional[Any] = None,
+        self,
+        feature_name: str,
+        options: Optional[Any] = None,
     ):
         return self.lsp.fm.feature(feature_name, options)
 
@@ -269,7 +275,7 @@ class LanguageClient(Client):
         self,
         command: str,
         *args: LSPAny,
-        work_done_token: Optional[ProgressToken] = None
+        work_done_token: Optional[ProgressToken] = None,
     ):
         """Make a ``workspace/executeCommand`` request.
 
@@ -409,11 +415,8 @@ class LanguageClient(Client):
             change_event = TextDocumentContentChangeEvent_Type2(text=text)
 
         params = DidChangeTextDocumentParams(
-            text_document=VersionedTextDocumentIdentifier(
-                uri=uri,
-                version=version
-            ),
-            content_changes=[change_event]
+            text_document=VersionedTextDocumentIdentifier(uri=uri, version=version),
+            content_changes=[change_event],
         )
         self.notify_text_document_did_change(params)
 
@@ -556,8 +559,10 @@ def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> Languag
         client.messages.append(params)
 
     @client.feature(WINDOW_SHOW_DOCUMENT)
-    def show_document(client: LanguageClient, params: ShowDocumentParams):
+    def show_document(
+        client: LanguageClient, params: ShowDocumentParams
+    ) -> ShowDocumentResult:
         client.shown_documents.append(params)
+        return ShowDocumentResult(success=True)
 
     return client
-
