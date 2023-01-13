@@ -8,7 +8,6 @@ from typing import BinaryIO
 
 from pygls.server import aio_readline
 
-
 logger = logging.getLogger("lsp_devtools.agent")
 
 
@@ -32,7 +31,7 @@ async def check_server_process(
 
     while not stop_event.is_set():
         retcode = server_process.poll()
-        print('.')
+        print(".")
         if retcode is not None:
 
             # Cancel any pending tasks.
@@ -68,9 +67,7 @@ class Agent:
             executor=self.thread_pool_executor,
             stop_event=self.stop_event,
             rfile=self.stdin,
-            proxy=partial(
-                forward_message, "client", self.server_process.stdin
-            ),
+            proxy=partial(forward_message, "client", self.server_process.stdin),
         )
 
         # Connect the subprocess' stdout to stdout
@@ -79,9 +76,7 @@ class Agent:
             executor=self.thread_pool_executor,
             stop_event=self.stop_event,
             rfile=self.server_process.stdout,
-            proxy=partial(
-                forward_message, "server", self.stdout
-            ),
+            proxy=partial(forward_message, "server", self.stdout),
         )
 
         # Run both connections concurrently.

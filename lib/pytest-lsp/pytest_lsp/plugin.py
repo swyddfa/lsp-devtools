@@ -22,7 +22,6 @@ from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import InitializedParams
 from lsprotocol.types import InitializeParams
 from lsprotocol.types import LSPAny
-
 from pytest_lsp.client import LanguageClient
 from pytest_lsp.client import make_test_client
 

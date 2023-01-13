@@ -14,4 +14,3 @@ The simplest way to generate the required JSON file is to use the `lsp-devtools 
 1. A file called `<client_name>_v<client_version>.json` should appear in you working directory, copy-paste it into this folder.
 
 New versions of a client should only be added if there is a noticable difference in the `ClientCapabilities` response when compared to previous versions..
-
