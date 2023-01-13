@@ -3,9 +3,9 @@ import json
 import pathlib
 import sys
 
+import pygls.uris as uri
 import pytest
 import pytest_lsp
-import pygls.uris as uri
 
 
 @pytest.mark.parametrize(
@@ -72,5 +72,5 @@ async def test_capabilities(client):
     """
     )
 
-    results = pytester.runpytest('-vv')
+    results = pytester.runpytest("-vv")
     results.assert_outcomes(passed=1)

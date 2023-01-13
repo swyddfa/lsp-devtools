@@ -18,4 +18,3 @@ API Reference
 
 .. autoclass:: ClientServer
    :members:
-

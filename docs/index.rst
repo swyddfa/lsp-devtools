@@ -56,5 +56,3 @@ This also means ``pytest-lsp`` can be used to test language servers written in a
        result = await client.completion_request(test_uri, line=5, character=23)
 
        assert len(result.items) > 0
-
-

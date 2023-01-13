@@ -7,7 +7,6 @@ from lsprotocol.types import DocumentLink
 from lsprotocol.types import InsertTextFormat
 from lsprotocol.types import MarkupContent
 from pygls.capabilities import get_capability
-
 from pytest_lsp.client import LanguageClient
 
 logger = logging.getLogger(__name__)
@@ -20,18 +19,19 @@ def completion_items(client: LanguageClient, items: List[CompletionItem]):
     commit_characters_support = get_capability(
         client.capabilities,
         "text_document.completion.completion_item.commit_characters_support",
-        False
+        False,
     )
     documentation_formats = set(
         get_capability(
             client.capabilities,
-            "text_document.completion.completion_item.documentation_format", []
+            "text_document.completion.completion_item.documentation_format",
+            [],
         )
     )
     snippet_support = get_capability(
         client.capabilities,
         "text_document.completion.completion_item.snippet_support",
-        False
+        False,
     )
 
     for item in items:
@@ -56,9 +56,7 @@ def document_links(client: LanguageClient, items: List[DocumentLink]):
     spec and the client's declared capabilities."""
 
     tooltip_support = get_capability(
-        client.capabilities,
-        "text_document.document_link.tooltip_support",
-        False
+        client.capabilities, "text_document.document_link.tooltip_support", False
     )
 
     for item in items:
