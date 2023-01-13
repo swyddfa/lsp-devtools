@@ -1,0 +1,55 @@
+exclude: '.bumpversion.cfg$'
+repos:
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+
+- repo: https://github.com/psf/black
+  rev: 22.12.0
+  hooks:
+  - id: black
+    exclude: 'lib/pytest-lsp/pytest_lsp/gen.py'
+
+- repo: https://github.com/PyCQA/flake8
+  rev: 6.0.0
+  hooks:
+  - id: flake8
+    args: [--config=lib/lsp-devtools/setup.cfg]
+
+- repo: https://github.com/pycqa/isort
+  rev: 5.11.4
+  hooks:
+  - id: isort
+    name: isort (python)
+    args: [--profile,black,--force-single-line]
+    exclude: 'lib/pytest-lsp/pytest_lsp/gen.py'
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: 'v0.991'
+  hooks:
+  - id: mypy
+    name: mypy (pytest-lsp)
+    args: [--explicit-package-bases,--check-untyped-defs]
+    additional_dependencies:
+    - importlib-resources
+    - pygls
+    - pytest
+    - pytest-asyncio
+    - types-appdirs
+    files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
+
+  - id: mypy
+    name: mypy (lsp-devtools)
+    args: [--explicit-package-bases,--check-untyped-defs]
+    additional_dependencies:
+    - aiosqlite
+    - attrs
+    - importlib-resources
+    - pygls
+    - textual
+    - types-appdirs
+    - websockets
+    files: 'lib/lsp-devtools/lsp_devtools/.*\.py'
