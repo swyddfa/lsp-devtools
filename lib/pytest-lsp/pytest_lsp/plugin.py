@@ -29,7 +29,7 @@ from pytest_lsp.client import make_test_client
 if sys.version_info.minor < 9:
     import importlib_resources as resources
 else:
-    import importlib.resources as resources
+    import importlib.resources as resources  # type: ignore[no-redef]
 
 
 logger = logging.getLogger("client")
@@ -130,17 +130,18 @@ class ClientServer:
 
         # Only attempt if there wasn't an error.
         if self.client.error is None:
-            response = await self.client.shutdown_request(None)
+            response = await self.client.shutdown_request(None)  # type: ignore
             assert response is None
 
             self.client.notify_exit(None)
         else:
             self._server.terminate()
 
-        self.client._stop_event.set()
+        if self.client._stop_event:
+            self.client._stop_event.set()
 
         try:
-            self.client.loop._signal_handlers.clear()
+            self.client.loop._signal_handlers.clear()  # type: ignore
         except AttributeError:
             pass
 
@@ -255,6 +256,9 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     """Add any captured log messages to the report."""
     client: Optional[LanguageClient] = None
 
+    if not hasattr(item, "funcargs"):
+        return
+
     for arg in item.funcargs.values():
         if isinstance(arg, LanguageClient):
             client = arg
@@ -288,12 +292,14 @@ def fixture(
 ):
 
     if isinstance(config, ClientServerConfig):
-        config = [config]
+        params = [config]
+    else:
+        params = list(config)
 
-    ids = [conf.client or f"client{idx}" for idx, conf in enumerate(config)]
+    ids = [conf.client or f"client{idx}" for idx, conf in enumerate(params)]
 
     def wrapper(fn):
-        @pytest_asyncio.fixture(params=config, ids=ids, **kwargs)
+        @pytest_asyncio.fixture(params=params, ids=ids, **kwargs)
         async def the_fixture(request):
 
             lsp = make_client_server(request.param)

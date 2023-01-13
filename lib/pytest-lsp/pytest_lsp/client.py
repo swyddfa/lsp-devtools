@@ -47,6 +47,7 @@ from lsprotocol.types import ShowDocumentParams
 from lsprotocol.types import ShowDocumentResult
 from lsprotocol.types import ShowMessageParams
 from lsprotocol.types import SymbolInformation
+from lsprotocol.types import TextDocumentContentChangeEvent
 from lsprotocol.types import TextDocumentContentChangeEvent_Type1
 from lsprotocol.types import TextDocumentContentChangeEvent_Type2
 from lsprotocol.types import TextDocumentIdentifier
@@ -98,7 +99,7 @@ class ClientProtocol(LanguageServerProtocol):
 
     def wait_for_notification(self, method, callback=None):
 
-        future = Future()
+        future: Future = Future()
         if callback:
 
             def wrapper(future: Future):
@@ -157,6 +158,9 @@ class LanguageClient(Client):
         self.error: Optional[Exception] = None
         """Indicates if the client encountered an error."""
 
+        self._control_loop: Optional[asyncio.AbstractEventLoop] = None
+        """Reference to the event loop running the tests."""
+
         self._setup_log_index = 0
         """Used to keep track of which log messages occurred during startup."""
 
@@ -182,7 +186,8 @@ class LanguageClient(Client):
         tb = "".join(traceback.format_exc())
 
         message = f"{source.__name__}: {error}\n{tb}"
-        self._control_loop.call_soon_threadsafe(cancel_all_tasks, message)
+        if self._control_loop:
+            self._control_loop.call_soon_threadsafe(cancel_all_tasks, message)
 
     async def completion_request(
         self, uri: str, line: int, character: int
@@ -387,6 +392,7 @@ class LanguageClient(Client):
            The text that is being inserted into the document.
         """
 
+        change_event: TextDocumentContentChangeEvent
         version = self.open_documents.get(uri, None)
         if not version:
             raise RuntimeError(f"The document {uri} is not open")
