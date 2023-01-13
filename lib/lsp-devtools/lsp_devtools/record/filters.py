@@ -33,7 +33,10 @@ class LSPFilter(logging.Filter):
     exclude_methods: Set[str] = attrs.field(factory=set, converter=set)
     """Exclude messages associated with the given method."""
 
-    formatter: FormatString = attrs.field(default="", converter=FormatString) # type: ignore
+    formatter: FormatString = attrs.field(
+        default="",
+        converter=FormatString,
+    )  # type: ignore
     """Format messages according to the given string"""
 
     _response_method_map: Dict[Union[int, str], str] = attrs.field(factory=dict)

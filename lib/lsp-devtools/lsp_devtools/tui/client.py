@@ -3,7 +3,6 @@ import logging
 import typing
 from functools import partial
 
-from textual.app import App
 from textual.message import Message
 
 from lsp_devtools.agent import MESSAGE_TEXT_NOTIFICATION

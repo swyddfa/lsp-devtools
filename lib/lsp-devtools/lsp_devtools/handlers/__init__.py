@@ -7,11 +7,13 @@ from uuid import uuid4
 
 import attrs
 
-MessageSource = Literal['client', 'server']
+MessageSource = Literal["client", "server"]
+
 
 @attrs.define
 class LspMessage:
-    """A container that holds a message from the LSP protocol, with some additional metadata."""
+    """A container that holds a message from the LSP protocol, with some additional
+    metadata."""
 
     Source = MessageSource
 
@@ -74,7 +76,7 @@ class LspHandler(logging.Handler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.session_id = ''
+        self.session_id = ""
 
     def handle_message(self, message: LspMessage):
         """Called each time a message is processed."""
@@ -93,6 +95,9 @@ class LspHandler(logging.Handler):
 
         self.handle_message(
             LspMessage.from_rpc(
-                session=self.session_id, timestamp=timestamp, source=source, message=message
+                session=self.session_id,
+                timestamp=timestamp,
+                source=source,
+                message=message,
             )
         )

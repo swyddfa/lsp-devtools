@@ -40,6 +40,7 @@ def main():
     cli = argparse.ArgumentParser(
         prog="lsp-devtools", description="Development tooling for language servers"
     )
+    cli.add_argument("--version", action="version", version=f"%(prog)s v{__version__}")
     commands = cli.add_subparsers(title="commands")
 
     for mod in BUILTIN_COMMANDS:
