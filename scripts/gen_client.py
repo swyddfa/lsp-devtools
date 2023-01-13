@@ -130,6 +130,7 @@ def generate_client() -> str:
     code = [
         "# GENERATED FROM scripts/gen-client.py -- DO NOT EDIT",
         f"# Last Modified: {datetime.now()}",
+        "# flake8: noqa",
         write_imports(imports),
         "",
         "",
