@@ -1,1 +1,0 @@
-Ensure that the test client returns a ``ShowDocumentResult`` for ``window/showDocument`` requests.

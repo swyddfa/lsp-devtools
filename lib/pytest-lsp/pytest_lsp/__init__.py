@@ -6,7 +6,7 @@ from .plugin import fixture
 from .plugin import make_client_server
 from .plugin import pytest_runtest_makereport
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 __all__ = [
     "ClientServer",

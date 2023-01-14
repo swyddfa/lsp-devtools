@@ -1,3 +1,12 @@
+v0.2.1 - 2023-01-14
+-------------------
+
+Fixes
+^^^^^
+
+- Ensure that the test client returns a ``ShowDocumentResult`` for ``window/showDocument`` requests. (`#34 <https://github.com/alcarney/lsp-devtools/issues/34>`_)
+
+
 v0.2.0 - 2023-01-10
 -------------------
 
