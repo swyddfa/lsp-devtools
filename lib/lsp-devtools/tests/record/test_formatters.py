@@ -27,7 +27,7 @@ from lsp_devtools.record.formatters import FormatString
                     "textDocument": {"uri": "file:///path/to/file.txt"},
                 },
             },
-            "textDocument/completion file:///path/to/file.txt:{'line': 1, 'character': 2}",
+            "textDocument/completion file:///path/to/file.txt:{'line': 1, 'character': 2}",  # noqa: E501
         ),
         (
             "{.method} {.params.textDocument.uri}:{.params.position|Position}",

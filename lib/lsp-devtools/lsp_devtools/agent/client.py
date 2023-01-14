@@ -108,7 +108,9 @@ class AgentClient(Server):
         async def client_connection(host: str, port: int):
             """Create and run a client connection."""
 
-            self._client = await websockets.connect(f"ws://{host}:{port}")  # type: ignore
+            self._client = await websockets.connect(  # type: ignore
+                f"ws://{host}:{port}"
+            )
             self.lsp.transport = WebSocketClientTransportAdapter(
                 self._client, self.loop
             )

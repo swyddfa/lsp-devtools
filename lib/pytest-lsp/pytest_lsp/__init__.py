@@ -1,11 +1,10 @@
 from .client import LanguageClient
 from .client import make_test_client
+from .plugin import ClientServer
+from .plugin import ClientServerConfig
 from .plugin import fixture
 from .plugin import make_client_server
 from .plugin import pytest_runtest_makereport
-
-from .plugin import ClientServer
-from .plugin import ClientServerConfig
 
 __version__ = "0.2.0"
 

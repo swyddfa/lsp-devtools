@@ -1,7 +1,6 @@
 import itertools
 import logging
 from typing import List
-from typing import Optional
 from typing import Tuple
 
 import pytest

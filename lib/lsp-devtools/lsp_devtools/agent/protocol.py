@@ -4,7 +4,6 @@ from typing import Type
 import attrs
 from pygls.protocol import JsonRPCProtocol
 
-
 MESSAGE_TEXT_NOTIFICATION = "message/text"
 
 

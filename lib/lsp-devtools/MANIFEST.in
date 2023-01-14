@@ -1,2 +1,3 @@
 include lsp_devtools/handlers/dbinit.sql
 include lsp_devtools/py.typed
+include lsp_devtools/tui/app.css

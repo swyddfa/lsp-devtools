@@ -58,7 +58,7 @@ prometheus = ["prometheus_client"]
 lsp-devtools = "lsp_devtools.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["lsp_devtools"]
+include = ["lsp_devtools*"]
 
 [tool.isort]
 force_single_line = true

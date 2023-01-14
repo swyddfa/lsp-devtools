@@ -23,7 +23,7 @@ def capabilities(args, extra):
         filename = f"{client_name}_v{client_version}.json"
         with open(filename, "w") as f:
             obj = params.capabilities
-            json.dump(ls.lsp._converter, f, indent=2)
+            json.dump(ls.lsp._converter.unstructure(obj), f, indent=2)
 
     server.start_io()
 

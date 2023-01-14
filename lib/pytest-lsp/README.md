@@ -4,7 +4,7 @@
 
 `pytest-lsp` is a pytest plugin for writing end-to-end tests for language servers.
 
-It works by running the language server in a subprocess and communicating with it over stdio, just like a real language client. 
+It works by running the language server in a subprocess and communicating with it over stdio, just like a real language client.
 This also means `pytest-lsp` can be used to test language servers written in any language - not just Python.
 
 `pytest-lsp` relies on the [`pygls`](https://github.com/openlawlibrary/pygls) library for its language server protocol implementation.
@@ -17,14 +17,14 @@ from pytest_lsp import ClientServerConfig
 
 
 @pytest_lsp.fixture(
-    scope='session', 
+    scope='session',
     config=ClientServerConfig(
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri="file:///path/to/test/project/root/"
     ),
 )
 async def client():
-    pass  
+    pass
 
 
 @pytest.mark.asyncio

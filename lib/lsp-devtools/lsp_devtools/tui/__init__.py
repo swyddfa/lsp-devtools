@@ -154,7 +154,8 @@ class LSPInspector(App):
         """Where the data for the app is being held"""
 
         self.client: Optional[TUIAgentClient] = None
-        """Client used to interact with the LSPAgent hosting the server we're inspecting"""
+        """Client used to interact with the LSPAgent hosting the server we're
+        inspecting."""
 
         self.loop: Optional[asyncio.AbstractEventLoop] = None
         """Accessed by the AgentClient to push messages into the UI"""

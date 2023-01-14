@@ -4,6 +4,7 @@ import sys
 
 import pygls.uris as uri
 import pytest
+import pytest_lsp
 from lsprotocol.types import CompletionItem
 from lsprotocol.types import CompletionList
 from lsprotocol.types import DocumentLink
@@ -17,10 +18,8 @@ from lsprotocol.types import Position
 from lsprotocol.types import Range
 from lsprotocol.types import SymbolInformation
 from lsprotocol.types import SymbolKind
-
-import pytest_lsp
-from pytest_lsp import LanguageClient
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
 
 ROOT_URI: str = uri.from_fs_path(str(pathlib.Path(__file__).parent))  # type: ignore
 TEST_URI = f"{ROOT_URI}/text.txt"
@@ -122,9 +121,7 @@ async def test_client_completion_resolve(client: LanguageClient):
 async def test_client_definition(client: LanguageClient, line: int, expected):
     """Ensure that the client can handle definition responses correctly"""
 
-    response = await client.definition_request(
-        TEST_URI, line=line, character=0
-    )
+    response = await client.definition_request(TEST_URI, line=line, character=0)
 
     assert response == expected
 
@@ -238,8 +235,6 @@ async def test_client_hover(client: LanguageClient, line: int, expected):
 async def test_client_implementation(client: LanguageClient, line: int, expected):
     """Ensure that the client can handle implementation responses correctly"""
 
-    response = await client.implementation_request(
-        TEST_URI, line=line, character=0
-    )
+    response = await client.implementation_request(TEST_URI, line=line, character=0)
 
     assert response == expected

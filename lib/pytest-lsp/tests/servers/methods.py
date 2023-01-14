@@ -1,6 +1,4 @@
 """Used for testing client's handling of return types."""
-import logging
-
 from lsprotocol.types import COMPLETION_ITEM_RESOLVE
 from lsprotocol.types import TEXT_DOCUMENT_COMPLETION
 from lsprotocol.types import TEXT_DOCUMENT_DEFINITION
