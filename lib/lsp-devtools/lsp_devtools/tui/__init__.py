@@ -195,6 +195,15 @@ class LSPInspector(App):
         await super().action_quit()
 
 
+def start_client(client, host, port):
+
+    try:
+        client.start_ws_client(host, port)
+    except Exception:
+        # TODO: Surface the error somehow
+        pass
+
+
 def tui(args, extra: List[str]):
     dbpath = args.to_sqlite
     if not dbpath.parent.exists():
@@ -205,7 +214,7 @@ def tui(args, extra: List[str]):
     app.client = client
 
     agent_thread = threading.Thread(
-        name="AgentClient", target=client.start_ws_client, args=(args.host, args.port)
+        name="AgentClient", target=start_client, args=(client, args.host, args.port)
     )
     agent_thread.start()
 
