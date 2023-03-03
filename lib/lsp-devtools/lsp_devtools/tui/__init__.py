@@ -23,7 +23,7 @@ from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Tree
-from textual.widgets import TreeNode
+from textual.widgets.tree import TreeNode
 
 from lsp_devtools.record import setup_filter_args
 
@@ -79,6 +79,8 @@ class MessagesTable(DataTable):
 
         self.viewer = viewer
 
+        self.cursor_type = "row"
+
         self.add_column("")
         self.add_column("Time")
         self.add_column("Source")
@@ -89,7 +91,7 @@ class MessagesTable(DataTable):
         if event.key != "enter":
             return
 
-        rowid = int(self.data[self.cursor_row][0])
+        rowid = int(self.get_row_at(self.cursor_row)[0])
         params, result, error = self.rpcdata[rowid]
 
         if params:
