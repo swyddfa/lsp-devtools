@@ -23,8 +23,14 @@ repos:
   rev: 5.12.0
   hooks:
   - id: isort
-    name: isort (python)
-    args: [--profile,black,--force-single-line]
+    name: isort (lsp-devtools)
+    args: [--settings-file, lib/lsp-devtools/pyproject.toml]
+    files: 'lib/lsp-devtools/lsp_devtools/.*\.py'
+
+  - id: isort
+    name: isort (pytest-lsp)
+    args: [--settings-file, lib/pytest-lsp/pyproject.toml]
+    files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
     exclude: 'lib/pytest-lsp/pytest_lsp/gen.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
