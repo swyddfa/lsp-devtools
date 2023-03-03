@@ -26,7 +26,6 @@ TEST_URI = f"{ROOT_URI}/text.txt"
 
 
 def arange(spec: str) -> Range:
-
     start_line, start_char, end_line, end_char = (
         int(i) for item in spec.split("-") for i in item.split(":")
     )

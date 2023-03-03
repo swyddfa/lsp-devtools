@@ -30,7 +30,6 @@ class PrometheusHandler(LspHandler):
         self.pending_requests = {}
 
     def handle_message(self, message: LspMessage):
-
         if message.is_request:
             REQUESTS_COUNTER.labels(
                 message.session, message.source, message.method

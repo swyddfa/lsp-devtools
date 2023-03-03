@@ -31,7 +31,6 @@ class AgentProtocol(JsonRPCProtocol):
     """The RPC protocol exposed by the agent."""
 
     def get_message_type(self, method: str) -> Optional[Type]:
-
         if method == MESSAGE_TEXT_NOTIFICATION:
             return MessageTextNotification
 

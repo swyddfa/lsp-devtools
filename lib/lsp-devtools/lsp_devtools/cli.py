@@ -36,7 +36,6 @@ def load_command(commands: argparse._SubParsersAction, name: str):
 
 
 def main():
-
     cli = argparse.ArgumentParser(
         prog="lsp-devtools", description="Development tooling for language servers"
     )

@@ -82,7 +82,6 @@ class LspHandler(logging.Handler):
         """Called each time a message is processed."""
 
     def emit(self, record: logging.LogRecord):
-
         if not isinstance(record.args, dict):
             return
 

@@ -31,7 +31,6 @@ server = LanguageServer(name="methods-server", version="v1.0")
 
 
 def arange(spec: str) -> Range:
-
     start_line, start_char, end_line, end_char = (
         int(i) for item in spec.split("-") for i in item.split(":")
     )
@@ -44,7 +43,6 @@ def arange(spec: str) -> Range:
 
 @server.feature(TEXT_DOCUMENT_COMPLETION)
 def on_complete(ls: LanguageServer, params: CompletionParams):
-
     line = params.position.line
 
     if line == 0:
@@ -67,7 +65,6 @@ def on_complete_resolve(ls: LanguageServer, item: CompletionItem):
 
 @server.feature(TEXT_DOCUMENT_DEFINITION)
 def on_definition(ls: LanguageServer, params: DefinitionParams):
-
     line = params.position.line
 
     if line == 0:
@@ -93,7 +90,6 @@ def on_definition(ls: LanguageServer, params: DefinitionParams):
 
 @server.feature(TEXT_DOCUMENT_DOCUMENT_LINK)
 def on_document_link(ls: LanguageServer, params: DocumentLinkParams):
-
     doc = params.text_document.uri
 
     if doc.endswith("one.txt"):
@@ -108,7 +104,6 @@ def on_document_link(ls: LanguageServer, params: DocumentLinkParams):
 
 @server.feature(TEXT_DOCUMENT_DOCUMENT_SYMBOL)
 def on_document_symbol(ls: LanguageServer, params: DocumentSymbolParams):
-
     doc = params.text_document.uri
 
     if doc.endswith("one.txt"):
@@ -144,7 +139,6 @@ def on_document_symbol(ls: LanguageServer, params: DocumentSymbolParams):
 
 @server.feature(TEXT_DOCUMENT_HOVER)
 def on_hover(ls: LanguageServer, params: HoverParams):
-
     line = params.position.line
 
     if line == 0:
@@ -157,7 +151,6 @@ def on_hover(ls: LanguageServer, params: HoverParams):
 
 @server.feature(TEXT_DOCUMENT_IMPLEMENTATION)
 def on_implementation(ls: LanguageServer, params: ImplementationParams):
-
     line = params.position.line
 
     if line == 0:
