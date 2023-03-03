@@ -27,7 +27,7 @@ dependencies = [
     "aiosqlite",
     "importlib-resources; python_version<\"3.9\"",
     "pygls[ws]",
-    "textual"
+    "textual>=0.13.0",
 ]
 
 [project.urls]
