@@ -1,5 +1,5 @@
 # GENERATED FROM scripts/gen-client.py -- DO NOT EDIT
-# Last Modified: 2023-01-13 19:50:12.916971
+# Last Modified: 2023-03-03 23:33:51.414822
 # flake8: noqa
 import lsprotocol.types
 from lsprotocol.types import CallHierarchyIncomingCallsParams
@@ -101,8 +101,9 @@ class Client(Server):
         """Make a ``codeAction/resolve`` request.
 
         Request to resolve additional information for a given code action.The
-        request's parameter is of type CodeAction the response is of type
-        CodeAction or a Thenable that resolves to such.
+        request's parameter is of type {@link CodeAction} the response is of type.
+
+        {@link CodeAction} or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("codeAction/resolve", params)
 
@@ -117,8 +118,8 @@ class Client(Server):
         """Make a ``completionItem/resolve`` request.
 
         Request to resolve additional information for a given completion
-        item.The request's parameter is of type CompletionItem the response is of
-        type CompletionItem or a Thenable that resolves to such.
+        item.The request's parameter is of type {@link CompletionItem} the response
+        is of type {@link CompletionItem} or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("completionItem/resolve", params)
 
@@ -127,8 +128,8 @@ class Client(Server):
 
         Request to resolve additional information for a given document link.
 
-        The request's parameter is of type DocumentLink the response is of
-        type DocumentLink or a Thenable that resolves to such.
+        The request's parameter is of type {@link DocumentLink} the response
+        is of type {@link DocumentLink} or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("documentLink/resolve", params)
 
@@ -138,8 +139,9 @@ class Client(Server):
         The initialize request is sent from the client to the server.
 
         It is sent once as the request after starting up the server. The
-        requests parameter is of type InitializeParams the response if of
-        type InitializeResult of a Thenable that resolves to such.
+        requests parameter is of type {@link InitializeParams} the response
+        if of type {@link InitializeResult} of a Thenable that resolves to
+        such.
         """
         return await self.lsp.send_request_async("initialize", params)
 
@@ -147,8 +149,9 @@ class Client(Server):
         """Make a ``inlayHint/resolve`` request.
 
         A request to resolve additional properties for an inlay hint. The
-        request's parameter is of type InlayHint, the response is of type InlayHint
-        or a Thenable that resolves to such.
+        request's parameter is of type {@link InlayHint}, the response is of type.
+
+        {@link InlayHint} or a Thenable that resolves to such.
 
         @since 3.17.0
         """
@@ -184,9 +187,9 @@ class Client(Server):
 
         A request to list all presentation for a color.
 
-        The request's parameter is of type ColorPresentationParams the
-        response is of type ColorInformation[] or a Thenable that resolves
-        to such.
+        The request's parameter is of type {@link ColorPresentationParams}
+        the response is of type {@link ColorInformation ColorInformation[]}
+        or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/colorPresentation", params)
 
@@ -194,12 +197,13 @@ class Client(Server):
         """Make a ``textDocument/completion`` request.
 
         Request to request completion at a given text document position. The
-        request's parameter is of type TextDocumentPosition the response is of type
-        CompletionItem[] or CompletionList or a Thenable that resolves to such.
+        request's parameter is of type {@link TextDocumentPosition} the response is
+        of type {@link CompletionItem CompletionItem[]} or {@link CompletionList}
+        or a Thenable that resolves to such.
 
-        The request can delay the computation of the
-        [`detail`](#CompletionItem.detail) and
-        [`documentation`](#CompletionItem.documentation) properties to the
+        The request can delay the computation of the {@link
+        CompletionItem.detail `detail`} and {@link
+        CompletionItem.documentation `documentation`} properties to the
         `completionItem/resolve` request. However, properties that are
         needed for the initial sorting and filtering, like `sortText`,
         `filterText`, `insertText`, and `textEdit`, must not be changed
@@ -214,9 +218,9 @@ class Client(Server):
         given text document position.
 
         The request's parameter is of type [TextDocumentPositionParams]
-        (#TextDocumentPositionParams) the response is of type Declaration or
-        a typed array of DeclarationLink or a Thenable that resolves to
-        such.
+        (#TextDocumentPositionParams) the response is of type {@link
+        Declaration} or a typed array of {@link DeclarationLink} or a
+        Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/declaration", params)
 
@@ -227,8 +231,9 @@ class Client(Server):
         document position.
 
         The request's parameter is of type [TextDocumentPosition]
-        (#TextDocumentPosition) the response is of either type Definition or
-        a typed array of DefinitionLink or a Thenable that resolves to such.
+        (#TextDocumentPosition) the response is of either type {@link
+        Definition} or a typed array of {@link DefinitionLink} or a Thenable
+        that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/definition", params)
 
@@ -246,15 +251,16 @@ class Client(Server):
 
         A request to list all color symbols found in a given text document.
 
-        The request's parameter is of type DocumentColorParams the response
-        is of type ColorInformation[] or a Thenable that resolves to such.
+        The request's parameter is of type {@link DocumentColorParams} the
+        response is of type {@link ColorInformation ColorInformation[]} or a
+        Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/documentColor", params)
 
     async def text_document_document_highlight_request(self, params: DocumentHighlightParams) -> typing.Optional[typing.List[lsprotocol.types.DocumentHighlight]]:
         """Make a ``textDocument/documentHighlight`` request.
 
-        Request to resolve a DocumentHighlight for a given text document
+        Request to resolve a {@link DocumentHighlight} for a given text document
         position.
 
         The request's parameter is of type [TextDocumentPosition]
@@ -276,9 +282,9 @@ class Client(Server):
 
         A request to list all symbols found in a given text document.
 
-        The request's parameter is of type TextDocumentIdentifier the
-        response is of type SymbolInformation[] or a Thenable that resolves
-        to such.
+        The request's parameter is of type {@link TextDocumentIdentifier}
+        the response is of type {@link SymbolInformation
+        SymbolInformation[]} or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/documentSymbol", params)
 
@@ -287,8 +293,9 @@ class Client(Server):
 
         A request to provide folding ranges in a document.
 
-        The request's parameter is of type FoldingRangeParams, the response
-        is of type FoldingRangeList or a Thenable that resolves to such.
+        The request's parameter is of type {@link FoldingRangeParams}, the
+        response is of type {@link FoldingRangeList} or a Thenable that
+        resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/foldingRange", params)
 
@@ -304,8 +311,9 @@ class Client(Server):
 
         Request to request hover information at a given text document position.
 
-        The request's parameter is of type TextDocumentPosition the response
-        is of type Hover or a Thenable that resolves to such.
+        The request's parameter is of type {@link TextDocumentPosition} the
+        response is of type {@link Hover} or a Thenable that resolves to
+        such.
         """
         return await self.lsp.send_request_async("textDocument/hover", params)
 
@@ -316,8 +324,8 @@ class Client(Server):
         text document position.
 
         The request's parameter is of type [TextDocumentPositionParams]
-        (#TextDocumentPositionParams) the response is of type Definition or
-        a Thenable that resolves to such.
+        (#TextDocumentPositionParams) the response is of type {@link
+        Definition} or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/implementation", params)
 
@@ -325,9 +333,9 @@ class Client(Server):
         """Make a ``textDocument/inlayHint`` request.
 
         A request to provide inlay hints in a document. The request's parameter
-        is of type InlayHintsParams, the response is of type.
+        is of type {@link InlayHintsParams}, the response is of type.
 
-        [InlayHint[]](#InlayHint[]) or a Thenable that resolves to such.
+        {@link InlayHint InlayHint[]} or a Thenable that resolves to such.
 
         @since 3.17.0
         """
@@ -337,9 +345,9 @@ class Client(Server):
         """Make a ``textDocument/inlineValue`` request.
 
         A request to provide inline values in a document. The request's
-        parameter is of type InlineValueParams, the response is of type.
+        parameter is of type {@link InlineValueParams}, the response is of type.
 
-        [InlineValue[]](#InlineValue[]) or a Thenable that resolves to such.
+        {@link InlineValue InlineValue[]} or a Thenable that resolves to such.
 
         @since 3.17.0
         """
@@ -360,8 +368,8 @@ class Client(Server):
         A request to get the moniker of a symbol at a given text document
         position.
 
-        The request parameter is of type TextDocumentPositionParams. The
-        response is of type [Moniker[]](#Moniker[]) or `null`.
+        The request parameter is of type {@link TextDocumentPositionParams}.
+        The response is of type {@link Moniker Moniker[]} or `null`.
         """
         return await self.lsp.send_request_async("textDocument/moniker", params)
 
@@ -414,10 +422,10 @@ class Client(Server):
         """Make a ``textDocument/references`` request.
 
         A request to resolve project-wide references for the symbol denoted by
-        the given text document position.
+        the given text document position. The request's parameter is of type {@link
+        ReferenceParams} the response is of type.
 
-        The request's parameter is of type ReferenceParams the response is
-        of type Location[] or a Thenable that resolves to such.
+        {@link Location Location[]} or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/references", params)
 
@@ -433,8 +441,8 @@ class Client(Server):
 
         A request to provide selection ranges in a document.
 
-        The request's parameter is of type SelectionRangeParams, the
-        response is of type [SelectionRange[]](#SelectionRange[]) or a
+        The request's parameter is of type {@link SelectionRangeParams}, the
+        response is of type {@link SelectionRange SelectionRange[]} or a
         Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/selectionRange", params)
@@ -474,8 +482,8 @@ class Client(Server):
         given text document position.
 
         The request's parameter is of type [TextDocumentPositionParams]
-        (#TextDocumentPositionParams) the response is of type Definition or
-        a Thenable that resolves to such.
+        (#TextDocumentPositionParams) the response is of type {@link
+        Definition} or a Thenable that resolves to such.
         """
         return await self.lsp.send_request_async("textDocument/typeDefinition", params)
 
@@ -520,16 +528,7 @@ class Client(Server):
         """
         return await self.lsp.send_request_async("workspace/diagnostic", params)
 
-    async def workspace_diagnostic_refresh_request(self, params: None) -> None:
-        """Make a ``workspace/diagnostic/refresh`` request.
-
-        The diagnostic refresh request definition.
-
-        @since 3.17.0
-        """
-        return await self.lsp.send_request_async("workspace/diagnostic/refresh", params)
-
-    async def workspace_execute_command_request(self, params: ExecuteCommandParams) -> typing.Union[object, typing.List[typing.Union[object, typing.List[lsprotocol.types.LSPAny], str, int, float, bool, None]], str, int, float, bool, None]:
+    async def workspace_execute_command_request(self, params: ExecuteCommandParams) -> typing.Optional[typing.Any]:
         """Make a ``workspace/executeCommand`` request.
 
         A request send from the client to the server to execute a command.
@@ -539,33 +538,12 @@ class Client(Server):
         """
         return await self.lsp.send_request_async("workspace/executeCommand", params)
 
-    async def workspace_inlay_hint_refresh_request(self, params: None) -> None:
-        """Make a ``workspace/inlayHint/refresh`` request.
-
-        @since 3.17.0
-        """
-        return await self.lsp.send_request_async("workspace/inlayHint/refresh", params)
-
-    async def workspace_inline_value_refresh_request(self, params: None) -> None:
-        """Make a ``workspace/inlineValue/refresh`` request.
-
-        @since 3.17.0
-        """
-        return await self.lsp.send_request_async("workspace/inlineValue/refresh", params)
-
-    async def workspace_semantic_tokens_refresh_request(self, params: None) -> None:
-        """Make a ``workspace/semanticTokens/refresh`` request.
-
-        @since 3.16.0
-        """
-        return await self.lsp.send_request_async("workspace/semanticTokens/refresh", params)
-
     async def workspace_symbol_request(self, params: WorkspaceSymbolParams) -> typing.Union[typing.List[lsprotocol.types.SymbolInformation], typing.List[lsprotocol.types.WorkspaceSymbol], None]:
         """Make a ``workspace/symbol`` request.
 
         A request to list project-wide symbols matching the query string given
-        by the WorkspaceSymbolParams. The response is of type SymbolInformation[]
-        or a Thenable that resolves to such.
+        by the {@link WorkspaceSymbolParams}. The response is of type {@link
+        SymbolInformation SymbolInformation[]} or a Thenable that resolves to such.
 
         @since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients
          need to advertise support for WorkspaceSymbols via the client capability
