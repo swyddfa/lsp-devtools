@@ -198,7 +198,6 @@ class LSPInspector(App):
 
 
 def start_client(client, host, port):
-
     try:
         client.start_ws_client(host, port)
     except Exception:
