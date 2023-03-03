@@ -7,6 +7,7 @@ from lsprotocol.types import DocumentLink
 from lsprotocol.types import InsertTextFormat
 from lsprotocol.types import MarkupContent
 from pygls.capabilities import get_capability
+
 from pytest_lsp.client import LanguageClient
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,6 @@ def completion_items(client: LanguageClient, items: List[CompletionItem]):
     )
 
     for item in items:
-
         if item.commit_characters:
             assert (
                 commit_characters_support

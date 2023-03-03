@@ -22,6 +22,7 @@ from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import InitializedParams
 from lsprotocol.types import InitializeParams
 from lsprotocol.types import LSPAny
+
 from pytest_lsp.client import LanguageClient
 from pytest_lsp.client import make_test_client
 
@@ -45,7 +46,6 @@ def watch_server_process(
             break
 
         if retcode is not None:
-
             stderr = ""
             if server.stderr is not None:
                 stderr = server.stderr.read().decode("utf8")
@@ -68,7 +68,6 @@ class ClientServer:
         client_capabilities: ClientCapabilities,
         initialization_options: Optional[LSPAny],
     ):
-
         self._server = server
         """The process object running the server."""
 
@@ -126,7 +125,6 @@ class ClientServer:
         return response
 
     async def stop(self):
-
         # Only attempt if there wasn't an error.
         if self.client.error is None:
             response = await self.client.shutdown_request(None)  # type: ignore
@@ -206,7 +204,6 @@ def find_client_capabilities(client: str) -> ClientCapabilities:
     # TODO: Implement support for client@latest?
     filename = None
     for resource in resources.files("pytest_lsp.clients").iterdir():
-
         # Skip the README or any other files that we don't care about.
         if not resource.name.endswith(".json"):
             continue
@@ -289,7 +286,6 @@ def fixture(
     config: Union[ClientServerConfig, Iterable[ClientServerConfig]],
     **kwargs,
 ):
-
     if isinstance(config, ClientServerConfig):
         params = [config]
     else:
@@ -300,7 +296,6 @@ def fixture(
     def wrapper(fn):
         @pytest_asyncio.fixture(params=params, ids=ids, **kwargs)
         async def the_fixture(request):
-
             lsp = make_client_server(request.param)
             await lsp.start()
 

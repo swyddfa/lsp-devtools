@@ -45,7 +45,6 @@ class ObjectViewer(Tree):
         self.walk_object(name, self.root, obj)
 
     def walk_object(self, label: str, node: TreeNode, obj: Any):
-
         if isinstance(obj, dict):
             node.expand()
             for field, value in obj.items():
@@ -87,7 +86,6 @@ class MessagesTable(DataTable):
         self.add_column("Method")
 
     def on_key(self, event: events.Key):
-
         if event.key != "enter":
             return
 
@@ -143,7 +141,6 @@ class Sidebar(Container):
 
 
 class LSPInspector(App):
-
     CSS_PATH = pathlib.Path(__file__).parent / "app.css"
     BINDINGS = [("ctrl+b", "toggle_sidebar", "Sidebar"), ("q", "quit", "Quit")]
 
@@ -170,7 +167,6 @@ class LSPInspector(App):
         yield Footer()
 
     def action_toggle_sidebar(self) -> None:
-
         sidebar = self.query_one(Sidebar)
         self.set_focus(None)
 
@@ -200,7 +196,6 @@ class LSPInspector(App):
 
 
 def tui(args, extra: List[str]):
-
     dbpath = args.to_sqlite
     if not dbpath.parent.exists():
         dbpath.parent.mkdir(parents=True)

@@ -28,7 +28,6 @@ class SqlHandler(LspHandler):
             conn.executescript(sql_script)
 
     def handle_message(self, message: LspMessage):
-
         with closing(sqlite3.connect(self.dbpath)) as conn:
             cursor = conn.cursor()
             cursor.execute(

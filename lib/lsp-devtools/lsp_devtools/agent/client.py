@@ -54,7 +54,6 @@ def parse_rpc_message(
     message_buf = ls._client_buf if message.source == "client" else ls._server_buf
 
     while len(data):
-
         # Append the incoming chunk to the message buffer
         message_buf.append(data)
 

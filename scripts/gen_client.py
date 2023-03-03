@@ -47,7 +47,6 @@ def write_notification(
     params: Optional[Type],
     imports: List[Union[str, Tuple[str, str]]],
 ) -> str:
-
     python_name = to_snake_case(method).replace("/", "_").replace("$_", "")
 
     if params is None:
@@ -76,7 +75,6 @@ def write_method(
     response: Type,
     imports: List[Union[str, Tuple[str, str]]],
 ) -> str:
-
     python_name = to_snake_case(method).replace("/", "_").replace("$_", "")
 
     if params is None:
@@ -105,7 +103,6 @@ def write_method(
 
 
 def generate_client() -> str:
-
     methods = []
     imports = [
         "typing",
@@ -114,7 +111,6 @@ def generate_client() -> str:
     ]
 
     for method_name, types in METHOD_TO_TYPES.items():
-
         if message_direction(method_name) == "serverToClient":
             continue
 

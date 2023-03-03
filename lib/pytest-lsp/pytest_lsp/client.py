@@ -71,7 +71,6 @@ class ClientProtocol(LanguageServerProtocol):
         self._notification_futures = {}
 
     def _handle_notification(self, method_name, params):
-
         if method_name == CANCEL_REQUEST:
             self._handle_cancel_notification(params.id)
             return
@@ -98,7 +97,6 @@ class ClientProtocol(LanguageServerProtocol):
         )
 
     def wait_for_notification(self, method, callback=None):
-
         future: Future = Future()
         if callback:
 
@@ -175,7 +173,6 @@ class LanguageClient(Client):
         return self.lsp.fm.feature(feature_name, options)
 
     def _report_server_error(self, error: Exception, source: Type[Exception]):
-
         # This may wind up being a mistake, but let's ignore broken pipe errors...
         # If the server process has exited, the watchdog thread will give us a better
         # error message.

@@ -16,7 +16,6 @@ server = CountingLanguageServer(name="completion-exit-server", version="v1.0")
 
 @server.feature(TEXT_DOCUMENT_COMPLETION)
 def on_complete(server: CountingLanguageServer, params: CompletionParams):
-
     server.count += 1
     if server.count == 5:
         sys.exit(0)

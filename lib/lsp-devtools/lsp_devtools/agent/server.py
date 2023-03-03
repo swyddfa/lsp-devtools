@@ -11,7 +11,6 @@ class AgentServer(Server):
     lsp: AgentProtocol
 
     def __init__(self, *args, **kwargs):
-
         if "protocol_cls" not in kwargs:
             kwargs["protocol_cls"] = AgentProtocol
 

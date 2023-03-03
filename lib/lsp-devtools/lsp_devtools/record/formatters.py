@@ -64,7 +64,6 @@ class Value:
         accessor = self.accessor if accessor is None else accessor
 
         for field in accessor.split("."):
-
             if not field:
                 continue
 
@@ -117,7 +116,6 @@ def get_separator(sep: str) -> str:
 
 
 def get_index(idx: str) -> Union[int, slice, None]:
-
     try:
         return int(idx)
     except ValueError:

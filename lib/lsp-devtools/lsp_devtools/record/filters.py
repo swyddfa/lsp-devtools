@@ -82,7 +82,6 @@ class LSPFilter(logging.Filter):
         return True
 
     def _get_message_method(self, message_type: str, message: dict) -> str:
-
         if message_type == "request":
             method = message["method"]
             self._response_method_map[message["id"]] = method
