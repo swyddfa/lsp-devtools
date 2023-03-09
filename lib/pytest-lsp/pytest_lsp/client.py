@@ -89,13 +89,6 @@ class ClientProtocol(LanguageServerProtocol):
                 "Failed to handle notification '%s': %s", method_name, params
             )
 
-    def user_error_handler(self, exctype, value, tb):
-        breakpoint()
-        self._server._control_loop.call_soon_threadsafe(
-            cancel_all_tasks,
-            f"Error: {value}\n{traceback.format_exception(exctype, value, tb)}",
-        )
-
     def wait_for_notification(self, method, callback=None):
         future: Future = Future()
         if callback:
@@ -156,9 +149,6 @@ class LanguageClient(Client):
         self.error: Optional[Exception] = None
         """Indicates if the client encountered an error."""
 
-        self._control_loop: Optional[asyncio.AbstractEventLoop] = None
-        """Reference to the event loop running the tests."""
-
         self._setup_log_index = 0
         """Used to keep track of which log messages occurred during startup."""
 
@@ -174,7 +164,7 @@ class LanguageClient(Client):
 
     def _report_server_error(self, error: Exception, source: Type[Exception]):
         # This may wind up being a mistake, but let's ignore broken pipe errors...
-        # If the server process has exited, the watchdog thread will give us a better
+        # If the server process has exited, the watchdog task will give us a better
         # error message.
         if isinstance(error, BrokenPipeError):
             return
@@ -183,8 +173,12 @@ class LanguageClient(Client):
         tb = "".join(traceback.format_exc())
 
         message = f"{source.__name__}: {error}\n{tb}"
-        if self._control_loop:
-            self._control_loop.call_soon_threadsafe(cancel_all_tasks, message)
+
+        loop = asyncio.get_running_loop()
+        loop.call_soon(cancel_all_tasks, message)
+
+        if self._stop_event:
+            self._stop_event.set()
 
     async def completion_request(
         self, uri: str, line: int, character: int
@@ -525,7 +519,7 @@ class LanguageClient(Client):
 
 
 def cancel_all_tasks(message: str):
-    """Called by the watchdog thread to cancel all awaited tasks."""
+    """Called to cancel all awaited tasks."""
 
     for task in asyncio.all_tasks():
         if sys.version_info.minor < 9:

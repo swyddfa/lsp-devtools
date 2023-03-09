@@ -7,7 +7,7 @@ import subprocess
 import sys
 import textwrap
 import threading
-import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from typing import Callable
 from typing import Iterable
@@ -22,6 +22,8 @@ from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import InitializedParams
 from lsprotocol.types import InitializeParams
 from lsprotocol.types import LSPAny
+from pygls.server import StdOutTransportAdapter
+from pygls.server import aio_readline
 
 from pytest_lsp.client import LanguageClient
 from pytest_lsp.client import make_test_client
@@ -35,16 +37,12 @@ else:
 logger = logging.getLogger("client")
 
 
-def watch_server_process(
+async def check_server_process(
     server: subprocess.Popen, stop: threading.Event, client: LanguageClient
 ):
     """Continously poll server process to see if it is still running."""
-    while True:
+    while not stop.is_set():
         retcode = server.poll()
-
-        if stop.is_set():
-            break
-
         if retcode is not None:
             stderr = ""
             if server.stderr is not None:
@@ -52,9 +50,9 @@ def watch_server_process(
 
             message = f"Server exited with return code: {retcode}\n{stderr}"
             client._report_server_error(RuntimeError(message), RuntimeError)
-            break
 
-        time.sleep(0.1)
+        else:
+            await asyncio.sleep(0.1)
 
 
 class ClientServer:
@@ -68,33 +66,14 @@ class ClientServer:
         client_capabilities: ClientCapabilities,
         initialization_options: Optional[LSPAny],
     ):
-        self._server = server
+        self.server = server
         """The process object running the server."""
 
-        control_loop = asyncio.get_running_loop()
-
         self.client = client
-        self.client._control_loop = control_loop
         """The client used to drive the test."""
 
         self.client_capabilities = client_capabilities
         """The capabilities of the client."""
-
-        self._client_thread = threading.Thread(
-            name="Client Thread",
-            target=self.client.start_io,
-            args=(self._server.stdout, self._server.stdin),
-            daemon=True,
-        )
-
-        # Used to detect if the server crashes.
-        self._watchdog_stop = threading.Event()
-        self._watchdog_thread = threading.Thread(
-            name="Watchdog Thread",
-            target=watch_server_process,
-            args=(self._server, self._watchdog_stop, self.client),
-            daemon=True,
-        )
 
         self.initialization_options = initialization_options
         """The initialization options to pass to the server."""
@@ -102,13 +81,41 @@ class ClientServer:
         self.root_uri = root_uri
         """The root uri to point the server at."""
 
-    async def start(self):
-        self._watchdog_thread.start()
-        self._client_thread.start()
+        self._thread_pool_executor = ThreadPoolExecutor(max_workers=2)
+        self._stop_event = threading.Event()
 
-        # Give the client some time to initialize
-        while self.client.lsp.transport is None:
-            await asyncio.sleep(0.1)
+    async def start(self):
+        loop = asyncio.get_running_loop()
+
+        self.client._stop_event = self._stop_event
+        transport = StdOutTransportAdapter(self.server.stdout, self.server.stdin)
+        self.client.lsp.connection_made(transport)
+
+        # TODO: Remove once Python 3.7 is no longer supported
+        conn_name = {}
+        watch_name = {}
+
+        if sys.version_info.minor > 7:
+            conn_name["name"] = "Client-Server Connection"
+            watch_name["name"] = "Server Watchdog"
+
+        # Have the client listen to and respond to requests from the server.
+        self.conn = loop.create_task(
+            aio_readline(
+                loop,
+                self._thread_pool_executor,
+                self.client._stop_event,
+                self.server.stdout,
+                self.client.lsp.data_received,
+            ),
+            **conn_name,  # type: ignore[arg-type]
+        )
+
+        # Watch the server process to see if it exits prematurely.
+        self.watch = loop.create_task(
+            check_server_process(self.server, self._stop_event, self.client),
+            **watch_name,  # type: ignore[arg-type]
+        )
 
         response = await self.client.initialize_request(
             InitializeParams(
@@ -132,20 +139,13 @@ class ClientServer:
 
             self.client.notify_exit(None)
         else:
-            self._server.terminate()
+            self.server.terminate()
 
         if self.client._stop_event:
             self.client._stop_event.set()
 
-        try:
-            self.client.loop._signal_handlers.clear()  # type: ignore
-        except AttributeError:
-            pass
-
-        self._watchdog_stop.set()
-        self._watchdog_thread.join()
-
-        self._client_thread.join()
+        # Wait for background tasks to finish.
+        await asyncio.gather(self.conn, self.watch)
 
 
 class ClientServerConfig:
@@ -246,6 +246,22 @@ def make_client_server(config: ClientServerConfig) -> ClientServer:
         root_uri=config.root_uri,
         initialization_options=config.initialization_options,
     )
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_setup(item: pytest.Item):
+    """Ensure that that client has not errored before running a test."""
+
+    client: Optional[LanguageClient] = None
+    for arg in item.funcargs.values():  # type: ignore[attr-defined]
+        if isinstance(arg, LanguageClient):
+            client = arg
+            break
+
+    if not client or client.error is None:
+        return
+
+    raise client.error
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):

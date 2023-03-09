@@ -155,7 +155,7 @@ async def test_capabilities(client):
     setup_test(pytester, "invalid_json.py", test_code)
     results = pytester.runpytest("-vv")
 
-    results.assert_outcomes(failed=1)
+    results.assert_outcomes(errors=1, failed=1)
 
     if sys.version_info.minor < 9:
         message = "E*CancelledError"
