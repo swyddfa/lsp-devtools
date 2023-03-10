@@ -1,11 +1,16 @@
 import logging
 from typing import Any
-from typing import Literal
 from typing import Mapping
 from typing import Optional
 from uuid import uuid4
 
 import attrs
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[assignment]
+
 
 MessageSource = Literal["client", "server"]
 
