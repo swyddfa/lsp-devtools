@@ -31,5 +31,5 @@ def on_complete(server: LanguageServer, params: CompletionParams):
     return [CompletionItem(label="item-one")]
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     server.start_io()
