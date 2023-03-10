@@ -68,7 +68,7 @@ profile = "black"
 filename = "CHANGES.rst"
 directory = "changes/"
 title_format = "v{version} - {project_date}"
-issue_format = "`#{issue} <https://github.com/alcarney/lsp-devtools/issues/{issue}>`_"
+issue_format = "`#{issue} <https://github.com/swyddfa/lsp-devtools/issues/{issue}>`_"
 underlines = ["-", "^", "\""]
 
 [[tool.towncrier.type]]
@@ -106,9 +106,10 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 skip_missing_interpreters = true
+envlist = py{37,38,39,310,311}
 
-[testenv:mypy]
-extras= typecheck
+[testenv]
+extras=test
 commands =
-    mypy --check-untyped-defs -p lsp_devtools
+    pytest {posargs}
 """
