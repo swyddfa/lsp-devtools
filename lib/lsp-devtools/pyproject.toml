@@ -28,6 +28,7 @@ dependencies = [
     "importlib-resources; python_version<\"3.9\"",
     "pygls[ws]",
     "textual>=0.14.0",
+    "typing-extensions; python_version<\"3.8\"",
 ]
 
 [project.urls]
