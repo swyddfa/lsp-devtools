@@ -184,6 +184,13 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
         item.add_report_section(call.when, "window/logMessages", "\n".join(messages))
 
 
+# anext() was added in 3.10
+if sys.version_info.minor < 10:
+
+    async def anext(it):
+        return await it.__anext__()
+
+
 def fixture(
     fixture_function=None,
     *,
