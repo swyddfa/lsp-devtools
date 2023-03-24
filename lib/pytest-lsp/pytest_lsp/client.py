@@ -1,5 +1,7 @@
 import asyncio
+import json
 import logging
+import os
 import sys
 import traceback
 from concurrent.futures import Future
@@ -10,6 +12,7 @@ from typing import Optional
 from typing import Type
 from typing import Union
 
+from lsprotocol.converters import get_converter
 from lsprotocol.types import CANCEL_REQUEST
 from lsprotocol.types import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
 from lsprotocol.types import WINDOW_LOG_MESSAGE
@@ -35,6 +38,9 @@ from lsprotocol.types import FileDelete
 from lsprotocol.types import Hover
 from lsprotocol.types import HoverParams
 from lsprotocol.types import ImplementationParams
+from lsprotocol.types import InitializedParams
+from lsprotocol.types import InitializeParams
+from lsprotocol.types import InitializeResult
 from lsprotocol.types import Location
 from lsprotocol.types import LocationLink
 from lsprotocol.types import LogMessageParams
@@ -58,6 +64,12 @@ from pygls.protocol import LanguageServerProtocol
 from pygls.protocol import default_converter
 
 from .gen import Client
+
+if sys.version_info.minor < 9:
+    import importlib_resources as resources
+else:
+    import importlib.resources as resources  # type: ignore[no-redef]
+
 
 logger = logging.getLogger(__name__)
 
@@ -110,25 +122,11 @@ class ClientProtocol(LanguageServerProtocol):
 class LanguageClient(Client):
     """Used to drive language servers under test."""
 
-    def __init__(
-        self, capabilities: ClientCapabilities, root_uri: str, *args, **kwargs
-    ):
-        """
-        Parameters
-        ----------
-        capabilities
-           The client's capabilities
-
-        root_uri
-           THe root uri of the client's workspace.
-        """
+    def __init__(self, *args, **kwargs):
         self.name = "pytest-test-client"
         self.version = None
 
         super().__init__(*args, **kwargs)
-
-        self.capabilities = capabilities
-        self.root_uri = root_uri
 
         self.open_documents: Dict[str, int] = {}
         """Used to keep track of the documents that the client has opened."""
@@ -320,6 +318,37 @@ class LanguageClient(Client):
         )
 
         return await self.text_document_hover_request(params)
+
+    async def initialize(self, params: InitializeParams) -> InitializeResult:
+        """Make an ``initialize`` request to a lanaguage server.
+
+        Helper method for :meth:`LanguageClient.initialize_request` that will
+        automatically fill in some of the required fields of ``params`` if they
+        are not given.
+
+        It will also automatically send an ``initialized`` notification once
+        the server responds.
+
+        Parameters
+        ----------
+        params
+           The parameters to send to the client.
+
+           The following fields will be automatically set if left blank.
+           - ``process_id``: Set to the PID of the current process.
+
+        Returns
+        -------
+        InitializeResult
+           The result received from the client.
+        """
+        if params.process_id is None:
+            params.process_id = os.getpid()
+
+        response = await self.initialize_request(params)
+        self.notify_initialized(InitializedParams())
+
+        return response
 
     async def implementation_request(
         self, uri: str, line: int, character: int
@@ -514,6 +543,24 @@ class LanguageClient(Client):
         params = DeleteFilesParams(files=[FileDelete(uri=uri) for uri in uris])
         self.notify_workspace_did_delete_files(params)
 
+    async def shutdown(self) -> None:
+        """Shutdown the server under test.
+
+        Helper method that handles sending ``shutdown`` and ``exit`` messages in the
+        correct order.
+
+        .. note::
+
+           This method will not attempt to send these messages if a fatal error has
+           occurred.
+
+        """
+        if self.error is not None:
+            return
+
+        await self.shutdown_request(None)
+        self.notify_exit(None)
+
     async def wait_for_notification(self, *args, **kwargs):
         return await self.lsp.wait_for_notification_async(*args, **kwargs)
 
@@ -528,13 +575,11 @@ def cancel_all_tasks(message: str):
             task.cancel(message)
 
 
-def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> LanguageClient:
+def make_test_client() -> LanguageClient:
     """Construct a new test client instance with the handlers needed to capture
     additional responses from the server."""
 
     client = LanguageClient(
-        capabilities,
-        root_uri,
         protocol_cls=ClientProtocol,
         converter_factory=default_converter,
         loop=asyncio.new_event_loop(),
@@ -563,3 +608,36 @@ def make_test_client(capabilities: ClientCapabilities, root_uri: str) -> Languag
         return ShowDocumentResult(success=True)
 
     return client
+
+
+def client_capabilities(client_spec: str) -> ClientCapabilities:
+    """Find the capabilities that correspond to the given client spec.
+
+    Parameters
+    ----------
+    client_spec
+       A string describing the client to load the corresponding
+       capabilities for.
+    """
+
+    # Currently, we only have a single version of each client so let's just return the
+    # first one we find.
+    #
+    # TODO: Implement support for client@x.y.z
+    # TODO: Implement support for client@latest?
+    filename = None
+    for resource in resources.files("pytest_lsp.clients").iterdir():
+        # Skip the README or any other files that we don't care about.
+        if not resource.name.endswith(".json"):
+            continue
+
+        if resource.name.startswith(client_spec.replace("-", "_")):
+            filename = resource
+            break
+
+    if not filename:
+        raise ValueError(f"Unknown client: '{client_spec}'")
+
+    converter = get_converter()
+    capabilities = json.loads(filename.read_text())
+    return converter.structure(capabilities, ClientCapabilities)
