@@ -5,6 +5,7 @@ import sys
 
 import pygls.uris as uri
 import pytest
+
 import pytest_lsp
 
 
@@ -42,18 +43,28 @@ def test_client_capabilities(
 
     pytester.makeconftest(
         f"""
+from lsprotocol.types import InitializeParams
+
 import pytest_lsp
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
+from pytest_lsp import client_capabilities
 
 @pytest_lsp.fixture(
     config=ClientServerConfig(
-        client="{client_spec}",
         server_command=["{python}", "{server}"],
-        root_uri="{root_uri}"
     )
 )
-async def client(client_):
-    ...
+async def client(lsp_client: LanguageClient):
+    await lsp_client.initialize(
+        InitializeParams(
+            capabilities=client_capabilities("{client_spec}"),
+            root_uri="{root_uri}"
+        )
+    )
+    yield
+
+    await lsp_client.shutdown()
     """
     )
 

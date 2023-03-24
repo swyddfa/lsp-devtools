@@ -23,18 +23,29 @@ asyncio_mode = auto
 
     pytester.makeconftest(
         f"""
+from lsprotocol.types import InitializeParams
+
 import pytest_lsp
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
+from pytest_lsp import client_capabilities
+
 
 @pytest_lsp.fixture(
     config=ClientServerConfig(
-        client="visual_studio_code",
         server_command=["{python}", "{server}"],
-        root_uri="{root_uri}"
     )
 )
-async def client(client_):
-    ...
+async def client(lsp_client: LanguageClient):
+    await lsp_client.initialize(
+        InitializeParams(
+            capabilities=client_capabilities("visual-studio-code"),
+            root_uri="{root_uri}"
+        )
+    )
+    yield
+
+    await lsp_client.shutdown()
     """
     )
 
