@@ -4,12 +4,13 @@ import sys
 
 import pygls.uris as uri
 import pytest
-import pytest_lsp
+from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import CompletionItem
 from lsprotocol.types import CompletionList
 from lsprotocol.types import DocumentLink
 from lsprotocol.types import DocumentSymbol
 from lsprotocol.types import Hover
+from lsprotocol.types import InitializeParams
 from lsprotocol.types import Location
 from lsprotocol.types import LocationLink
 from lsprotocol.types import MarkupContent
@@ -18,6 +19,8 @@ from lsprotocol.types import Position
 from lsprotocol.types import Range
 from lsprotocol.types import SymbolInformation
 from lsprotocol.types import SymbolKind
+
+import pytest_lsp
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
 
@@ -51,16 +54,19 @@ def event_loop():
 @pytest_lsp.fixture(
     scope="session",
     config=ClientServerConfig(
-        client="visual_studio_code",
         server_command=[
             sys.executable,
             str(pathlib.Path(__file__).parent / "servers" / "methods.py"),
         ],
-        root_uri=ROOT_URI,
     ),
 )
-async def client(client_):
-    ...
+async def client(lsp_client: LanguageClient):
+    await lsp_client.initialize(
+        InitializeParams(
+            capabilities=ClientCapabilities(),
+            root_uri=ROOT_URI,
+        )
+    )
 
 
 @pytest.mark.parametrize(
