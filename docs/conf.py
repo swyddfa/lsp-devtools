@@ -7,7 +7,7 @@
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "LSP Devtools"
-copyright = "2022, Alex Carney"
+copyright = "2023, Alex Carney"
 author = "Alex Carney"
 
 # -- General configuration ---------------------------------------------------
@@ -34,4 +34,4 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
 html_title = "LSP Devtools"
-html_static_path = ["_static"]
+# html_static_path = ["_static"]

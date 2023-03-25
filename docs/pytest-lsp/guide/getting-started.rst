@@ -11,7 +11,7 @@ For the purposes of this example we'll write a simple language server in Python 
 
 The following server implements the ``textDocument/completion`` method
 
-.. literalinclude:: ../../lib/pytest-lsp/tests/examples/getting-started/server.py
+.. literalinclude:: ../../../lib/pytest-lsp/tests/examples/getting-started/server.py
    :language: python
    :end-at: ]
 
@@ -23,7 +23,7 @@ A Simple Test Case
 Now we can go ahead and test it.
 Copy the following code and save it into a file named ``test_server.py``, in the same directory as the ``server.py`` file you created in the previous step.
 
-.. literalinclude:: ../../lib/pytest-lsp/tests/examples/getting-started/t_server.py
+.. literalinclude:: ../../../lib/pytest-lsp/tests/examples/getting-started/t_server.py
    :language: python
    :end-at: await lsp_client.shutdown()
 
@@ -35,7 +35,7 @@ Once all test cases have been called, the code after the ``yield`` statement wil
 
 With the framework in place, we can go ahead and define our first test case
 
-.. literalinclude:: ../../lib/pytest-lsp/tests/examples/getting-started/t_server.py
+.. literalinclude:: ../../../lib/pytest-lsp/tests/examples/getting-started/t_server.py
    :language: python
    :start-at: async def test_
 
@@ -120,7 +120,7 @@ Let's try again
 
    ================================================= 1 passed in 0.96s ==================================================
 
-Much bettter!
+Much better!
 
 
 .. _pygls: https://github.com/openlawlibrary/pygls
