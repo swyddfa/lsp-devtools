@@ -41,12 +41,10 @@ def arange(spec: str) -> Range:
 
 @pytest.fixture(scope="session")
 def event_loop():
-    # We need to redefine the event_loop fixture to match the scope of our
-    # client_server fixture.
-    #
-    # https://github.com/pytest-dev/pytest-asyncio/issues/68#issuecomment-334083751
-
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    """Redefine `pytest-asyncio's default event_loop fixture to match the scope
+    of our client fixture."""
+    policy = asyncio.get_event_loop_policy()
+    loop = policy.new_event_loop()
     yield loop
     loop.close()
 
