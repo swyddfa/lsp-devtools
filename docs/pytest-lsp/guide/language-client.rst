@@ -5,10 +5,36 @@ Language Client
 
 The pytest-lsp :class:`~pytest_lsp.LanguageClient` supports the following LSP requests and notifications.
 
+``textDocument/publishDiagnostics``
+-----------------------------------
+
+The client maintains a record of any :attr:`~pytest_lsp.LanguageClient.diagnostics` published by the server in a dictionary indexed by a text document's uri.
+
+.. card:: test_server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/diagnostics/t_server.py
+      :language: python
+      :start-at: async def test_
+
+
+.. note::
+
+   While the client has the (rather useful!) ability to :func:`~pytest_lsp.LanguageClient.wait_for_notification` messages from the server, this is not something covered by the `LSP Specification`_.
+
+.. _LSP Specification: https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/
+
+.. card:: server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/diagnostics/server.py
+      :language: python
+      :start-at: @server.feature
+      :end-before: if __name__ == "__main__"
+
+
 ``window/logMessage``
 ---------------------
 
-Any :lsp:`window/logMessage` notifications sent from the server will be accesible via the client's :attr:`~pytest_lsp.LanguageClient.log_messages` attribute.
+Any :lsp:`window/logMessage` notifications sent from the server will be accessible via the client's :attr:`~pytest_lsp.LanguageClient.log_messages` attribute.
 This allows you to write test cases that check for the presence of particular log messages.
 
 .. card:: test_server.py
