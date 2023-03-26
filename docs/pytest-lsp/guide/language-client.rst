@@ -83,3 +83,40 @@ If a test case fails ``pytest-lsp`` will also include any captured log messages 
   ================================ short test summary info ==================================
   FAILED test_server.py::test_completions - assert False
   =================================== 1 failed in 1.02s =====================================
+
+``window/showDocument``
+-----------------------
+
+Similar to ``window/logMessage`` above, the client records any :lsp:`window/showDocument` notifications and are accessible via its :attr:`~pytest_lsp.LanguageClient.shown_documents` attribute.
+
+.. card:: test_server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-show-document/t_server.py
+      :language: python
+      :start-at: async def test_
+
+.. card:: server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-show-document/server.py
+      :language: python
+      :start-at: @server.feature
+      :end-at: return items
+
+
+``window/showMessage``
+----------------------
+
+Similar to ``window/logMessage`` above, the client records any :lsp:`window/showMessage` notifications and are accessible via its :attr:`~pytest_lsp.LanguageClient.messages` attribute.
+
+.. card:: test_server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-show-message/t_server.py
+      :language: python
+      :start-at: async def test_
+
+.. card:: server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-show-message/server.py
+      :language: python
+      :start-at: @server.feature
+      :end-at: return items

@@ -25,9 +25,11 @@ asyncio_mode = auto
 @pytest.mark.parametrize(
     "name",
     [
+        "diagnostics",
         "getting-started",
         "window-log-message",
-        "diagnostics",
+        "window-show-document",
+        "window-show-message",
     ],
 )
 def test_documentation_examples(pytester: pytest.Pytester, name: str):
