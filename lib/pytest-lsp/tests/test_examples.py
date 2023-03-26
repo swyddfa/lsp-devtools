@@ -22,7 +22,14 @@ asyncio_mode = auto
         dest.write_text(src.read_text())
 
 
-@pytest.mark.parametrize("name", ["getting-started", "window-log-message"])
+@pytest.mark.parametrize(
+    "name",
+    [
+        "getting-started",
+        "window-log-message",
+        "diagnostics",
+    ],
+)
 def test_documentation_examples(pytester: pytest.Pytester, name: str):
     """Ensure that the examples included in the documentation work as expected."""
 
@@ -56,14 +63,14 @@ def test_window_log_message_fail(pytester: pytest.Pytester):
     results = pytester.runpytest()
     results.assert_outcomes(failed=1)
 
-    results.stdout.fnmatch_lines("* Captured window/logMessages call")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 0")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 1")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 2")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 3")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 4")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 5")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 6")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 7")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 8")
-    results.stdout.fnmatch_lines("  LOG: Suggesting item 9")
+    results.stdout.fnmatch_lines("-* Captured window/logMessages call -*")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 0")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 1")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 2")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 3")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 4")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 5")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 6")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 7")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 8")
+    results.stdout.fnmatch_lines(" *LOG: Suggesting item 9")
