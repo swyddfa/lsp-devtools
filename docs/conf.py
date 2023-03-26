@@ -5,6 +5,8 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+from docutils import nodes
+from sphinx.application import Sphinx
 
 project = "LSP Devtools"
 copyright = "2023, Alex Carney"
@@ -17,6 +19,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
+    "sphinx_design",
 ]
 
 autoclass_content = "both"
@@ -35,3 +38,17 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "furo"
 html_title = "LSP Devtools"
 # html_static_path = ["_static"]
+
+
+def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    """Link to sections within the lsp specification."""
+
+    anchor = text.replace("/", "_")
+    ref = f"https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#{anchor}"  # noqa: E501
+
+    node = nodes.reference(rawtext, text, refuri=ref, **options)
+    return [node], []
+
+
+def setup(app: Sphinx):
+    app.add_role("lsp", lsp_role)
