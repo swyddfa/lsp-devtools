@@ -101,7 +101,7 @@ class ClientProtocol(LanguageServerProtocol):
                 "Failed to handle notification '%s': %s", method_name, params
             )
 
-    def wait_for_notification(self, method, callback=None):
+    def wait_for_notification(self, method: str, callback=None):
         future: Future = Future()
         if callback:
 
@@ -114,7 +114,7 @@ class ClientProtocol(LanguageServerProtocol):
         self._notification_futures[method] = future
         return future
 
-    def wait_for_notification_async(self, method):
+    def wait_for_notification_async(self, method: str):
         future = self.wait_for_notification(method)
         return asyncio.wrap_future(future)
 
@@ -561,8 +561,15 @@ class LanguageClient(Client):
         await self.shutdown_request(None)
         self.notify_exit(None)
 
-    async def wait_for_notification(self, *args, **kwargs):
-        return await self.lsp.wait_for_notification_async(*args, **kwargs)
+    async def wait_for_notification(self, method: str):
+        """Block until a notification with the given method is received.
+
+        Parameters
+        ----------
+        method
+           The notification method to wait for, e.g. ``textDocument/publishDiagnostics``
+        """
+        return await self.lsp.wait_for_notification_async(method)
 
 
 def cancel_all_tasks(message: str):
