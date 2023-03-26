@@ -167,7 +167,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     if not client:
         return
 
-    levels = ["ERROR: ", " WARN: ", " INFO: ", "DEBUG: "]
+    levels = ["ERROR: ", " WARN: ", " INFO: ", "  LOG: "]
 
     if call.when == "setup":
         captured_messages = client.log_messages[: client._setup_log_index + 1]
