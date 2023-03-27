@@ -23,22 +23,23 @@ asyncio_mode = auto
 
 
 @pytest.mark.parametrize(
-    "name",
+    "name, expected",
     [
-        "diagnostics",
-        "getting-started",
-        "window-log-message",
-        "window-show-document",
-        "window-show-message",
+        ("diagnostics", dict(passed=1)),
+        ("getting-started", dict(passed=1)),
+        ("parameterised-clients", dict(passed=2)),
+        ("window-log-message", dict(passed=1)),
+        ("window-show-document", dict(passed=1)),
+        ("window-show-message", dict(passed=1)),
     ],
 )
-def test_documentation_examples(pytester: pytest.Pytester, name: str):
+def test_documentation_examples(pytester: pytest.Pytester, name: str, expected: dict):
     """Ensure that the examples included in the documentation work as expected."""
 
     setup_test(pytester, name)
 
     results = pytester.runpytest()
-    results.assert_outcomes(passed=1)
+    results.assert_outcomes(**expected)
 
 
 def test_getting_started_fail(pytester: pytest.Pytester):

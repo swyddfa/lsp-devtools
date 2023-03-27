@@ -191,23 +191,43 @@ if sys.version_info.minor < 10:
         return await it.__anext__()
 
 
+def get_fixture_arguments(fn: Callable, client: LanguageClient, request) -> dict:
+    """Return the arguments to pass to the user's fixture function"""
+    kwargs = {}
+
+    parameters = inspect.signature(fn).parameters
+    if "request" in parameters:
+        kwargs["request"] = request
+
+    for name, cls in typing.get_type_hints(fn).items():
+        if issubclass(cls, LanguageClient):
+            kwargs[name] = client
+
+    return kwargs
+
+
 def fixture(
     fixture_function=None,
     *,
     config: ClientServerConfig,
     **kwargs,
 ):
+    """Define a fixture that returns a client connected to a server running in a
+    background sub-process
+
+    Parameters
+    ----------
+    config
+       Configuration for the client and server.
+    """
+
     def wrapper(fn):
         @pytest_asyncio.fixture(**kwargs)
         async def the_fixture(request):
             client_server = make_client_server(config)
             client_server.start()
 
-            kwargs = {}
-            for name, cls in typing.get_type_hints(fn).items():
-                if issubclass(cls, LanguageClient):
-                    kwargs[name] = client_server.client
-
+            kwargs = get_fixture_arguments(fn, client_server.client, request)
             result = fn(**kwargs)
             if inspect.isasyncgen(result):
                 try:
