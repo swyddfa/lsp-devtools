@@ -5,8 +5,8 @@ from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import InitializeParams
 
 import pytest_lsp
-from pytest_lsp.client import LanguageClient
-from pytest_lsp.plugin import ClientServerConfig
+from pytest_lsp import LanguageClient
+from pytest_lsp import ClientServerConfig
 
 
 @pytest_lsp.fixture(
