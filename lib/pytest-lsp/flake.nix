@@ -11,23 +11,26 @@
      let
        eachPythonVersion = versions: f:
          builtins.listToAttrs (builtins.map (version: {name = "py${version}"; value = f version; }) versions);
-      pygls-overlay = import ./nix/pygls-overlay.nix;
       pytest-lsp-overlay = import ./nix/pytest-lsp-overlay.nix;
     in {
 
-    overlays.pytest-lsp = pytest-lsp-overlay;
+    overlays.default = pytest-lsp-overlay;
 
     devShells = utils.lib.eachDefaultSystemMap (system:
       let
-        pkgs = import nixpkgs { inherit system; overlays = [ pygls-overlay pytest-lsp-overlay ]; };
+        pkgs = import nixpkgs { inherit system; overlays = [ pytest-lsp-overlay ]; };
       in
         eachPythonVersion [ "37" "38" "39" "310" "311" ] (pyVersion:
+
+
+          let
+            pytest-lsp = pkgs."python${pyVersion}Packages".pytest-lsp.overridePythonAttrs (_: { doCheck = false; });
+          in
 
           with pkgs; mkShell {
             name = "py${pyVersion}";
 
             packages = with pkgs."python${pyVersion}Packages"; [
-              pkgs."python${pyVersion}"
               pytest-lsp
             ];
           }
