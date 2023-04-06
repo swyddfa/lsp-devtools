@@ -7,11 +7,10 @@ import re
 import sys
 import textwrap
 from datetime import datetime
-from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Type
-from typing import Union
 
 from lsprotocol._hooks import _resolve_forward_references
 from lsprotocol.types import METHOD_TO_TYPES
@@ -23,10 +22,10 @@ cli = argparse.ArgumentParser(
 cli.add_argument("-o", "--output", default=None)
 
 
-def write_imports(imports: List[Union[str, Tuple[str, str]]]) -> str:
+def write_imports(imports: Set[Tuple[str, str]]) -> str:
     lines = []
 
-    for import_ in sorted(imports, key=lambda i: (i[0], i[1])):
+    for import_ in sorted(list(imports), key=lambda i: (i[0], i[1])):
         if isinstance(import_, tuple):
             mod, name = import_
             lines.append(f"from {mod} import {name}")
@@ -45,7 +44,7 @@ def write_notification(
     method: str,
     request: Type,
     params: Optional[Type],
-    imports: List[Union[str, Tuple[str, str]]],
+    imports: Set[Tuple[str, str]],
 ) -> str:
     python_name = to_snake_case(method).replace("/", "_").replace("$_", "")
 
@@ -53,11 +52,11 @@ def write_notification(
         param_name = "None"
     else:
         param_mod, param_name = params.__module__, params.__name__
-        imports.append((param_mod, param_name))
+        imports.add((param_mod, param_name))
 
     return "\n".join(
         [
-            f"def notify_{python_name}(self, params: {param_name}) -> None:",
+            f"def {python_name}(self, params: {param_name}) -> None:",
             f'    """Send a ``{method}`` notification.',
             "",
             textwrap.indent(inspect.getdoc(request) or "", "    "),
@@ -68,30 +67,63 @@ def write_notification(
     )
 
 
-def write_method(
-    method: str,
-    request: Type,
-    params: Optional[Type],
-    response: Type,
-    imports: List[Union[str, Tuple[str, str]]],
-) -> str:
-    python_name = to_snake_case(method).replace("/", "_").replace("$_", "")
-
-    if params is None:
-        param_name = "None"
-    else:
-        param_mod, param_name = params.__module__, params.__name__
-        imports.append((param_mod, param_name))
-
+def get_response_type(response: Type, imports: Set[Tuple[str, str]]) -> str:
     # Find the response type.
     result_field = [f for f in response.__attrs_attrs__ if f.name == "result"][0]
     result = re.sub(r"<class '([\w.]+)'>", r"\1", str(result_field.type))
     result = re.sub(r"ForwardRef\('([\w.]+)'\)", r"lsprotocol.types.\1", result)
     result = result.replace("NoneType", "None")
 
+    # Replace any lsprotocol types with their short name.
+    for match in re.finditer(r"lsprotocol.types.([\w]+)", result):
+        imports.add(("lsprotocol.types", match.group(1)))
+
+    # Replace any typing imports with their short name.
+    for match in re.finditer(r"typing.([\w]+)", result):
+        imports.add(("typing", match.group(1)))
+
+    result = result.replace("lsprotocol.types.", "")
+    result = result.replace("typing.", "")
+
+    return result
+
+
+def write_method(
+    method: str,
+    request: Type,
+    params: Optional[Type],
+    response: Type,
+    imports: Set[Tuple[str, str]],
+) -> str:
+    python_name = to_snake_case(method).replace("/", "_").replace("$_", "")
+    if python_name == "shutdown":
+        python_name = "shutdown_request"
+
+    if params is None:
+        param_name = "None"
+    else:
+        param_mod, param_name = params.__module__, params.__name__
+        imports.add((param_mod, param_name))
+
+    result_type = get_response_type(response, imports)
+
     return "\n".join(
         [
-            f"async def {python_name}_request(self, params: {param_name}) -> {result}:",
+            f"def {python_name}(",
+            "    self,",
+            f"    params: {param_name},",
+            f"    callback: Optional[Callable[[{result_type}], None]] = None,",
+            ") -> Future:",
+            f'    """Make a ``{method}`` request.',
+            "",
+            textwrap.indent(inspect.getdoc(request) or "", "    "),
+            '    """',
+            f'    return self.lsp.send_request("{method}", params, callback)',
+            "",
+            f"async def {python_name}_async(",
+            "    self,",
+            f"    params: {param_name},",
+            f") -> {result_type}:",
             f'    """Make a ``{method}`` request.',
             "",
             textwrap.indent(inspect.getdoc(request) or "", "    "),
@@ -104,13 +136,17 @@ def write_method(
 
 def generate_client() -> str:
     methods = []
-    imports = [
-        "typing",
-        "lsprotocol.types",
+    imports = {
+        ("concurrent.futures", "Future"),
+        ("pygls.protocol", "LanguageServerProtocol"),
+        ("pygls.protocol", "default_converter"),
         ("pygls.server", "Server"),
-    ]
+        ("typing", "Callable"),
+        ("typing", "Optional"),
+    }
 
     for method_name, types in METHOD_TO_TYPES.items():
+        # Skip any requests that come from the server.
         if message_direction(method_name) == "serverToClient":
             continue
 
@@ -131,7 +167,18 @@ def generate_client() -> str:
         "",
         "",
         "class Client(Server):",
-        '    """Used to drive the language server under test."""',
+        "",
+        "    def __init__(",
+        "        self,",
+        "        name: str,",
+        "        version: str,",
+        "        protocol_cls=LanguageServerProtocol,",
+        "        converter_factory=default_converter,",
+        "        **kwargs,",
+        "    ):",
+        "        self.name = name",
+        "        self.version = version",
+        "        super().__init__(protocol_cls, converter_factory, **kwargs)",
         "",
         *methods,
     ]
