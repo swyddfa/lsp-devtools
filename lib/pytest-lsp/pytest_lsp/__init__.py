@@ -1,4 +1,5 @@
 from .client import LanguageClient
+from .client import __version__
 from .client import client_capabilities
 from .client import make_test_client
 from .plugin import ClientServer
@@ -8,9 +9,8 @@ from .plugin import make_client_server
 from .plugin import pytest_runtest_makereport
 from .plugin import pytest_runtest_setup
 
-__version__ = "0.2.1"
-
 __all__ = [
+    "__version__",
     "ClientServer",
     "ClientServerConfig",
     "LanguageClient",
