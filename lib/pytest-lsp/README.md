@@ -24,7 +24,7 @@ async def client(lsp_client: LanguageClient):
     # Setup
     response = await lsp_client.initialize(
         InitializeParams(
-            capabilities=client_capabilities("visual-studio-code")
+            capabilities=client_capabilities("visual-studio-code"),
             root_uri="file:///path/to/test/project/root/",
         )
     )
