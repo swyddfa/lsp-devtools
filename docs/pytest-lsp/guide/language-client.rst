@@ -35,7 +35,6 @@ The client maintains a record of any :attr:`~pytest_lsp.LanguageClient.diagnosti
 ---------------------
 
 Any :lsp:`window/logMessage` notifications sent from the server will be accessible via the client's :attr:`~pytest_lsp.LanguageClient.log_messages` attribute.
-This allows you to write test cases that check for the presence of particular log messages.
 
 .. card:: test_server.py
 

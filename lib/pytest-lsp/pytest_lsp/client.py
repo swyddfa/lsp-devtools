@@ -156,6 +156,7 @@ class LanguageClient(Client):
            The parameters to send to the client.
 
            The following fields will be automatically set if left blank.
+
            - ``process_id``: Set to the PID of the current process.
 
         Returns

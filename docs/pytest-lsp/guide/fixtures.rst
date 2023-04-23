@@ -18,10 +18,17 @@ However, you're likely to encounter an error like the following::
 This is due to the default `event_loop <https://pytest-asyncio.readthedocs.io/en/latest/reference/fixtures.html#event-loop>`__ fixture provided by `pytest-asyncio`_ not living long enough to support your client.
 To fix this you can override the ``event_loop`` fixture, setting its scope to match that of your client.
 
-.. literalinclude:: ../../../lib/pytest-lsp/tests/test_client_methods.py
-   :language: python
-   :start-at: @pytest.fixture(scope="session")
-   :end-at: loop.close()
+.. code-block:: python
+
+   @pytest.fixture(scope="session")
+   def event_loop():
+       """Redefine `pytest-asyncio's default event_loop fixture to match the scope
+       of our client fixture."""
+       policy = asyncio.get_event_loop_policy()
+       loop = policy.new_event_loop()
+       yield loop
+       loop.close()
+
 
 .. _pytest-asyncio: https://github.com/pytest-dev/pytest-asyncio
 
@@ -35,4 +42,4 @@ This can be used to run the same set of tests while pretending to be a different
 .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/parameterised-clients/t_server.py
    :language: python
    :start-at: @pytest_lsp.fixture
-   :end-at: await lsp_client.shutdown()
+   :end-at: await lsp_client.shutdown_session()
