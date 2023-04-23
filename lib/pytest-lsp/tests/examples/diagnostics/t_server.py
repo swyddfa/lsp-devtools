@@ -2,11 +2,13 @@ import sys
 
 from lsprotocol.types import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
 from lsprotocol.types import ClientCapabilities
+from lsprotocol.types import DidOpenTextDocumentParams
 from lsprotocol.types import InitializeParams
+from lsprotocol.types import TextDocumentItem
 
 import pytest_lsp
-from pytest_lsp import LanguageClient
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
 
 
 @pytest_lsp.fixture(
@@ -15,20 +17,27 @@ from pytest_lsp import ClientServerConfig
 async def client(lsp_client: LanguageClient):
     # Setup
     params = InitializeParams(capabilities=ClientCapabilities())
-    await lsp_client.initialize(params)
+    await lsp_client.initialize_session(params)
 
     yield
 
     # Teardown
-    await lsp_client.shutdown()
+    await lsp_client.shutdown_session()
 
 
 async def test_diagnostics(client: LanguageClient):
     """Ensure that the server implements diagnostics correctly."""
 
     test_uri = "file:///path/to/file.txt"
-    client.notify_did_open(
-        uri=test_uri, language="plaintext", contents="The file's contents"
+    client.text_document_did_open(
+        DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=test_uri,
+                language_id="plaintext",
+                version=1,
+                text="The file's contents",
+            )
+        )
     )
 
     # Wait for the server to publish its diagnostics
