@@ -37,7 +37,7 @@ from pytest_lsp import client_capabilities
     )
 )
 async def client(lsp_client: LanguageClient):
-    await lsp_client.initialize(
+    await lsp_client.initialize_session(
         InitializeParams(
             capabilities=client_capabilities("visual-studio-code"),
             root_uri="{root_uri}"
@@ -45,7 +45,7 @@ async def client(lsp_client: LanguageClient):
     )
     yield
 
-    await lsp_client.shutdown()
+    await lsp_client.shutdown_session()
     """
     )
 
@@ -95,7 +95,7 @@ async def test_capabilities(client):
             text_document=TextDocumentIdentifier(uri="file:///test.txt"),
             position=Position(line=0, character=0)
         )
-        items = await client.text_document_completion_request(params)
+        items = await client.text_document_completion_async(params)
         assert len({i.label for i in items} & expected) == len(items)
 """
 
@@ -154,7 +154,7 @@ async def test_capabilities(client):
     expected = {str(i) for i in range(10)}
 
     for i in range(10):
-        items = await client.text_document_completion_request(
+        items = await client.text_document_completion_async(
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri="file:///test.txt"),
                 position=Position(line=0, character=0)

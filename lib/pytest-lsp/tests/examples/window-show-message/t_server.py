@@ -1,11 +1,15 @@
 import sys
 
 from lsprotocol.types import ClientCapabilities
+from lsprotocol.types import CompletionList
+from lsprotocol.types import CompletionParams
 from lsprotocol.types import InitializeParams
+from lsprotocol.types import Position
+from lsprotocol.types import TextDocumentIdentifier
 
 import pytest_lsp
-from pytest_lsp import LanguageClient
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
 
 
 @pytest_lsp.fixture(
@@ -14,19 +18,30 @@ from pytest_lsp import ClientServerConfig
 async def client(lsp_client: LanguageClient):
     # Setup
     params = InitializeParams(capabilities=ClientCapabilities())
-    await lsp_client.initialize(params)
+    await lsp_client.initialize_session(params)
 
     yield
 
     # Teardown
-    await lsp_client.shutdown()
+    await lsp_client.shutdown_session()
 
 
 async def test_completions(client: LanguageClient):
-    test_uri = "file:///path/to/file.txt"
-    results = await client.completion_request(uri=test_uri, line=1, character=0)
+    results = await client.text_document_completion_async(
+        params=CompletionParams(
+            position=Position(line=1, character=0),
+            text_document=TextDocumentIdentifier(uri="file:///path/to/file.txt"),
+        )
+    )
 
-    labels = [item.label for item in results]
+    assert results is not None
+
+    if isinstance(results, CompletionList):
+        items = results.items
+    else:
+        items = results
+
+    labels = [item.label for item in items]
     assert labels == [f"item-{i}" for i in range(10)]
 
     for idx, shown_message in enumerate(client.messages):

@@ -56,7 +56,7 @@ from pytest_lsp import client_capabilities
     )
 )
 async def client(lsp_client: LanguageClient):
-    await lsp_client.initialize(
+    await lsp_client.initialize_session(
         InitializeParams(
             capabilities=client_capabilities("{client_spec}"),
             root_uri="{root_uri}"
@@ -64,7 +64,7 @@ async def client(lsp_client: LanguageClient):
     )
     yield
 
-    await lsp_client.shutdown()
+    await lsp_client.shutdown_session()
     """
     )
 
@@ -76,7 +76,7 @@ from lsprotocol.types import ExecuteCommandParams
 
 @pytest.mark.asyncio
 async def test_capabilities(client):
-    actual = await client.workspace_execute_command_request(
+    actual = await client.workspace_execute_command_async(
         ExecuteCommandParams(command="return.client.capabilities")
     )
     assert actual == json.loads('{expected}')
