@@ -107,6 +107,12 @@ directory = "misc"
 name = "Misc"
 showcontent = true
 
+[[tool.towncrier.type]]
+directory = "removed"
+name = "Removed"
+showcontent = true
+
+
 [tool.tox]
 legacy_tox_ini = """
 [tox]

@@ -1,0 +1,3 @@
+``@pytest_lsp.fixture`` now supports the ``yield`` statement, allowing the ``client`` fixture definition to be responsible for initialising and shutting down the LSP session granting the test author full control over the contents of the ``initialize`` request.
+
+This is a breaking change, see the documentation for details and `this PR <https://github.com/swyddfa/esbonio/pull/571>`_ for an example migration.
