@@ -1,0 +1,4 @@
+Helper methods like ``completion_request`` and ``notify_did_open`` have been removed.
+The equivalent methods provided by the LSP specification like ``text_document_completion_async`` and ``text_document_did_open`` should be used directly.
+
+See `this PR <https://github.com/swyddfa/esbonio/pull/571>`_ for an example migration.
