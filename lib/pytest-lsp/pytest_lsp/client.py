@@ -138,7 +138,7 @@ class LanguageClient(Client):
            occurred.
 
         """
-        if self.error is not None:
+        if self.error is not None or self.capabilities is None:
             return
 
         await self.shutdown_request_async(None)
