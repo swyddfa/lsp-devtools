@@ -1,11 +1,12 @@
 import asyncio
 import logging
 from concurrent.futures import Future
-from typing import Any
 
 from lsprotocol.types import CANCEL_REQUEST
 from pygls.exceptions import JsonRpcMethodNotFound
 from pygls.protocol import LanguageServerProtocol
+
+from .checks import check_result_against_client_capabilities
 
 logger = logging.getLogger(__name__)
 
@@ -37,13 +38,13 @@ class LanguageClientProtocol(LanguageServerProtocol):
                 "Failed to handle notification '%s': %s", method_name, params
             )
 
-    def send_request(self, method, params=None, callback=None, msg_id=None):
-        def check_result(result: Any):
-            logger.warn("%s", result)
-            if callback:
-                callback(result)
+    async def send_request_async(self, method, params=None):
+        result = await super().send_request_async(method, params)
+        check_result_against_client_capabilities(
+            self._server.capabilities, method, result
+        )
 
-        return super().send_request(method, params, check_result, msg_id)
+        return result
 
     def wait_for_notification(self, method: str, callback=None):
         future: Future = Future()
