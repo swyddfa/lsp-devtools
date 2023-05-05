@@ -8,12 +8,14 @@ from .plugin import fixture
 from .plugin import make_client_server
 from .plugin import pytest_runtest_makereport
 from .plugin import pytest_runtest_setup
+from .protocol import LanguageClientProtocol
 
 __all__ = [
     "__version__",
     "ClientServer",
     "ClientServerConfig",
     "LanguageClient",
+    "LanguageClientProtocol",
     "client_capabilities",
     "fixture",
     "make_client_server",

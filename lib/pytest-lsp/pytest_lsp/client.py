@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 import traceback
-from concurrent.futures import Future
 from typing import Any
 from typing import Dict
 from typing import List
@@ -12,7 +11,6 @@ from typing import Optional
 from typing import Type
 
 from lsprotocol.converters import get_converter
-from lsprotocol.types import CANCEL_REQUEST
 from lsprotocol.types import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
 from lsprotocol.types import WINDOW_LOG_MESSAGE
 from lsprotocol.types import WINDOW_SHOW_DOCUMENT
@@ -27,11 +25,10 @@ from lsprotocol.types import PublishDiagnosticsParams
 from lsprotocol.types import ShowDocumentParams
 from lsprotocol.types import ShowDocumentResult
 from lsprotocol.types import ShowMessageParams
-from pygls.exceptions import JsonRpcMethodNotFound
-from pygls.protocol import LanguageServerProtocol
 from pygls.protocol import default_converter
 
 from .gen import Client
+from .protocol import LanguageClientProtocol
 
 if sys.version_info.minor < 9:
     import importlib_resources as resources
@@ -41,51 +38,6 @@ else:
 
 __version__ = "0.2.1"
 logger = logging.getLogger(__name__)
-
-
-class ClientProtocol(LanguageServerProtocol):
-    """An extended protocol class with extra methods that are useful for testing."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._notification_futures = {}
-
-    def _handle_notification(self, method_name, params):
-        if method_name == CANCEL_REQUEST:
-            self._handle_cancel_notification(params.id)
-            return
-
-        future = self._notification_futures.pop(method_name, None)
-        if future:
-            future.set_result(params)
-
-        try:
-            handler = self._get_handler(method_name)
-            self._execute_notification(handler, params)
-        except (KeyError, JsonRpcMethodNotFound):
-            logger.warning("Ignoring notification for unknown method '%s'", method_name)
-        except Exception:
-            logger.exception(
-                "Failed to handle notification '%s': %s", method_name, params
-            )
-
-    def wait_for_notification(self, method: str, callback=None):
-        future: Future = Future()
-        if callback:
-
-            def wrapper(future: Future):
-                result = future.result()
-                callback(result)
-
-            future.add_done_callback(wrapper)
-
-        self._notification_futures[method] = future
-        return future
-
-    def wait_for_notification_async(self, method: str):
-        future = self.wait_for_notification(method)
-        return asyncio.wrap_future(future)
 
 
 class LanguageClient(Client):
@@ -218,7 +170,7 @@ def make_test_client() -> LanguageClient:
     additional responses from the server."""
 
     client = LanguageClient(
-        protocol_cls=ClientProtocol,
+        protocol_cls=LanguageClientProtocol,
         converter_factory=default_converter,
         loop=asyncio.new_event_loop(),
     )
