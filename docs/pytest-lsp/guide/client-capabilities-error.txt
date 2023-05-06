@@ -1,0 +1,25 @@
+$ pytest -W error::pytest_lsp.LspSpecificationWarning
+======================================== test session starts ========================================
+platform linux -- Python 3.11.3, pytest-7.2.0, pluggy-1.0.0
+rootdir: test_client_capabilities_error0, configfile: tox.ini
+plugins: typeguard-2.13.3, asyncio-0.20.2, lsp-0.2.1
+asyncio: mode=Mode.AUTO
+collected 1 item
+
+test_server.py F                                                                              [100%]
+
+============================================= FAILURES ==============================================
+_________________________________________ test_completions __________________________________________
+
+...
+        try:
+            result_checker(capabilities, result)
+        except AssertionError as e:
+>           warnings.warn(str(e), LspSpecificationWarning, stacklevel=4)
+E           pytest_lsp.checks.LspSpecificationWarning: Client does not support snippets.
+E           assert False
+
+/.../site-packages/pytest_lsp/checks.py:73: LspSpecificationWarning
+====================================== short test summary info ======================================
+FAILED test_server.py::test_completions - pytest_lsp.checks.LspSpecificationWarning: Client does n...
+========================================= 1 failed in 1.16s =========================================

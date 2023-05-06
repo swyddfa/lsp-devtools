@@ -42,6 +42,41 @@ def test_documentation_examples(pytester: pytest.Pytester, name: str, expected: 
     results.assert_outcomes(**expected)
 
 
+def test_client_capabilities(pytester: pytest.Pytester):
+    """Ensure that the client capabilities example warns as expected."""
+
+    setup_test(pytester, "client-capabilities")
+
+    results = pytester.runpytest()
+    results.assert_outcomes(passed=1, warnings=1)
+
+    message = "*LspSpecificationWarning: Client does not support snippets."
+    results.stdout.fnmatch_lines(message)
+
+
+def test_client_capabilities_error(pytester: pytest.Pytester):
+    """Ensure that the client capabilities warnings can be upgraded to errors."""
+
+    setup_test(pytester, "client-capabilities")
+
+    results = pytester.runpytest("-W" "error::pytest_lsp.LspSpecificationWarning")
+    results.assert_outcomes(failed=1)
+
+    message = (
+        "E*pytest_lsp.checks.LspSpecificationWarning: Client does not support snippets."
+    )
+    results.stdout.fnmatch_lines(message)
+
+
+def test_client_capabilities_ignore(pytester: pytest.Pytester):
+    """Ensure that the client capabilities warnings can be ignored."""
+
+    setup_test(pytester, "client-capabilities")
+
+    results = pytester.runpytest("-W" "ignore::pytest_lsp.LspSpecificationWarning")
+    results.assert_outcomes(passed=1, warnings=0)
+
+
 def test_getting_started_fail(pytester: pytest.Pytester):
     """Ensure that the initial getting started example fails as expected."""
 

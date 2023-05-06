@@ -16,6 +16,8 @@ Test Setup
 
 .. autofunction:: fixture
 
+.. autofunction:: client_capabilities
+
 .. autoclass:: ClientServerConfig
    :members:
 
@@ -24,4 +26,10 @@ Test Setup
 .. autofunction:: make_test_client
 
 .. autoclass:: ClientServer
+   :members:
+
+Checks
+------
+
+.. automodule:: pytest_lsp.checks
    :members:

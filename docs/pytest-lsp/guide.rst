@@ -6,4 +6,5 @@ User Guide
 
    guide/getting-started
    guide/language-client
+   guide/client-capabilities
    guide/fixtures
