@@ -1,3 +1,4 @@
+from .checks import LspSpecificationWarning
 from .client import LanguageClient
 from .client import __version__
 from .client import client_capabilities
@@ -16,6 +17,7 @@ __all__ = [
     "ClientServerConfig",
     "LanguageClient",
     "LanguageClientProtocol",
+    "LspSpecificationWarning",
     "client_capabilities",
     "fixture",
     "make_client_server",
