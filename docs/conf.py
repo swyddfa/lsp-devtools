@@ -32,7 +32,10 @@ autoclass_content = "both"
 autodoc_member_order = "groupwise"
 autodoc_typehints = "description"
 
-intersphinx_mapping = {"python": ("https://docs.python.org/3/", None)}
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "pytest": ("https://docs.pytest.org/en/stable/", None),
+}
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

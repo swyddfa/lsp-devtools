@@ -1,4 +1,13 @@
-"""Checks to ensure that the server is compliant with the spec."""
+"""Checks to ensure that the server is compliant with the spec.
+
+These can be used in your unit tests to ensure that objects (such as ``CompletionItem``
+etc) take into account the client's capabilities when constructed.
+
+However, they are also called automatically during end-to-end tests that make use of the
+standard :class:`~pytest_lsp.LanguageClient`. See :ref:`pytest-lsp-spec-checks` for more
+details.
+
+"""
 import logging
 import warnings
 from typing import Any
