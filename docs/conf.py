@@ -5,8 +5,13 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
-from docutils import nodes
-from sphinx.application import Sphinx
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath("./ext"))
+
+from docutils import nodes  # noqa: E402
+from sphinx.application import Sphinx  # noqa: E402
 
 project = "LSP Devtools"
 copyright = "2023, Alex Carney"
@@ -20,6 +25,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx_design",
+    "supported_clients",
 ]
 
 autoclass_content = "both"
