@@ -172,7 +172,7 @@ def make_test_client() -> LanguageClient:
     client = LanguageClient(
         protocol_cls=LanguageClientProtocol,
         converter_factory=default_converter,
-        loop=asyncio.new_event_loop(),
+        loop=asyncio.get_running_loop(),
     )
 
     @client.feature(TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
