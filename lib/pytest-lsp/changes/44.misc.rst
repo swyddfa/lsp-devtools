@@ -1,1 +1,0 @@
-The client-server connection is now managed by a single asyncio event loop, rather than spinning up multiple threads, resulting in a much simpler architecture.

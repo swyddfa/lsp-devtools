@@ -1,1 +1,0 @@
-Add documentation on the built in features of the test LSP client

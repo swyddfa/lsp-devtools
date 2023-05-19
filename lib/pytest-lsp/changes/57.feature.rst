@@ -1,5 +1,0 @@
-If a client's capabilities has been set, pytest-lsp will automatically check the server's response to see if it is compatible with the capabilities the client provided.
-
-If an issue is detected, pytest-lsp will emit an ``LspSpecificationWarning``
-
-**Note:** This relies on a dedicated ``check_xxx`` function being written for each request so only a subset of the LSP spec is currently supported.

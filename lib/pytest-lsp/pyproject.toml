@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytest-lsp"
-version = "0.2.1"
+version = "0.3.0"
 description = "pytest plugin for end-to-end testing of language servers"
 readme = "README.md"
 requires-python = ">=3.7"

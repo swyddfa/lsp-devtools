@@ -1,3 +1,43 @@
+v0.3.0 - 2023-05-19
+-------------------
+
+Features
+^^^^^^^^
+
+- ``@pytest_lsp.fixture`` now supports the ``yield`` statement, allowing the ``client`` fixture definition to be responsible for initialising and shutting down the LSP session granting the test author full control over the contents of the ``initialize`` request.
+
+  This is a breaking change, see the documentation for details and `this PR <https://github.com/swyddfa/esbonio/pull/571>`_ for an example migration. (`#47 <https://github.com/swyddfa/lsp-devtools/issues/47>`_)
+- If a client's capabilities has been set, pytest-lsp will automatically check the server's response to see if it is compatible with the capabilities the client provided.
+
+  If an issue is detected, pytest-lsp will emit an ``LspSpecificationWarning``
+
+  **Note:** This relies on a dedicated ``check_xxx`` function being written for each request so only a subset of the LSP spec is currently supported. (`#57 <https://github.com/swyddfa/lsp-devtools/issues/57>`_)
+
+
+Docs
+^^^^
+
+- Add getting started guide (`#47 <https://github.com/swyddfa/lsp-devtools/issues/47>`_)
+- Add note on redefining the ``event_loop`` fixture to match the client fixture's scope (`#49 <https://github.com/swyddfa/lsp-devtools/issues/49>`_)
+- Add documentation on the built in features of the test LSP client (`#50 <https://github.com/swyddfa/lsp-devtools/issues/50>`_)
+- Add example on using parameterised fixtures to test with multiple clients (`#51 <https://github.com/swyddfa/lsp-devtools/issues/51>`_)
+
+
+Misc
+^^^^
+
+- The client-server connection is now managed by a single asyncio event loop, rather than spinning up multiple threads, resulting in a much simpler architecture. (`#44 <https://github.com/swyddfa/lsp-devtools/issues/44>`_)
+
+
+Removed
+^^^^^^^
+
+- Helper methods like ``completion_request`` and ``notify_did_open`` have been removed.
+  The equivalent methods provided by the LSP specification like ``text_document_completion_async`` and ``text_document_did_open`` should be used directly.
+
+  See `this PR <https://github.com/swyddfa/esbonio/pull/571>`_ for an example migration. (`#56 <https://github.com/swyddfa/lsp-devtools/issues/56>`_)
+
+
 v0.2.1 - 2023-01-14
 -------------------
 
