@@ -7,7 +7,6 @@ from pygls.server import LanguageServer
 
 
 def capabilities(args, extra):
-
     server = LanguageServer(name="capabilities-dumper", version="v1.0")
 
     @server.feature(INITIALIZE)

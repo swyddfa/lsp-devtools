@@ -33,7 +33,6 @@ async def check_server_process(
         retcode = server_process.poll()
         print(".")
         if retcode is not None:
-
             # Cancel any pending tasks.
             for task in asyncio.all_tasks():
                 task.cancel(f"Server process exited with code: {retcode}")

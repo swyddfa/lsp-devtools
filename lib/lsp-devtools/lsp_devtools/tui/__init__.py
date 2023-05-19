@@ -23,7 +23,7 @@ from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Header
 from textual.widgets import Tree
-from textual.widgets import TreeNode
+from textual.widgets.tree import TreeNode
 
 from lsp_devtools.record import setup_filter_args
 
@@ -45,7 +45,6 @@ class ObjectViewer(Tree):
         self.walk_object(name, self.root, obj)
 
     def walk_object(self, label: str, node: TreeNode, obj: Any):
-
         if isinstance(obj, dict):
             node.expand()
             for field, value in obj.items():
@@ -80,6 +79,8 @@ class MessagesTable(DataTable):
 
         self.viewer = viewer
 
+        self.cursor_type = "row"
+
         self.add_column("")
         self.add_column("Time")
         self.add_column("Source")
@@ -87,11 +88,10 @@ class MessagesTable(DataTable):
         self.add_column("Method")
 
     def on_key(self, event: events.Key):
-
         if event.key != "enter":
             return
 
-        rowid = int(self.data[self.cursor_row][0])
+        rowid = int(self.get_row_at(self.cursor_row)[0])
         params, result, error = self.rpcdata[rowid]
 
         if params:
@@ -143,7 +143,6 @@ class Sidebar(Container):
 
 
 class LSPInspector(App):
-
     CSS_PATH = pathlib.Path(__file__).parent / "app.css"
     BINDINGS = [("ctrl+b", "toggle_sidebar", "Sidebar"), ("q", "quit", "Quit")]
 
@@ -170,7 +169,6 @@ class LSPInspector(App):
         yield Footer()
 
     def action_toggle_sidebar(self) -> None:
-
         sidebar = self.query_one(Sidebar)
         self.set_focus(None)
 
@@ -199,8 +197,15 @@ class LSPInspector(App):
         await super().action_quit()
 
 
-def tui(args, extra: List[str]):
+def start_client(client, host, port):
+    try:
+        client.start_ws_client(host, port)
+    except Exception:
+        # TODO: Surface the error somehow
+        pass
 
+
+def tui(args, extra: List[str]):
     dbpath = args.to_sqlite
     if not dbpath.parent.exists():
         dbpath.parent.mkdir(parents=True)
@@ -210,7 +215,7 @@ def tui(args, extra: List[str]):
     app.client = client
 
     agent_thread = threading.Thread(
-        name="AgentClient", target=client.start_ws_client, args=(args.host, args.port)
+        name="AgentClient", target=start_client, args=(client, args.host, args.port)
     )
     agent_thread.start()
 

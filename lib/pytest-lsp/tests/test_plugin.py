@@ -23,18 +23,29 @@ asyncio_mode = auto
 
     pytester.makeconftest(
         f"""
+from lsprotocol.types import InitializeParams
+
 import pytest_lsp
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
+from pytest_lsp import client_capabilities
+
 
 @pytest_lsp.fixture(
     config=ClientServerConfig(
-        client="visual_studio_code",
         server_command=["{python}", "{server}"],
-        root_uri="{root_uri}"
     )
 )
-async def client(client_):
-    ...
+async def client(lsp_client: LanguageClient):
+    await lsp_client.initialize_session(
+        InitializeParams(
+            capabilities=client_capabilities("visual-studio-code"),
+            root_uri="{root_uri}"
+        )
+    )
+    yield
+
+    await lsp_client.shutdown_session()
     """
     )
 
@@ -84,7 +95,7 @@ async def test_capabilities(client):
             text_document=TextDocumentIdentifier(uri="file:///test.txt"),
             position=Position(line=0, character=0)
         )
-        items = await client.text_document_completion_request(params)
+        items = await client.text_document_completion_async(params)
         assert len({i.label for i in items} & expected) == len(items)
 """
 
@@ -143,7 +154,7 @@ async def test_capabilities(client):
     expected = {str(i) for i in range(10)}
 
     for i in range(10):
-        items = await client.text_document_completion_request(
+        items = await client.text_document_completion_async(
             CompletionParams(
                 text_document=TextDocumentIdentifier(uri="file:///test.txt"),
                 position=Position(line=0, character=0)
@@ -155,7 +166,7 @@ async def test_capabilities(client):
     setup_test(pytester, "invalid_json.py", test_code)
     results = pytester.runpytest("-vv")
 
-    results.assert_outcomes(failed=1)
+    results.assert_outcomes(errors=1, failed=1)
 
     if sys.version_info.minor < 9:
         message = "E*CancelledError"

@@ -1,0 +1,11 @@
+$ pytest -W ignore::pytest_lsp.LspSpecificationWarning
+======================================== test session starts ========================================
+platform linux -- Python 3.11.3, pytest-7.2.0, pluggy-1.0.0
+rootdir: test_client_capabilities_ignore0, configfile: tox.ini
+plugins: typeguard-2.13.3, asyncio-0.20.2, lsp-0.2.1
+asyncio: mode=Mode.AUTO
+collected 1 item
+
+test_server.py .                                                                              [100%]
+
+========================================= 1 passed in 1.02s =========================================

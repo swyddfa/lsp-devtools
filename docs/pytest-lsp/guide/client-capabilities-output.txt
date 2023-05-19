@@ -1,0 +1,18 @@
+$ pytest
+======================================== test session starts ========================================
+platform linux -- Python 3.11.3, pytest-7.2.0, pluggy-1.0.0
+rootdir: test_client_capabilities0, configfile: tox.ini
+plugins: typeguard-2.13.3, asyncio-0.20.2, lsp-0.2.1
+asyncio: mode=Mode.AUTO
+collected 1 item
+
+test_server.py .                                                                              [100%]
+
+========================================= warnings summary ==========================================
+test_server.py::test_completions
+  test_client_capabilities0/test_server.py:35: LspSpecificationWarning: Client does not support snippets.
+  assert False
+    results = await client.text_document_completion_async(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=================================== 1 passed, 1 warning in 1.02s ====================================

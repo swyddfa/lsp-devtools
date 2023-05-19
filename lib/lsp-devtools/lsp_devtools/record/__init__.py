@@ -37,7 +37,6 @@ class RichLSPHandler(RichHandler):
         traceback: Optional[Traceback],
         message_renderable: "ConsoleRenderable",
     ) -> "ConsoleRenderable":
-
         # Delegate most of the rendering to the base RichHandler class.
         res = super().render(
             record=record, traceback=traceback, message_renderable=message_renderable
@@ -115,7 +114,6 @@ def setup_sqlite_output(args):
 
 
 def start_recording(args, extra: List[str]):
-
     client = AgentClient()
     log_func = log_raw_message if args.capture_raw_output else log_rpc_message
     logger.setLevel(logging.INFO)

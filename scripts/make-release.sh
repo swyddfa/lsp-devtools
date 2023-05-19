@@ -16,12 +16,12 @@ case $1 in
     lsp-devtools)
         SRC="lib/lsp-devtools"
         TAG_PREFIX="lsp-devtools-v"
-        COMMIT_MSG="LSP Devtools Release v"
+        COMMIT_MSG="lsp-devtools Release v"
         ;;
     pytest-lsp)
         SRC="lib/pytest-lsp"
         TAG_PREFIX="pytest-lsp-v"
-        COMMIT_MSG="Pytest LSP Release v"
+        COMMIT_MSG="pytest-lsp Release v"
         ;;
     *)
         echo "Unkown component ${1}"
@@ -100,11 +100,11 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     fi
 
     # Write the release notes for github
-    python -m towncrier --draft --version="${VERSION}" | \
+    python -m towncrier build --draft --version="${VERSION}" | \
         rst2html.py --template=changes/github-template.html > .changes.html
 
     # Write the release notes for the changelog
-    python -m towncrier --yes --version="${VERSION}"
+    python -m towncrier build --yes --version="${VERSION}"
 
     # Setup git, commit, tag and push all the changes.
     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -123,8 +123,8 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     pandoc CHANGES.rst -f rst -t gfm -o CHANGELOG.md
 
     # Export info that can be picked up in later steps.
-    echo "::set-output name=VERSION::${VERSION}"
-    echo "::set-output name=TAG::${TAG}"
-    echo "::set-output name=DATE::${DATE}"
+    echo "VERSION=${VERSION}" >> $GITHUB_ENV
+    echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
+    echo "RELEASE_DATE=${DATE}" >> $GITHUB_ENV
 
 fi

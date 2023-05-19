@@ -1,14 +1,9 @@
-name: LSP Devtools
+name: Release
 
 on:
-  pull_request:
-    branches:
-    - develop
-    - release
   push:
     branches:
     - release
-    - develop
 
 jobs:
   # Simple job the checks to see which parts we actually have to build.
@@ -19,7 +14,7 @@ jobs:
       lsp-devtools: ${{steps.check-lsp-devtools.outputs.build}}
       pytest-lsp: ${{steps.check-pytest-lsp.outputs.build}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -51,20 +46,16 @@ jobs:
 
   lsp-devtools:
     name: lsp-devtools
-    needs: [trigger]
+    needs: trigger
     if: always() && needs.trigger.outputs.lsp-devtools
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python-version: ["3.10"]
-        os: [ubuntu-latest]
-    steps:
-    - uses: actions/checkout@v2
+    runs-on: ubuntu-latest
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.10"
 
     - run: |
         sudo apt update
@@ -72,8 +63,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install build tox mypy bump2version towncrier==19.2 docutils
-
+        python -m pip install build bump2version towncrier docutils
       name: Install Build Tools
 
     - run: |
@@ -82,27 +72,17 @@ jobs:
         ./scripts/make-release.sh lsp-devtools
       name: Set Version
       id: info
-      if: matrix.python-version == '3.10'
-
-    - name: Test
-      run: |
-        set -e
-
-        cd lib/lsp-devtools
-        tox -e py310
 
     - name: Package
       run: |
         cd lib/lsp-devtools
         python -m build
-      if: always() && matrix.python-version == '3.10'
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: 'dist'
         path: lib/lsp-devtools/dist
-      if: always() && matrix.python-version == '3.10'
 
     - name: Publish
       id: assets
@@ -111,64 +91,27 @@ jobs:
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
 
-        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
-        echo "::set-output name=WHL::$whl"
-
-        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
-        echo "::set-output name=SRC::$src"
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
-
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: LSP Devtools v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: lib/lsp-devtools/.changes.html
-        draft: false
+      run: |
+        gh release create "${RELEASE_TAG}" \
+          --title "lsp-devtools v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/lsp-devtools/.changes.html \
+          ./lib/lsp-devtools/dist/*
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/lsp-devtools/dist/${{ steps.assets.outputs.WHL }}
-        asset_name: ${{ steps.assets.outputs.WHL }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/lsp-devtools/dist/${{ steps.assets.outputs.SRC }}
-        asset_name: ${{ steps.assets.outputs.SRC }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
-
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   pytest-lsp:
     name: pytest-lsp
-    needs: [trigger]
+    needs: trigger
     if: always() && needs.trigger.outputs.pytest-lsp
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
-        os: [ubuntu-latest]
-    steps:
-    - uses: actions/checkout@v2
+    runs-on: ubuntu-latest
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.10"
 
     - run: |
         sudo apt update
@@ -176,7 +119,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install build tox bump2version towncrier==19.2 docutils
+        python -m pip install build bump2version towncrier docutils
 
       name: Install Build Tools
 
@@ -186,72 +129,29 @@ jobs:
         ./scripts/make-release.sh pytest-lsp
       name: Set Version
       id: info
-      if: matrix.python-version == '3.10'
-
-    - run: |
-        cd lib/pytest-lsp
-
-        version=$(echo ${{ matrix.python-version }} | tr -d .)
-        python -m tox -e `tox -l | grep $version | tr '\n' ','`
-      name: Test
 
     - name: Package
       run: |
         cd lib/pytest-lsp
         python -m build
-      if: always() && matrix.python-version == '3.10'
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: 'dist'
         path: lib/pytest-lsp/dist
-      if: always() && matrix.python-version == '3.10'
 
     - name: Publish
-      id: assets
       run: |
         cd lib/pytest-lsp
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
 
-        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
-        echo "::set-output name=WHL::$whl"
-
-        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
-        echo "::set-output name=SRC::$src"
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
-
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: Pytest LSP v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: lib/pytest-lsp/.changes.html
-        draft: false
+      run: |
+        gh release create "${RELEASE_TAG}" \
+          --title "pytest-lsp v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/pytest-lsp/.changes.html \
+          ./lib/pytest-lsp/dist/*
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/pytest-lsp/dist/${{ steps.assets.outputs.WHL }}
-        asset_name: ${{ steps.assets.outputs.WHL }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/pytest-lsp/dist/${{ steps.assets.outputs.SRC }}
-        asset_name: ${{ steps.assets.outputs.SRC }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.10' && startsWith(github.ref, 'refs/heads/release')
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

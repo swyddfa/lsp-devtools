@@ -1,153 +1,99 @@
 import asyncio
 import inspect
-import json
 import logging
-import os
 import subprocess
 import sys
 import textwrap
 import threading
-import time
-from typing import Any
+import typing
+from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
-from typing import Iterable
 from typing import List
 from typing import Optional
-from typing import Union
 
 import pytest
 import pytest_asyncio
-from lsprotocol.converters import get_converter
-from lsprotocol.types import ClientCapabilities
-from lsprotocol.types import InitializedParams
-from lsprotocol.types import InitializeParams
-from lsprotocol.types import LSPAny
+from pygls.server import StdOutTransportAdapter
+from pygls.server import aio_readline
+
 from pytest_lsp.client import LanguageClient
 from pytest_lsp.client import make_test_client
-
-if sys.version_info.minor < 9:
-    import importlib_resources as resources
-else:
-    import importlib.resources as resources  # type: ignore[no-redef]
-
 
 logger = logging.getLogger("client")
 
 
-def watch_server_process(
+async def check_server_process(
     server: subprocess.Popen, stop: threading.Event, client: LanguageClient
 ):
     """Continously poll server process to see if it is still running."""
-    while True:
+    while not stop.is_set():
         retcode = server.poll()
-
-        if stop.is_set():
-            break
-
         if retcode is not None:
-
             stderr = ""
             if server.stderr is not None:
                 stderr = server.stderr.read().decode("utf8")
 
             message = f"Server exited with return code: {retcode}\n{stderr}"
             client._report_server_error(RuntimeError(message), RuntimeError)
-            break
 
-        time.sleep(0.1)
+        else:
+            await asyncio.sleep(0.1)
 
 
 class ClientServer:
     """A client server pair used to drive test cases."""
 
-    def __init__(
-        self,
-        client: LanguageClient,
-        server: subprocess.Popen,
-        root_uri: str,
-        client_capabilities: ClientCapabilities,
-        initialization_options: Optional[LSPAny],
-    ):
-
-        self._server = server
+    def __init__(self, *, client: LanguageClient, server: subprocess.Popen):
+        self.server = server
         """The process object running the server."""
 
-        control_loop = asyncio.get_running_loop()
-
         self.client = client
-        self.client._control_loop = control_loop
         """The client used to drive the test."""
 
-        self.client_capabilities = client_capabilities
-        """The capabilities of the client."""
+        self._thread_pool_executor = ThreadPoolExecutor(max_workers=2)
+        self._stop_event = threading.Event()
 
-        self._client_thread = threading.Thread(
-            name="Client Thread",
-            target=self.client.start_io,
-            args=(self._server.stdout, self._server.stdin),
-            daemon=True,
-        )
+    def start(self):
+        loop = asyncio.get_running_loop()
 
-        # Used to detect if the server crashes.
-        self._watchdog_stop = threading.Event()
-        self._watchdog_thread = threading.Thread(
-            name="Watchdog Thread",
-            target=watch_server_process,
-            args=(self._server, self._watchdog_stop, self.client),
-            daemon=True,
-        )
+        self.client._stop_event = self._stop_event
+        transport = StdOutTransportAdapter(self.server.stdout, self.server.stdin)
+        self.client.lsp.connection_made(transport)
 
-        self.initialization_options = initialization_options
-        """The initialization options to pass to the server."""
+        # TODO: Remove once Python 3.7 is no longer supported
+        conn_name = {}
+        watch_name = {}
 
-        self.root_uri = root_uri
-        """The root uri to point the server at."""
+        if sys.version_info.minor > 7:
+            conn_name["name"] = "Client-Server Connection"
+            watch_name["name"] = "Server Watchdog"
 
-    async def start(self):
-        self._watchdog_thread.start()
-        self._client_thread.start()
-
-        # Give the client some time to initialize
-        while self.client.lsp.transport is None:
-            await asyncio.sleep(0.1)
-
-        response = await self.client.initialize_request(
-            InitializeParams(
-                process_id=os.getpid(),
-                root_uri=self.root_uri,
-                capabilities=self.client_capabilities,
-                initialization_options=self.initialization_options,
+        # Have the client listen to and respond to requests from the server.
+        self.conn = loop.create_task(
+            aio_readline(
+                loop,
+                self._thread_pool_executor,
+                self.client._stop_event,
+                self.server.stdout,
+                self.client.lsp.data_received,
             ),
+            **conn_name,  # type: ignore[arg-type]
         )
 
-        assert response.capabilities is not None
-        self.client.notify_initialized(InitializedParams())
-
-        return response
+        # Watch the server process to see if it exits prematurely.
+        self.watch = loop.create_task(
+            check_server_process(self.server, self._stop_event, self.client),
+            **watch_name,  # type: ignore[arg-type]
+        )
 
     async def stop(self):
-
-        # Only attempt if there wasn't an error.
-        if self.client.error is None:
-            response = await self.client.shutdown_request(None)  # type: ignore
-            assert response is None
-
-            self.client.notify_exit(None)
-        else:
-            self._server.terminate()
+        self.server.terminate()
 
         if self.client._stop_event:
             self.client._stop_event.set()
 
-        try:
-            self.client.loop._signal_handlers.clear()  # type: ignore
-        except AttributeError:
-            pass
-
-        self._watchdog_stop.set()
-        self._watchdog_thread.join()
-
-        self._client_thread.join()
+        # Wait for background tasks to finish.
+        await asyncio.gather(self.conn, self.watch)
 
 
 class ClientServerConfig:
@@ -156,12 +102,8 @@ class ClientServerConfig:
     def __init__(
         self,
         server_command: List[str],
-        root_uri: str,
         *,
-        client: str = "",
-        client_capabilities: Optional[ClientCapabilities] = None,
-        client_factory: Callable[..., LanguageClient] = make_test_client,
-        initialization_options: Optional[Any] = None,
+        client_factory: Callable[[], LanguageClient] = make_test_client,
     ) -> None:
         """
         Parameters
@@ -169,58 +111,13 @@ class ClientServerConfig:
         server_command
            The command to use to start the language server.
 
-        root_uri
-           The root uri to start the language server in
-
-        client
-           The name of the client profile to use
-
-        client_capabilities
-           Use to use a specific set of client, capabilities.
-           Specifiying this will override ``client``.
-
         client_factory
            Factory function to use when constructing the language client instance.
            Defaults to :func:`pytest_lsp.make_test_client`
-
-        initialization_options
-           The initialization options to pass to the server on start up.
-
         """
 
         self.server_command = server_command
-        self.root_uri = root_uri
-        self.client = client
-        self.client_capabilities = client_capabilities
         self.client_factory = client_factory
-        self.initialization_options = initialization_options
-
-
-def find_client_capabilities(client: str) -> ClientCapabilities:
-    """Find the capabilities that correspond to the given client spec."""
-
-    # Currently, we only have a single version of each client so let's just return the
-    # first one we find.
-    #
-    # TODO: Implement support for client@x.y.z
-    # TODO: Implement support for client@latest?
-    filename = None
-    for resource in resources.files("pytest_lsp.clients").iterdir():
-
-        # Skip the README or any other files that we don't care about.
-        if not resource.name.endswith(".json"):
-            continue
-
-        if resource.name.startswith(client.replace("-", "_")):
-            filename = resource
-            break
-
-    if not filename:
-        raise ValueError(f"Unsupported client '{client}'")
-
-    converter = get_converter()
-    capabilities = json.loads(filename.read_text())
-    return converter.structure(capabilities, ClientCapabilities)
 
 
 def make_client_server(config: ClientServerConfig) -> ClientServer:
@@ -233,22 +130,26 @@ def make_client_server(config: ClientServerConfig) -> ClientServer:
         stderr=subprocess.PIPE,
     )
 
-    if config.client_capabilities:
-        capabilities = config.client_capabilities
-    elif config.client:
-        capabilities = find_client_capabilities(config.client)
-    else:
-        capabilities = ClientCapabilities()
-
-    client = config.client_factory(capabilities, config.root_uri)
-
     return ClientServer(
-        client=client,
         server=server,
-        client_capabilities=capabilities,
-        root_uri=config.root_uri,
-        initialization_options=config.initialization_options,
+        client=config.client_factory(),
     )
+
+
+@pytest.hookimpl(trylast=True)
+def pytest_runtest_setup(item: pytest.Item):
+    """Ensure that that client has not errored before running a test."""
+
+    client: Optional[LanguageClient] = None
+    for arg in item.funcargs.values():  # type: ignore[attr-defined]
+        if isinstance(arg, LanguageClient):
+            client = arg
+            break
+
+    if not client or client.error is None:
+        return
+
+    raise client.error
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
@@ -266,7 +167,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     if not client:
         return
 
-    levels = ["ERROR: ", " WARN: ", " INFO: ", "DEBUG: "]
+    levels = ["ERROR: ", " WARN: ", " INFO: ", "  LOG: "]
 
     if call.when == "setup":
         captured_messages = client.log_messages[: client._setup_log_index + 1]
@@ -283,39 +184,66 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
         item.add_report_section(call.when, "window/logMessages", "\n".join(messages))
 
 
+# anext() was added in 3.10
+if sys.version_info.minor < 10:
+
+    async def anext(it):
+        return await it.__anext__()
+
+
+def get_fixture_arguments(fn: Callable, client: LanguageClient, request) -> dict:
+    """Return the arguments to pass to the user's fixture function"""
+    kwargs = {}
+
+    parameters = inspect.signature(fn).parameters
+    if "request" in parameters:
+        kwargs["request"] = request
+
+    for name, cls in typing.get_type_hints(fn).items():
+        if issubclass(cls, LanguageClient):
+            kwargs[name] = client
+
+    return kwargs
+
+
 def fixture(
     fixture_function=None,
     *,
-    config: Union[ClientServerConfig, Iterable[ClientServerConfig]],
+    config: ClientServerConfig,
     **kwargs,
 ):
+    """Define a fixture that returns a client connected to a server running in a
+    background sub-process
 
-    if isinstance(config, ClientServerConfig):
-        params = [config]
-    else:
-        params = list(config)
-
-    ids = [conf.client or f"client{idx}" for idx, conf in enumerate(params)]
+    Parameters
+    ----------
+    config
+       Configuration for the client and server.
+    """
 
     def wrapper(fn):
-        @pytest_asyncio.fixture(params=params, ids=ids, **kwargs)
+        @pytest_asyncio.fixture(**kwargs)
         async def the_fixture(request):
+            client_server = make_client_server(config)
+            client_server.start()
 
-            lsp = make_client_server(request.param)
-            await lsp.start()
+            kwargs = get_fixture_arguments(fn, client_server.client, request)
+            result = fn(**kwargs)
+            if inspect.isasyncgen(result):
+                try:
+                    await anext(result)
+                except StopAsyncIteration:
+                    pass
 
-            # TODO: Do this 'properly'
-            signature = inspect.signature(fn)
-            if "client_" in signature.parameters.keys():
-                await fn(lsp.client)
-            else:
-                await fn()
+            yield client_server.client
 
-            lsp.client._setup_log_index = len(lsp.client.log_messages)
-            lsp.client._last_log_index = len(lsp.client.log_messages)
+            if inspect.isasyncgen(result):
+                try:
+                    await anext(result)
+                except StopAsyncIteration:
+                    pass
 
-            yield lsp.client
-            await lsp.stop()
+            await client_server.stop()
 
         return the_fixture
 

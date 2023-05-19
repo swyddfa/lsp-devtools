@@ -1,5 +1,4 @@
 import re
-from functools import cache
 from typing import Any
 from typing import Callable
 from typing import List
@@ -8,6 +7,13 @@ from typing import Tuple
 from typing import Union
 
 import lsprotocol.types
+
+try:
+    from functools import cache
+except ImportError:
+    from functools import lru_cache
+
+    cache = lru_cache(None)
 
 
 def format_position(position: dict) -> str:
@@ -64,7 +70,6 @@ class Value:
         accessor = self.accessor if accessor is None else accessor
 
         for field in accessor.split("."):
-
             if not field:
                 continue
 
@@ -117,7 +122,6 @@ def get_separator(sep: str) -> str:
 
 
 def get_index(idx: str) -> Union[int, slice, None]:
-
     try:
         return int(idx)
     except ValueError:

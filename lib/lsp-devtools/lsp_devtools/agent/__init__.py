@@ -42,7 +42,6 @@ class WSHandler(logging.Handler):
 
 
 def run_agent(args, extra: List[str]):
-
     if extra is None:
         print("Missing server start command", file=sys.stderr)
         return 1

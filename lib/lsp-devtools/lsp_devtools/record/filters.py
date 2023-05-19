@@ -1,12 +1,17 @@
 import logging
 from typing import Dict
-from typing import Literal
 from typing import Set
 from typing import Union
 
 import attrs
 
 from .formatters import FormatString
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[assignment]
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +87,6 @@ class LSPFilter(logging.Filter):
         return True
 
     def _get_message_method(self, message_type: str, message: dict) -> str:
-
         if message_type == "request":
             method = message["method"]
             self._response_method_map[message["id"]] = method
