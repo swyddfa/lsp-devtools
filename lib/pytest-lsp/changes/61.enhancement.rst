@@ -1,0 +1,2 @@
+pytest-lsp's ``LanguageClient`` is now based on the one provided by ``pygls``.
+The main benefit is that the server connection is now based on an ``asyncio.subprocess.Process`` removing the need for pytest-lsp to constantly check to see if the server is still running.
