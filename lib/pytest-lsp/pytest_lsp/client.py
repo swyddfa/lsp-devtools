@@ -4,7 +4,6 @@ import logging
 import os
 import sys
 import traceback
-from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -25,9 +24,9 @@ from lsprotocol.types import PublishDiagnosticsParams
 from lsprotocol.types import ShowDocumentParams
 from lsprotocol.types import ShowDocumentResult
 from lsprotocol.types import ShowMessageParams
+from pygls.lsp.client import LanguageClient as BaseLanguageClient
 from pygls.protocol import default_converter
 
-from .gen import Client
 from .protocol import LanguageClientProtocol
 
 if sys.version_info.minor < 9:
@@ -40,11 +39,18 @@ __version__ = "0.3.0"
 logger = logging.getLogger(__name__)
 
 
-class LanguageClient(Client):
+class LanguageClient(BaseLanguageClient):
     """Used to drive language servers under test."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__("pytest-lsp-client", __version__, *args, **kwargs)
+    def __init__(
+        self,
+        protocol_cls: Type[LanguageClientProtocol] = LanguageClientProtocol,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(
+            "pytest-lsp-client", __version__, protocol_cls=protocol_cls, *args, **kwargs
+        )
 
         self.capabilities: Optional[ClientCapabilities] = None
         """The client's capabilities."""
@@ -71,20 +77,27 @@ class LanguageClient(Client):
         self._last_log_index = 0
         """Used to keep track of which log messages correspond with which test case."""
 
-    def feature(
-        self,
-        feature_name: str,
-        options: Optional[Any] = None,
-    ):
-        return self.lsp.fm.feature(feature_name, options)
+    async def server_exit(self, server: asyncio.subprocess.Process):
+        """Called when the server process exits."""
+        logger.debug("Server process exited with code: %s", server.returncode)
 
-    def _report_server_error(self, error: Exception, source: Type[Exception]):
-        # This may wind up being a mistake, but let's ignore broken pipe errors...
-        # If the server process has exited, the watchdog task will give us a better
-        # error message.
-        if isinstance(error, BrokenPipeError):
+        if self._stop_event.is_set():
             return
 
+        stderr = ""
+        if server.stderr is not None:
+            stderr = await server.stderr.read()
+            stderr = stderr.decode("utf8")
+
+        loop = asyncio.get_running_loop()
+        loop.call_soon(
+            cancel_all_tasks,
+            f"Server process exited with return code: {server.returncode}\n{stderr}",
+        )
+
+    def report_server_error(self, error: Exception, source: Type[Exception]):
+        """Called when the server does something unexpected, e.g. sending malformed
+        JSON."""
         self.error = error
         tb = "".join(traceback.format_exc())
 
@@ -141,7 +154,7 @@ class LanguageClient(Client):
         if self.error is not None or self.capabilities is None:
             return
 
-        await self.shutdown_request_async(None)
+        await self.shutdown_async(None)
         self.exit(None)
 
     async def wait_for_notification(self, method: str):
@@ -152,7 +165,7 @@ class LanguageClient(Client):
         method
            The notification method to wait for, e.g. ``textDocument/publishDiagnostics``
         """
-        return await self.lsp.wait_for_notification_async(method)
+        return await self.protocol.wait_for_notification_async(method)
 
 
 def cancel_all_tasks(message: str):
@@ -170,9 +183,7 @@ def make_test_client() -> LanguageClient:
     additional responses from the server."""
 
     client = LanguageClient(
-        protocol_cls=LanguageClientProtocol,
         converter_factory=default_converter,
-        loop=asyncio.get_running_loop(),
     )
 
     @client.feature(TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
