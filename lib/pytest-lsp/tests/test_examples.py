@@ -95,7 +95,7 @@ def test_getting_started_fail(pytester: pytest.Pytester):
     if sys.version_info.minor < 9:
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"  # noqa: E501
+        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"  # noqa: E501
 
     results.stdout.fnmatch_lines(message)
 
