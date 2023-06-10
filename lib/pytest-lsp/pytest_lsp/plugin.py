@@ -1,20 +1,14 @@
-import asyncio
 import inspect
 import logging
-import subprocess
 import sys
 import textwrap
-import threading
 import typing
-from concurrent.futures import ThreadPoolExecutor
 from typing import Callable
 from typing import List
 from typing import Optional
 
 import pytest
 import pytest_asyncio
-from pygls.server import StdOutTransportAdapter
-from pygls.server import aio_readline
 
 from pytest_lsp.client import LanguageClient
 from pytest_lsp.client import make_test_client
@@ -22,78 +16,21 @@ from pytest_lsp.client import make_test_client
 logger = logging.getLogger("client")
 
 
-async def check_server_process(
-    server: subprocess.Popen, stop: threading.Event, client: LanguageClient
-):
-    """Continously poll server process to see if it is still running."""
-    while not stop.is_set():
-        retcode = server.poll()
-        if retcode is not None:
-            stderr = ""
-            if server.stderr is not None:
-                stderr = server.stderr.read().decode("utf8")
-
-            message = f"Server exited with return code: {retcode}\n{stderr}"
-            client._report_server_error(RuntimeError(message), RuntimeError)
-
-        else:
-            await asyncio.sleep(0.1)
-
-
 class ClientServer:
     """A client server pair used to drive test cases."""
 
-    def __init__(self, *, client: LanguageClient, server: subprocess.Popen):
-        self.server = server
-        """The process object running the server."""
+    def __init__(self, *, client: LanguageClient, server_command: List[str]):
+        self.server_command = server_command
+        """The command to use when starting the server."""
 
         self.client = client
         """The client used to drive the test."""
 
-        self._thread_pool_executor = ThreadPoolExecutor(max_workers=2)
-        self._stop_event = threading.Event()
-
-    def start(self):
-        loop = asyncio.get_running_loop()
-
-        self.client._stop_event = self._stop_event
-        transport = StdOutTransportAdapter(self.server.stdout, self.server.stdin)
-        self.client.lsp.connection_made(transport)
-
-        # TODO: Remove once Python 3.7 is no longer supported
-        conn_name = {}
-        watch_name = {}
-
-        if sys.version_info.minor > 7:
-            conn_name["name"] = "Client-Server Connection"
-            watch_name["name"] = "Server Watchdog"
-
-        # Have the client listen to and respond to requests from the server.
-        self.conn = loop.create_task(
-            aio_readline(
-                loop,
-                self._thread_pool_executor,
-                self.client._stop_event,
-                self.server.stdout,
-                self.client.lsp.data_received,
-            ),
-            **conn_name,  # type: ignore[arg-type]
-        )
-
-        # Watch the server process to see if it exits prematurely.
-        self.watch = loop.create_task(
-            check_server_process(self.server, self._stop_event, self.client),
-            **watch_name,  # type: ignore[arg-type]
-        )
+    async def start(self):
+        await self.client.start_io(*self.server_command)
 
     async def stop(self):
-        self.server.terminate()
-
-        if self.client._stop_event:
-            self.client._stop_event.set()
-
-        # Wait for background tasks to finish.
-        await asyncio.gather(self.conn, self.watch)
+        await self.client.stop()
 
 
 class ClientServerConfig:
@@ -123,15 +60,8 @@ class ClientServerConfig:
 def make_client_server(config: ClientServerConfig) -> ClientServer:
     """Construct a new ``ClientServer`` instance."""
 
-    server = subprocess.Popen(
-        config.server_command,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-
     return ClientServer(
-        server=server,
+        server_command=config.server_command,
         client=config.client_factory(),
     )
 
@@ -225,7 +155,7 @@ def fixture(
         @pytest_asyncio.fixture(**kwargs)
         async def the_fixture(request):
             client_server = make_client_server(config)
-            client_server.start()
+            await client_server.start()
 
             kwargs = get_fixture_arguments(fn, client_server.client, request)
             result = fn(**kwargs)
