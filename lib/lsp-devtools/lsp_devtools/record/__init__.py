@@ -1,16 +1,19 @@
 import argparse
+import json
 import logging
 import pathlib
+import sys
+from functools import partial
+from logging import LogRecord
 from typing import List
 from typing import Optional
 
-from pygls.protocol import partial
 from rich.console import ConsoleRenderable
 from rich.logging import RichHandler
 from rich.traceback import Traceback
 
 from lsp_devtools.agent import MESSAGE_TEXT_NOTIFICATION
-from lsp_devtools.agent import AgentClient
+from lsp_devtools.agent import AgentServer
 from lsp_devtools.agent import MessageText
 from lsp_devtools.agent import parse_rpc_message
 from lsp_devtools.handlers.sql import SqlHandler
@@ -50,13 +53,19 @@ class RichLSPHandler(RichHandler):
 
         return res
 
+    def format(self, record: LogRecord) -> str:
+        # Pretty print json messages
+        if isinstance(record.args, dict):
+            record.args = (json.dumps(record.args, indent=2),)
+        return super().format(record)
 
-def log_raw_message(ls: AgentClient, message: MessageText):
+
+def log_raw_message(ls: AgentServer, message: MessageText):
     """Push raw messages through the logging system."""
     logger.info(message.text, extra={"source": message.source})
 
 
-def log_rpc_message(ls: AgentClient, message: MessageText):
+def log_rpc_message(ls: AgentServer, message: MessageText):
     """Push parsed json-rpc messages through the logging system"""
 
     logfn = partial(logger.info, "%s", extra={"source": message.source})
@@ -114,10 +123,13 @@ def setup_sqlite_output(args):
 
 
 def start_recording(args, extra: List[str]):
-    client = AgentClient()
+    server = AgentServer()
     log_func = log_raw_message if args.capture_raw_output else log_rpc_message
     logger.setLevel(logging.INFO)
-    client.feature(MESSAGE_TEXT_NOTIFICATION)(log_func)
+    server.feature(MESSAGE_TEXT_NOTIFICATION)(log_func)
+
+    host = args.host
+    port = args.port
 
     if args.to_file:
         setup_file_output(args)
@@ -129,7 +141,8 @@ def start_recording(args, extra: List[str]):
         setup_stdout_output(args)
 
     try:
-        client.start_ws_client(args.host, args.port)
+        print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
+        server.start_tcp(host, port)
     except Exception:
         # TODO: Error handling
         raise
@@ -188,10 +201,10 @@ def setup_filter_args(cmd: argparse.ArgumentParser):
 def cli(commands: argparse._SubParsersAction):
     cmd: argparse.ArgumentParser = commands.add_parser(
         "record",
-        help="record an LSP session, requires the server be wrapped by an agent.",
+        help="record a JSON-RPC session.",
         description="""\
-This command connects to an LSP agent allowing for messages sent
-between client and server to be logged.
+This command starts a JSON-RPC server allowing for a client to connect (over TCP by
+default) and push messages to it and have them be recorded.
 """,
     )
 
