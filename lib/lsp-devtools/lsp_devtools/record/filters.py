@@ -78,6 +78,7 @@ class LSPFilter(logging.Filter):
         if self.formatter.pattern:
             try:
                 record.msg = self.formatter.format(message)
+                record.args = None
             except Exception:
                 logger.debug(
                     "Skipping message that failed to format: %s", message, exc_info=True
