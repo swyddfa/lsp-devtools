@@ -1,20 +1,18 @@
 import asyncio
+import inspect
 import logging
-import subprocess
+import re
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from functools import partial
 from typing import BinaryIO
-
-from pygls.server import aio_readline
 
 logger = logging.getLogger("lsp_devtools.agent")
 
 
-def forward_message(source: str, dest: BinaryIO, message: bytes):
+async def forward_message(source: str, dest: asyncio.StreamWriter, message: bytes):
     """Forward the given message to the destination channel"""
     dest.write(message)
-    dest.flush()
+    await dest.drain()
 
     # Log the full message
     logger.info(
@@ -24,81 +22,103 @@ def forward_message(source: str, dest: BinaryIO, message: bytes):
     )
 
 
-async def check_server_process(
-    server_process: subprocess.Popen, stop_event: threading.Event
-):
-    """Ensure that the server process is still alive."""
+# TODO: Upstream this?
+async def aio_readline(stop_event, reader, message_handler):
+    CONTENT_LENGTH_PATTERN = re.compile(rb"^Content-Length: (\d+)\r\n$")
+
+    # Initialize message buffer
+    message = []
+    content_length = 0
 
     while not stop_event.is_set():
-        retcode = server_process.poll()
-        print(".")
-        if retcode is not None:
-            # Cancel any pending tasks.
-            for task in asyncio.all_tasks():
-                task.cancel(f"Server process exited with code: {retcode}")
+        # Read a header line
+        header = await reader.readline()
+        if not header:
+            break
+        message.append(header)
 
-            # Signal everything to stop.
-            stop_event.set()
+        # Extract content length if possible
+        if not content_length:
+            match = CONTENT_LENGTH_PATTERN.fullmatch(header)
+            if match:
+                content_length = int(match.group(1))
+                logger.debug("Content length: %s", content_length)
 
-        await asyncio.sleep(0.1)
+        # Check if all headers have been read (as indicated by an empty line \r\n)
+        if content_length and not header.strip():
+            # Read body
+            body = await reader.readexactly(content_length)
+            if not body:
+                break
+            message.append(body)
+
+            # Pass message to protocol, optionally async
+            result = message_handler(b"".join(message))
+            if inspect.isawaitable(result):
+                await result
+
+            # Reset the buffer
+            message = []
+            content_length = 0
+
+
+async def get_streams(stdin, stdout):
+    """Convert blocking stdin/stdout streams into async streams."""
+    loop = asyncio.get_running_loop()
+
+    reader = asyncio.StreamReader()
+    read_protocol = asyncio.StreamReaderProtocol(reader)
+    await loop.connect_read_pipe(lambda: read_protocol, stdin)
+
+    write_transport, write_protocol = await loop.connect_write_pipe(
+        asyncio.streams.FlowControlMixin, stdout
+    )
+    writer = asyncio.StreamWriter(write_transport, write_protocol, reader, loop)
+    return reader, writer
 
 
 class Agent:
     """The Agent sits between a language server and its client, listening to messages
     enabling them to be recorded."""
 
-    def __init__(self, server: subprocess.Popen, stdin: BinaryIO, stdout: BinaryIO):
+    def __init__(
+        self, server: asyncio.subprocess.Process, stdin: BinaryIO, stdout: BinaryIO
+    ):
         self.stdin = stdin
         self.stdout = stdout
-        self.server_process = server
+        self.server = server
         self.stop_event = threading.Event()
-        self.thread_pool_executor = ThreadPoolExecutor(
-            max_workers=4,
-            thread_name_prefix="LSP Traffic Worker ",
-        )
 
     async def start(self):
-        event_loop = asyncio.get_running_loop()
+        # Get async versions of stdin/stdout
+        reader, writer = await get_streams(self.stdin, self.stdout)
 
         # Connect stdin to the subprocess' stdin
         client_to_server = aio_readline(
-            loop=event_loop,
-            executor=self.thread_pool_executor,
-            stop_event=self.stop_event,
-            rfile=self.stdin,
-            proxy=partial(forward_message, "client", self.server_process.stdin),
+            self.stop_event,
+            reader,
+            partial(forward_message, "client", self.server.stdin),
         )
 
         # Connect the subprocess' stdout to stdout
         server_to_client = aio_readline(
-            loop=event_loop,
-            executor=self.thread_pool_executor,
-            stop_event=self.stop_event,
-            rfile=self.server_process.stdout,
-            proxy=partial(forward_message, "server", self.stdout),
+            self.stop_event,
+            self.server.stdout,
+            partial(forward_message, "server", writer),
         )
 
         # Run both connections concurrently.
         return await asyncio.gather(
             client_to_server,
             server_to_client,
-            check_server_process(self.server_process, self.stop_event),
         )
 
-    def stop(self):
+    async def stop(self):
         self.stop_event.set()
-        self.thread_pool_executor.shutdown(wait=False, cancel_futures=True)
 
         try:
-            self.server_process.terminate()
-            ret = self.server_process.wait(timeout=1)
+            self.server.terminate()
+            ret = await self.server.wait()
             print(f"Server process exited with code: {ret}")
         except TimeoutError:
-            self.server_process.kill()
-
-        # Need to close these to prevent open file warnings
-        if self.server_process.stdin is not None:
-            self.server_process.stdin.close()
-
-        if self.server_process.stdout is not None:
-            self.server_process.stdout.close()
+            self.server.kill()

@@ -26,7 +26,7 @@ dependencies = [
     "appdirs",
     "aiosqlite",
     "importlib-resources; python_version<\"3.9\"",
-    "pygls[ws]",
+    "pygls",
     "textual>=0.14.0",
     "typing-extensions; python_version<\"3.8\"",
 ]

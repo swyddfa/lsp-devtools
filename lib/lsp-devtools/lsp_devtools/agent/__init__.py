@@ -3,16 +3,15 @@ import asyncio
 import logging
 import subprocess
 import sys
-import threading
 from typing import List
 
 from .agent import Agent
 from .agent import logger
 from .client import AgentClient
-from .client import parse_rpc_message
 from .protocol import MESSAGE_TEXT_NOTIFICATION
 from .protocol import MessageText
 from .server import AgentServer
+from .server import parse_rpc_message
 
 __all__ = [
     "Agent",
@@ -25,47 +24,51 @@ __all__ = [
 ]
 
 
-class WSHandler(logging.Handler):
-    """Logging handler that forwards captured LSP messages through to the web socket
-    client."""
+class MessageHandler(logging.Handler):
+    """Logging handler that forwards captured JSON-RPC messages through to the
+    ``AgentServer`` instance."""
 
-    def __init__(self, server: AgentServer, *args, **kwargs):
+    def __init__(self, client: AgentClient, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.server = server
+        self.client = client
 
     def emit(self, record: logging.LogRecord):
         message = MessageText(
             text=record.args[0],  # type: ignore
             source=record.__dict__["source"],
         )
-        self.server.lsp.message_text_notification(message)
+        self.client.protocol.message_text_notification(message)
 
 
-def run_agent(args, extra: List[str]):
+async def main(args, extra: List[str]):
     if extra is None:
         print("Missing server start command", file=sys.stderr)
         return 1
 
-    process = subprocess.Popen(extra, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-    agent = Agent(process, sys.stdin.buffer, sys.stdout.buffer)
+    command, *arguments = extra
 
-    server = AgentServer()
-    handler = WSHandler(server)
+    server = await asyncio.create_subprocess_exec(
+        command,
+        *arguments,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    agent = Agent(server, sys.stdin.buffer, sys.stdout.buffer)
+
+    client = AgentClient()
+    handler = MessageHandler(client)
     handler.setLevel(logging.INFO)
 
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
 
-    agent_thread = threading.Thread(
-        target=asyncio.run,
-        args=(agent.start(),),
-    )
-    agent_thread.start()
+    await client.start_tcp(args.host, args.port)
+    await agent.start()
 
-    try:
-        server.start_ws(args.host, args.port)
-    finally:
-        agent.stop()
+
+def run_agent(args, extra: List[str]):
+    asyncio.run(main(args, extra))
 
 
 def cli(commands: argparse._SubParsersAction):
@@ -74,31 +77,32 @@ def cli(commands: argparse._SubParsersAction):
         help="instrument an LSP session",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description="""\
-This command runs the given language server as a subprocess, wrapping it in a
-websocket server allowing all traffic to be inspected by some client.
+This command runs the given JSON-RPC server as a subprocess, wrapping it in a
+an "AgentClient" which will capture all messages sent to/from the wrapped
+server, forwarding them onto an "AgentServer" to be processed.
 
 To wrap a server, supply its start command after all other agent options and
 preceeded by a `--`, for example:
 
     lsp-devtools agent -p 1234 -- python -m esbonio
 
-Wrapping a language server with this command is required to enable the
+Wrapping a JSON-RPC server with this command is required to enable the
 majority of the lsp-devtools suite of tools.
 
-       ┌─ LSP Client ─┐     ┌─────── Agent ────────┐    ┌─ LSP Server ─┐
+       ┌─ RPC Client ─┐     ┌──── Agent Client ────┐    ┌─ RPC Server ─┐
        │              │     │   ┌──────────────┐   │    │              │
        │        stdout│─────│───│              │───│────│stdin         │
-       │              │     │   │ Agent Server │   │    │              │
+       │              │     │   │    Agent     │   │    │              │
        │         stdin│─────│───│              │───│────│stdout        │
        │              │     │   └──────────────┘   │    │              │
-       │              │     │          │           │    │              │
-       └──────────────┘     └──────────┴───────────┘    └──────────────┘
+       │              │     │                      │    │              │
+       └──────────────┘     └──────────────────────┘    └──────────────┘
                                        │
-                                       │ web socket
+                                       │ tcp/websocket
                                        │
                                 ┌──────────────┐
                                 │              │
-                                │ Agent Client │
+                                │ Agent Server │
                                 │              │
                                 └──────────────┘
 
@@ -107,13 +111,13 @@ majority of the lsp-devtools suite of tools.
 
     cmd.add_argument(
         "--host",
-        help="the host to run the websocket server on.",
+        help="the host to connect to.",
         default="localhost",
     )
     cmd.add_argument(
         "-p",
         "--port",
-        help="the port to run the websocket server on",
+        help="the port to connect to",
         default=8765,
     )
 

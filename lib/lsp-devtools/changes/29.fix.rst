@@ -1,0 +1,1 @@
+As a consequence of the new architecture, commands like ``lsp-devtools record`` no longer miss the start of an LSP session
