@@ -44,4 +44,3 @@ E       asyncio.exceptions.CancelledError: Server process exited with return cod
 ============================================== short test summary info ==============================================
 ERROR test_server.py::test_completions - asyncio.exceptions.CancelledError: Server process exited with return code: 0
 ================================================= 1 error in 1.15s ==================================================
-
