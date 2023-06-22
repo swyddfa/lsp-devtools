@@ -1,9 +1,12 @@
+import asyncio
 import json
 import re
+import threading
 from typing import Any
 from typing import Callable
 from typing import Optional
 
+from pygls.client import aio_readline
 from pygls.protocol import default_converter
 from pygls.server import Server
 
@@ -27,9 +30,31 @@ class AgentServer(Server):
         super().__init__(*args, **kwargs)
         self._client_buffer = []
         self._server_buffer = []
+        self._stop_event = threading.Event()
+        self._tcp_server = None
 
     def feature(self, feature_name: str, options: Optional[Any] = None):
         return self.lsp.fm.feature(feature_name, options)
+
+    async def start_tcp(self, host: str, port: int) -> None:
+        async def handle_client(reader, writer):
+            self.lsp.connection_made(writer)
+            await aio_readline(self._stop_event, reader, self.lsp.data_received)
+
+            writer.close()
+            await writer.wait_closed()
+
+            if self._tcp_server is not None:
+                self._tcp_server.cancel()
+
+        server = await asyncio.start_server(handle_client, host, port)
+        async with server:
+            self._tcp_server = asyncio.create_task(server.serve_forever())
+            await self._tcp_server
+
+    async def stop(self):
+        if self._tcp_server is not None:
+            self._tcp_server.cancel()
 
 
 MESSAGE_PATTERN = re.compile(
@@ -41,9 +66,7 @@ MESSAGE_PATTERN = re.compile(
 )
 
 
-def parse_rpc_message(
-    ls: AgentServer, message: MessageText, callback: Callable[[dict], None]
-):
+def parse_rpc_message(ls: AgentServer, message: MessageText, callback):
     """Parse json-rpc messages coming from the agent.
 
     Originally adatped from the ``data_received`` method on pygls' ``JsonRPCProtocol``
