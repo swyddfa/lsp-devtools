@@ -4,6 +4,7 @@ import logging
 import subprocess
 import sys
 from typing import List
+from uuid import uuid4
 
 from .agent import Agent
 from .agent import logger
@@ -31,13 +32,17 @@ class MessageHandler(logging.Handler):
     def __init__(self, client: AgentClient, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.client = client
+        self.session = str(uuid4())
 
     def emit(self, record: logging.LogRecord):
-        message = MessageText(
-            text=record.args[0],  # type: ignore
-            source=record.__dict__["source"],
+        self.client.protocol.message_text_notification(
+            MessageText(
+                text=record.args[0],  # type: ignore
+                session=self.session,
+                timestamp=record.created,
+                source=record.__dict__["source"],
+            )
         )
-        self.client.protocol.message_text_notification(message)
 
 
 async def main(args, extra: List[str]):
