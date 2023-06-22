@@ -1,8 +1,8 @@
 import argparse
+import asyncio
 import json
 import logging
 import pathlib
-import sys
 from functools import partial
 from logging import LogRecord
 from typing import List
@@ -142,10 +142,11 @@ def start_recording(args, extra: List[str]):
 
     try:
         print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
-        server.start_tcp(host, port)
-    except Exception:
-        # TODO: Error handling
-        raise
+        asyncio.run(server.start_tcp(host, port))
+    except asyncio.CancelledError:
+        pass
+    except KeyboardInterrupt:
+        pass
 
 
 def setup_filter_args(cmd: argparse.ArgumentParser):
