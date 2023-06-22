@@ -7,3 +7,8 @@ Sidebar {
 Sidebar.-hidden {
     offset-x: 100%;
 }
+
+
+DataTable {
+    height: 100%;
+}
