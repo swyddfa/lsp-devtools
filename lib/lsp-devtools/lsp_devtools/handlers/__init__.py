@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Any
 from typing import Mapping
@@ -13,6 +14,13 @@ except ImportError:
 
 
 MessageSource = Literal["client", "server"]
+
+
+def maybe_json(value):
+    try:
+        return json.loads(value)
+    except Exception:
+        return value
 
 
 @attrs.define
@@ -37,13 +45,13 @@ class LspMessage:
     method: Optional[str]
     """The ``method`` field, if it exists."""
 
-    params: Optional[Any]
+    params: Optional[Any] = attrs.field(converter=maybe_json)
     """The ``params`` field, if it exists."""
 
-    result: Optional[Any]
+    result: Optional[Any] = attrs.field(converter=maybe_json)
     """The ``result`` field, if it exists."""
 
-    error: Optional[Any]
+    error: Optional[Any] = attrs.field(converter=maybe_json)
     """The ``error`` field, if it exists."""
 
     @classmethod
@@ -81,7 +89,7 @@ class LspHandler(logging.Handler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.session_id = ""
+        self.session_id = str(uuid4())
 
     def handle_message(self, message: LspMessage):
         """Called each time a message is processed."""
@@ -93,9 +101,6 @@ class LspHandler(logging.Handler):
         message = record.args
         timestamp = record.created
         source = record.__dict__["source"]
-
-        if message.get("method", None) == "initialize":
-            self.session_id = str(uuid4())
 
         self.handle_message(
             LspMessage.from_rpc(
