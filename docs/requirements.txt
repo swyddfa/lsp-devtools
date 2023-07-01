@@ -3,4 +3,5 @@
 sphinx
 sphinx-design
 furo
+git+https://github.com/openlawlibrary/pygls.git#egg=pygls
 -e lib/pytest-lsp
