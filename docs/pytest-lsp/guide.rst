@@ -8,3 +8,4 @@ User Guide
    guide/language-client
    guide/client-capabilities
    guide/fixtures
+   guide/troubleshooting
