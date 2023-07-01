@@ -37,7 +37,7 @@ With the framework in place, we can go ahead and define our first test case
 
 .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/getting-started/t_server.py
    :language: python
-   :start-at: async def test_
+   :start-at: @pytest.mark.asyncio
 
 All that's left is to run the test suite!
 

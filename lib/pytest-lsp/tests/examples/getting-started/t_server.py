@@ -7,6 +7,7 @@ from lsprotocol.types import InitializeParams
 from lsprotocol.types import Position
 from lsprotocol.types import TextDocumentIdentifier
 
+import pytest
 import pytest_lsp
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
@@ -26,6 +27,7 @@ async def client(lsp_client: LanguageClient):
     await lsp_client.shutdown_session()
 
 
+@pytest.mark.asyncio
 async def test_completions(client: LanguageClient):
     """Ensure that the server implements completions correctly."""
 

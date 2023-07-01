@@ -14,7 +14,7 @@ The client maintains a record of any :attr:`~pytest_lsp.LanguageClient.diagnosti
 
    .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/diagnostics/t_server.py
       :language: python
-      :start-at: async def test_
+      :start-at: @pytest.mark.asyncio
 
 
 .. note::
@@ -40,7 +40,7 @@ Any :lsp:`window/logMessage` notifications sent from the server will be accessib
 
    .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-log-message/t_server.py
       :language: python
-      :start-at: async def test_
+      :start-at: @pytest.mark.asyncio
 
 .. card:: server.py
 
@@ -92,7 +92,7 @@ Similar to ``window/logMessage`` above, the client records any :lsp:`window/show
 
    .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-show-document/t_server.py
       :language: python
-      :start-at: async def test_
+      :start-at: @pytest.mark.asyncio
 
 .. card:: server.py
 
@@ -111,7 +111,7 @@ Similar to ``window/logMessage`` above, the client records any :lsp:`window/show
 
    .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-show-message/t_server.py
       :language: python
-      :start-at: async def test_
+      :start-at: @pytest.mark.asyncio
 
 .. card:: server.py
 

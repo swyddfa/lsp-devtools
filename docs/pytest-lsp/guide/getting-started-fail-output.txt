@@ -1,6 +1,5 @@
 $ pytest
-================================================ test session starts =========================
-=======================
+================================================ test session starts ================================================
 platform linux -- Python 3.11.3, pytest-7.2.0, pluggy-1.0.0
 rootdir: /tmp/pytest-of-alex/pytest-38/test_getting_started_fail0, configfile: tox.ini
 plugins: asyncio-0.21.0, typeguard-3.0.2, lsp-0.3.0
