@@ -14,7 +14,7 @@ endif
 
 html-build:
 	BUILDDIR=$(BUILDDIR) sphinx-build -b html . _build/$(BUILDDIR)/en/
-	echo "version=$(BUILDDIR)" >> $GITHUB_ENV
+	echo "version=$(BUILDDIR)" >> $GITHUB_OUTPUT
 
 
 html-local:
