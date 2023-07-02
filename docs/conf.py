@@ -50,7 +50,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 html_theme = "furo"
 html_title = "LSP Devtools"
-# html_static_path = ["_static"]
+html_static_path = ["_static"]
 html_theme_options = {
     "source_repository": "https://github.com/swyddfa/lsp-devtools/",
     "source_branch": BRANCH,
@@ -77,4 +77,5 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 
 
 def setup(app: Sphinx):
+    app.add_css_file("custom.css")
     app.add_role("lsp", lsp_role)

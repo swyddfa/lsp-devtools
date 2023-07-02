@@ -1,0 +1,4 @@
+.scrollable-svg {
+    max-height: 450px;
+    overflow: auto;
+}
