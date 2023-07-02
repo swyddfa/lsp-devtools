@@ -8,6 +8,7 @@ from logging import LogRecord
 from typing import List
 from typing import Optional
 
+from rich.console import Console
 from rich.console import ConsoleRenderable
 from rich.logging import RichHandler
 from rich.traceback import Traceback
@@ -20,6 +21,11 @@ from lsp_devtools.handlers.sql import SqlHandler
 
 from .filters import LSPFilter
 
+EXPORTERS = {
+    ".html": ("save_html", {}),
+    ".svg": ("save_svg", {"title": ""}),
+    ".txt": ("save_text", {}),
+}
 logger = logging.getLogger(__name__)
 
 
@@ -72,9 +78,11 @@ def log_rpc_message(ls: AgentServer, message: MessageText):
     parse_rpc_message(ls, message, logfn)
 
 
-def setup_stdout_output(args):
+def setup_stdout_output(args) -> Console:
     """Log to stdout."""
-    handler = RichLSPHandler(level=logging.INFO)
+
+    console = Console(record=args.save_output is not None)
+    handler = RichLSPHandler(level=logging.INFO, console=console)
     handler.addFilter(
         LSPFilter(
             message_source=args.message_source,
@@ -87,6 +95,7 @@ def setup_stdout_output(args):
     )
 
     logger.addHandler(handler)
+    return console
 
 
 def setup_file_output(args):
@@ -128,6 +137,7 @@ def start_recording(args, extra: List[str]):
     logger.setLevel(logging.INFO)
     server.feature(MESSAGE_TEXT_NOTIFICATION)(log_func)
 
+    console: Optional[Console] = None
     host = args.host
     port = args.port
 
@@ -138,7 +148,7 @@ def start_recording(args, extra: List[str]):
         setup_sqlite_output(args)
 
     else:
-        setup_stdout_output(args)
+        console = setup_stdout_output(args)
 
     try:
         print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
@@ -147,6 +157,16 @@ def start_recording(args, extra: List[str]):
         pass
     except KeyboardInterrupt:
         pass
+
+    if console is not None and args.save_output is not None:
+        destination = args.save_output
+        exporter_name, kwargs = EXPORTERS.get(destination.suffix, (None, None))
+        if exporter_name is None:
+            console.print(f"Unable to save output to '{destination.suffix}' files")
+            return
+
+        exporter = getattr(console, exporter_name)
+        exporter(str(destination), **kwargs)
 
 
 def setup_filter_args(cmd: argparse.ArgumentParser):
@@ -271,6 +291,18 @@ default) and push messages to it and have them be recorded.
         metavar="FILE",
         type=pathlib.Path,
         help="save messages to a SQLite DB",
+    )
+    output.add_argument(
+        "--save-output",
+        default=None,
+        metavar="DEST",
+        type=pathlib.Path,
+        help=(
+            "only applies when printing messages to the console. "
+            "This makes use of the rich.Console's export feature to save its output in "
+            "HTML, SVG or plain text format. The format used will be picked "
+            "automatically based on the desintation's file extension."
+        ),
     )
 
     cmd.set_defaults(run=start_recording)
