@@ -20,18 +20,18 @@
       let
         pkgs = import nixpkgs { inherit system; overlays = [ pytest-lsp-overlay ]; };
       in
-        eachPythonVersion [ "37" "38" "39" "310" "311" ] (pyVersion:
-
-
-          let
-            pytest-lsp = pkgs."python${pyVersion}Packages".pytest-lsp.overridePythonAttrs (_: { doCheck = false; });
-          in
-
+        eachPythonVersion [ "38" "39" "310" "311" ] (pyVersion:
           with pkgs; mkShell {
             name = "py${pyVersion}";
 
+            shellHook = ''
+              export PYTHONPATH="./:$PYTHONPATH"
+            '';
+
             packages = with pkgs."python${pyVersion}Packages"; [
-              pytest-lsp
+              pygls
+              pytest
+              pytest-asyncio
             ];
           }
       )
