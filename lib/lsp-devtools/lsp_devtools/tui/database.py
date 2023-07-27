@@ -82,13 +82,43 @@ class Database:
         if self.app is not None:
             self.app.post_message(PingMessage())
 
-    async def get_messages(self, max_row=-1):
-        """Get messages from the databse"""
+    async def get_messages(
+        self,
+        *,
+        session: str = "",
+        max_row: Optional[int] = None,
+    ):
+        """Get messages from the database
 
-        query = "SELECT * FROM protocol WHERE rowid > ?"
+        Parameters
+        ----------
+        session
+           If set, only return messages with the given session id
+
+        max_row
+           If set, only return messages with a row id greater than ``max_row``
+        """
+
+        base_query = "SELECT * FROM protocol"
+        where = []
+        parameters = []
+
+        if session:
+            where.append("session = ?")
+            parameters.append(session)
+
+        if max_row:
+            where.append("rowid > ?")
+            parameters.append(max_row)
+
+        if where:
+            conditions = " AND ".join(where)
+            query = " ".join([base_query, "WHERE", conditions])
+        else:
+            query = base_query
 
         async with self.cursor() as cursor:
-            await cursor.execute(query, (max_row,))
+            await cursor.execute(query, tuple(parameters))
 
             rows = await cursor.fetchall()
             results = []

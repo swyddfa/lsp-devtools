@@ -88,12 +88,14 @@ class MessagesTable(DataTable):
         self.add_column("ID")
         self.add_column("Method")
 
-    def on_key(self, event: events.Key):
-        if event.key != "enter":
+    @on(DataTable.RowHighlighted)
+    def show_object(self, event: DataTable.RowHighlighted):
+        """Show the message object on the currently highlighted row."""
+
+        rowid = int(self.get_row_at(event.cursor_row)[0])
+        if (message := self.rpcdata.get(rowid, None)) is None:
             return
 
-        rowid = int(self.get_row_at(self.cursor_row)[0])
-        message = self.rpcdata[rowid]
         name = ""
         obj = {}
 
@@ -111,10 +113,15 @@ class MessagesTable(DataTable):
 
         self.viewer.set_object(name, obj)
 
+    def _get_query_params(self):
+        """Return the set of query parameters to use when populating the table."""
+        return dict(max_row=self.max_row - 1)
+
     async def update(self):
         """Trigger a re-run of the query to pull in new data."""
 
-        messages = await self.db.get_messages(self.max_row - 1)
+        query_params = self._get_query_params()
+        messages = await self.db.get_messages(**query_params)
         for message in messages:
             self.max_row += 1
             self.rpcdata[self.max_row] = message
@@ -146,8 +153,8 @@ class LSPInspector(App):
     def __init__(self, db: Database, server: AgentServer, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        db.app = self
         self.db = db
-        self.db.app = self
         """Where the data for the app is being held"""
 
         self.server = server

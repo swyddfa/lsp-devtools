@@ -27,7 +27,8 @@ dependencies = [
     "importlib-resources; python_version<\"3.9\"",
     "pygls",
     "stamina",
-    "textual>=0.14.0",
+    "textual>=0.38.0",
+    "typing-extensions; python_version<\"3.8\"",
 ]
 
 [project.urls]
