@@ -13,3 +13,14 @@ This can be used to run the same set of tests while pretending to be a different
    :language: python
    :start-at: @pytest_lsp.fixture
    :end-at: await lsp_client.shutdown_session()
+
+
+Requesting Other Fixtures
+-------------------------
+
+As you would expect, it's possible to request other fixtures to help set up your client.
+
+.. literalinclude:: ../../../lib/pytest-lsp/tests/examples/fixture-passthrough/t_server.py
+   :language: python
+   :start-at: @pytest.fixture
+   :end-at: await lsp_client.shutdown_session()

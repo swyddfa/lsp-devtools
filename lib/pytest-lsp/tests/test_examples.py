@@ -27,6 +27,7 @@ asyncio_mode = auto
     [
         ("diagnostics", dict(passed=1)),
         ("getting-started", dict(passed=1)),
+        ("fixture-passthrough", dict(passed=1)),
         ("parameterised-clients", dict(passed=2)),
         ("window-log-message", dict(passed=1)),
         ("window-show-document", dict(passed=1)),

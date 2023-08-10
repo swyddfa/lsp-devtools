@@ -121,17 +121,46 @@ if sys.version_info.minor < 10:
         return await it.__anext__()
 
 
-def get_fixture_arguments(fn: Callable, client: LanguageClient, request) -> dict:
-    """Return the arguments to pass to the user's fixture function"""
+def get_fixture_arguments(
+    fn: Callable,
+    client: LanguageClient,
+    request: pytest.FixtureRequest,
+) -> dict:
+    """Return the arguments to pass to the user's fixture function.
+
+    Parameters
+    ----------
+    fn
+       The user's fixture function
+
+    client
+       The language client instance to inject
+
+    request
+       pytest's request fixture
+
+    Returns
+    -------
+    dict
+       The set of arguments to pass to the user's fixture function
+    """
     kwargs = {}
+    required_parameters = set(inspect.signature(fn).parameters.keys())
 
-    parameters = inspect.signature(fn).parameters
-    if "request" in parameters:
+    # Inject the 'request' fixture if requested
+    if "request" in required_parameters:
         kwargs["request"] = request
+        required_parameters.remove("request")
 
+    # Inject the language client
     for name, cls in typing.get_type_hints(fn).items():
         if issubclass(cls, LanguageClient):
             kwargs[name] = client
+            required_parameters.remove(name)
+
+    # Assume all remaining parameters are pytest fixtures
+    for name in required_parameters:
+        kwargs[name] = request.getfixturevalue(name)
 
     return kwargs
 
