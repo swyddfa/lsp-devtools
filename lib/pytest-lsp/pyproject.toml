@@ -58,6 +58,14 @@ typecheck = [
 [tool.setuptools.packages.find]
 include = ["pytest_lsp*"]
 
+[tool.coverage.run]
+source_pkgs = ["pytest_lsp"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+sort = "Cover"
+
 [tool.isort]
 force_single_line = true
 profile = "black"
@@ -111,17 +119,3 @@ showcontent = true
 directory = "removed"
 name = "Removed"
 showcontent = true
-
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-isolated_build = True
-skip_missing_interpreters = true
-envlist = py{37,38,39,310,311}
-
-[testenv]
-extras= dev
-commands =
-    pytest {posargs}
-"""
