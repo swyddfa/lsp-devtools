@@ -1,0 +1,1 @@
+If the agent is unable to connect to a server app immediately, it will now retry indefinitely until it succeeds or the language server exits
