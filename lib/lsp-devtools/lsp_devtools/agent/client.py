@@ -2,6 +2,7 @@ import asyncio
 from typing import Any
 from typing import Optional
 
+import stamina
 from pygls.client import Client
 from pygls.client import aio_readline
 from pygls.protocol import default_converter
@@ -36,6 +37,7 @@ class AgentClient(Client):
         super().__init__(
             protocol_cls=AgentProtocol, converter_factory=default_converter
         )
+        self.connected = False
 
     def _report_server_error(self, error, source):
         # Bail on error
@@ -47,13 +49,25 @@ class AgentClient(Client):
 
     # TODO: Upstream this... or at least something equivalent.
     async def start_tcp(self, host: str, port: int):
-        reader, writer = await asyncio.open_connection(host, port)
+        # The user might not have started the server app immediately and since the
+        # agent will live as long as the wrapper language server we may as well
+        # try indefinitely.
+        retries = stamina.retry_context(
+            on=OSError,
+            attempts=None,
+            timeout=None,
+            wait_initial=1,
+            wait_max=60,
+        )
+        async for attempt in retries:
+            with attempt:
+                reader, writer = await asyncio.open_connection(host, port)
 
-        # adapter = TCPTransportAdapter(writer)
         self.protocol.connection_made(writer)
         connection = asyncio.create_task(
             aio_readline(self._stop_event, reader, self.protocol.data_received)
         )
+        self.connected = True
         self._async_tasks.append(connection)
 
     # TODO: Upstream this... or at least something equivalent.

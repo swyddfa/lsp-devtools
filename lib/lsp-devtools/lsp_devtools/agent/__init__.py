@@ -33,16 +33,25 @@ class MessageHandler(logging.Handler):
         super().__init__(*args, **kwargs)
         self.client = client
         self.session = str(uuid4())
+        self._buffer: List[MessageText] = []
 
     def emit(self, record: logging.LogRecord):
-        self.client.protocol.message_text_notification(
-            MessageText(
-                text=record.args[0],  # type: ignore
-                session=self.session,
-                timestamp=record.created,
-                source=record.__dict__["source"],
-            )
+        message = MessageText(
+            text=record.args[0],  # type: ignore
+            session=self.session,
+            timestamp=record.created,
+            source=record.__dict__["source"],
         )
+
+        if not self.client.connected:
+            self._buffer.append(message)
+            return
+
+        # Send any buffered messages
+        while len(self._buffer) > 0:
+            self.client.protocol.message_text_notification(self._buffer.pop(0))
+
+        self.client.protocol.message_text_notification(message)
 
 
 async def main(args, extra: List[str]):
@@ -68,8 +77,10 @@ async def main(args, extra: List[str]):
     logger.setLevel(logging.INFO)
     logger.addHandler(handler)
 
-    await client.start_tcp(args.host, args.port)
-    await agent.start()
+    await asyncio.gather(
+        client.start_tcp(args.host, args.port),
+        agent.start(),
+    )
 
 
 def run_agent(args, extra: List[str]):
