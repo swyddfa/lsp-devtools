@@ -155,7 +155,7 @@ class FormatString:
     VARIABLE = re.compile(r"{\.([^}]+)}")
 
     def __init__(self, pattern: str):
-        self.pattern = pattern.replace("\\n", "\n").replace("\\t", "\t")
+        self.pattern = pattern  # .replace("\\n", "\n").replace("\\t", "\t")
         self._parse()
 
     def _parse(self):

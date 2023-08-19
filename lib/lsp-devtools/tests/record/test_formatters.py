@@ -27,7 +27,7 @@ from lsp_devtools.record.formatters import FormatString
                     "textDocument": {"uri": "file:///path/to/file.txt"},
                 },
             },
-            "textDocument/completion file:///path/to/file.txt:{'line': 1, 'character': 2}",  # noqa: E501
+            'textDocument/completion file:///path/to/file.txt:{\n  "line": 1,\n  "character": 2\n}',  # noqa: E501
         ),
         (
             "{.method} {.params.textDocument.uri}:{.params.position|Position}",
@@ -61,7 +61,7 @@ from lsp_devtools.record.formatters import FormatString
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
                 }
             },
-            "{'label': 'one'}\n{'label': 'two'}\n{'label': 'three'}",
+            '{\n  "label": "one"\n}\n{\n  "label": "two"\n}\n{\n  "label": "three"\n}',
         ),
         (
             "{.result.items[].label}",
@@ -88,7 +88,7 @@ from lsp_devtools.record.formatters import FormatString
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
                 }
             },
-            "{'label': 'one'}",
+            '{\n  "label": "one"\n}',
         ),
         (
             "{.result.items[-1]}",
@@ -97,7 +97,7 @@ from lsp_devtools.record.formatters import FormatString
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
                 }
             },
-            "{'label': 'three'}",
+            '{\n  "label": "three"\n}',
         ),
         (
             "- {.result.items[0].label}",
