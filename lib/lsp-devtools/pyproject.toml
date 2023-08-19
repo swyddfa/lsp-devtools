@@ -42,10 +42,6 @@ dev = [
     "pre-commit",
     "tox",
 ]
-test=[
-    "pytest-cov",
-    "pytest-timeout",
-]
 typecheck=[
     "mypy",
     "importlib_resources",
@@ -59,6 +55,14 @@ lsp-devtools = "lsp_devtools.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["lsp_devtools*"]
+
+[tool.coverage.run]
+source_pkgs = ["lsp_devtools"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+sort = "Cover"
 
 [tool.isort]
 force_single_line = true
@@ -100,16 +104,3 @@ showcontent = true
 directory = "misc"
 name = "Misc"
 showcontent = true
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-isolated_build = True
-skip_missing_interpreters = true
-envlist = py{37,38,39,310,311}
-
-[testenv]
-extras=test
-commands =
-    pytest {posargs}
-"""

@@ -6,26 +6,27 @@ import stamina
 from pygls.client import Client
 from pygls.client import aio_readline
 from pygls.protocol import default_converter
-from websockets.client import WebSocketClientProtocol
 
 from lsp_devtools.agent.protocol import AgentProtocol
 
+# from websockets.client import WebSocketClientProtocol
 
-class WebSocketClientTransportAdapter:
-    """Protocol adapter for the WebSocket client interface."""
 
-    def __init__(self, ws: WebSocketClientProtocol, loop: asyncio.AbstractEventLoop):
-        self._ws = ws
-        self._loop = loop
+# class WebSocketClientTransportAdapter:
+#     """Protocol adapter for the WebSocket client interface."""
 
-    def close(self) -> None:
-        """Stop the WebSocket server."""
-        print("-- CLOSING --")
-        self._loop.create_task(self._ws.close())
+#     def __init__(self, ws: WebSocketClientProtocol, loop: asyncio.AbstractEventLoop):
+#         self._ws = ws
+#         self._loop = loop
 
-    def write(self, data: Any) -> None:
-        """Create a task to write specified data into a WebSocket."""
-        asyncio.ensure_future(self._ws.send(data))
+#     def close(self) -> None:
+#         """Stop the WebSocket server."""
+#         print("-- CLOSING --")
+#         self._loop.create_task(self._ws.close())
+
+#     def write(self, data: Any) -> None:
+#         """Create a task to write specified data into a WebSocket."""
+#         asyncio.ensure_future(self._ws.send(data))
 
 
 class AgentClient(Client):
