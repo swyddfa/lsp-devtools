@@ -1,0 +1,1 @@
+``make_test_client`` has been renamed to ``make_test_lsp_client``

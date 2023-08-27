@@ -178,7 +178,7 @@ def cancel_all_tasks(message: str):
             task.cancel(message)
 
 
-def make_test_client() -> LanguageClient:
+def make_test_lsp_client() -> LanguageClient:
     """Construct a new test client instance with the handlers needed to capture
     additional responses from the server."""
 

@@ -4,82 +4,42 @@ import sys
 import textwrap
 import typing
 from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Optional
 
+import attrs
 import pytest
 import pytest_asyncio
+from pygls.client import Client
 
 from pytest_lsp.client import LanguageClient
-from pytest_lsp.client import make_test_client
+from pytest_lsp.client import make_test_lsp_client
 
 logger = logging.getLogger("client")
 
 
-class ClientServer:
-    """A client server pair used to drive test cases."""
-
-    def __init__(self, *, client: LanguageClient, server_command: List[str]):
-        self.server_command = server_command
-        """The command to use when starting the server."""
-
-        self.client = client
-        """The client used to drive the test."""
-
-    async def start(self):
-        await self.client.start_io(*self.server_command)
-
-    async def stop(self):
-        await self.client.stop()
-
-
+@attrs.define
 class ClientServerConfig:
-    """Configuration for a LSP Client-Server pair."""
+    """Configuration for a Client-Server connection."""
 
-    def __init__(
-        self,
-        server_command: List[str],
-        *,
-        client_factory: Callable[[], LanguageClient] = make_test_client,
-    ) -> None:
-        """
-        Parameters
-        ----------
-        server_command
-           The command to use to start the language server.
+    server_command: List[str]
+    """The command to use to start the language server."""
 
-        client_factory
-           Factory function to use when constructing the language client instance.
-           Defaults to :func:`pytest_lsp.make_test_client`
-        """
-
-        self.server_command = server_command
-        self.client_factory = client_factory
-
-
-def make_client_server(config: ClientServerConfig) -> ClientServer:
-    """Construct a new ``ClientServer`` instance."""
-
-    return ClientServer(
-        server_command=config.server_command,
-        client=config.client_factory(),
+    client_factory: Callable[[], Client] = attrs.field(
+        default=make_test_lsp_client,
     )
+    """Factory function to use when constructing the test client instance."""
 
+    server_env: Optional[Dict[str, str]] = attrs.field(default=None)
+    """Environment variables to set when starting the server."""
 
-@pytest.hookimpl(trylast=True)
-def pytest_runtest_setup(item: pytest.Item):
-    """Ensure that that client has not errored before running a test."""
+    async def start(self) -> Client:
+        """Return the client instance to use for the test."""
+        client = self.client_factory()
 
-    client: Optional[LanguageClient] = None
-    for arg in item.funcargs.values():  # type: ignore[attr-defined]
-        if isinstance(arg, LanguageClient):
-            client = arg
-            break
-
-    if not client or client.error is None:
-        return
-
-    raise client.error
+        await client.start_io(*self.server_command, env=self.server_env)
+        return client
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
@@ -123,7 +83,7 @@ if sys.version_info.minor < 10:
 
 def get_fixture_arguments(
     fn: Callable,
-    client: LanguageClient,
+    client: Client,
     request: pytest.FixtureRequest,
 ) -> dict:
     """Return the arguments to pass to the user's fixture function.
@@ -134,7 +94,7 @@ def get_fixture_arguments(
        The user's fixture function
 
     client
-       The language client instance to inject
+       The test client instance to inject
 
     request
        pytest's request fixture
@@ -154,7 +114,7 @@ def get_fixture_arguments(
 
     # Inject the language client
     for name, cls in typing.get_type_hints(fn).items():
-        if issubclass(cls, LanguageClient):
+        if issubclass(cls, Client):
             kwargs[name] = client
             required_parameters.remove(name)
 
@@ -183,10 +143,9 @@ def fixture(
     def wrapper(fn):
         @pytest_asyncio.fixture(**kwargs)
         async def the_fixture(request):
-            client_server = make_client_server(config)
-            await client_server.start()
+            client = await config.start()
 
-            kwargs = get_fixture_arguments(fn, client_server.client, request)
+            kwargs = get_fixture_arguments(fn, client, request)
             result = fn(**kwargs)
             if inspect.isasyncgen(result):
                 try:
@@ -194,7 +153,7 @@ def fixture(
                 except StopAsyncIteration:
                     pass
 
-            yield client_server.client
+            yield client
 
             if inspect.isasyncgen(result):
                 try:
@@ -202,7 +161,7 @@ def fixture(
                 except StopAsyncIteration:
                     pass
 
-            await client_server.stop()
+            await client.stop()
 
         return the_fixture
 
