@@ -11,7 +11,7 @@ from typing import Optional
 import attrs
 import pytest
 import pytest_asyncio
-from pygls.client import Client
+from pygls.client import JsonRPCClient
 
 from pytest_lsp.client import LanguageClient
 from pytest_lsp.client import make_test_lsp_client
@@ -26,7 +26,7 @@ class ClientServerConfig:
     server_command: List[str]
     """The command to use to start the language server."""
 
-    client_factory: Callable[[], Client] = attrs.field(
+    client_factory: Callable[[], JsonRPCClient] = attrs.field(
         default=make_test_lsp_client,
     )
     """Factory function to use when constructing the test client instance."""
@@ -34,7 +34,7 @@ class ClientServerConfig:
     server_env: Optional[Dict[str, str]] = attrs.field(default=None)
     """Environment variables to set when starting the server."""
 
-    async def start(self) -> Client:
+    async def start(self) -> JsonRPCClient:
         """Return the client instance to use for the test."""
         client = self.client_factory()
 
@@ -83,7 +83,7 @@ if sys.version_info.minor < 10:
 
 def get_fixture_arguments(
     fn: Callable,
-    client: Client,
+    client: JsonRPCClient,
     request: pytest.FixtureRequest,
 ) -> dict:
     """Return the arguments to pass to the user's fixture function.
@@ -114,7 +114,7 @@ def get_fixture_arguments(
 
     # Inject the language client
     for name, cls in typing.get_type_hints(fn).items():
-        if issubclass(cls, Client):
+        if issubclass(cls, JsonRPCClient):
             kwargs[name] = client
             required_parameters.remove(name)
 
