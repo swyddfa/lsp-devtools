@@ -24,7 +24,7 @@ from lsprotocol.types import PublishDiagnosticsParams
 from lsprotocol.types import ShowDocumentParams
 from lsprotocol.types import ShowDocumentResult
 from lsprotocol.types import ShowMessageParams
-from pygls.lsp.client import LanguageClient as BaseLanguageClient
+from pygls.lsp.client import BaseLanguageClient
 from pygls.protocol import default_converter
 
 from .protocol import LanguageClientProtocol
