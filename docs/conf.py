@@ -37,6 +37,7 @@ autodoc_member_order = "groupwise"
 autodoc_typehints = "description"
 
 intersphinx_mapping = {
+    "pygls": ("https://pygls.readthedocs.io/en/latest/", None),
     "python": ("https://docs.python.org/3/", None),
     "pytest": ("https://docs.pytest.org/en/stable/", None),
 }

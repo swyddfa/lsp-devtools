@@ -8,7 +8,7 @@ LanguageClient
 
 .. autoclass:: LanguageClient
    :members:
-   :inherited-members:
+   :show-inheritance:
 
 
 Test Setup
@@ -21,12 +21,8 @@ Test Setup
 .. autoclass:: ClientServerConfig
    :members:
 
-.. autofunction:: make_client_server
+.. autofunction:: make_test_lsp_client
 
-.. autofunction:: make_test_client
-
-.. autoclass:: ClientServer
-   :members:
 
 Checks
 ------
