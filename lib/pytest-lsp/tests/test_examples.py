@@ -101,6 +101,18 @@ def test_getting_started_fail(pytester: pytest.Pytester):
     results.stdout.fnmatch_lines(message)
 
 
+def test_generic_rpc(pytester: pytest.Pytester):
+    """Ensure that the generic rpc example works as expected"""
+
+    setup_test(pytester, "generic-rpc")
+
+    results = pytester.runpytest("--log-cli-level", "info")
+    results.assert_outcomes(passed=1, failed=1)
+
+    results.stdout.fnmatch_lines(" *LOG: a=1")
+    results.stdout.fnmatch_lines(" *LOG: b=2")
+
+
 def test_window_log_message_fail(pytester: pytest.Pytester):
     """Ensure that the initial getting started example fails as expected."""
 

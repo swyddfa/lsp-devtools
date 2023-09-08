@@ -9,3 +9,4 @@ User Guide
    guide/client-capabilities
    guide/fixtures
    guide/troubleshooting
+   guide/testing-json-rpc-servers
