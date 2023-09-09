@@ -14,7 +14,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -38,24 +38,25 @@ jobs:
         # dev version number e.g. v1.2.3-dev4
         ./scripts/make-release.sh pytest-lsp
       name: Set Version
-      if: matrix.python-version == '3.10'
+      if: matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
 
     - run: |
         cd lib/pytest-lsp
 
         version=$(echo ${{ matrix.python-version }} | tr -d .)
         python -m tox run -f "py${version}"
+      shell: bash
       name: Test
 
     - name: Package
       run: |
         cd lib/pytest-lsp
         python -m build
-      if: always() && matrix.python-version == '3.10'
+      if: always() && matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v3
       with:
         name: 'dist'
         path: lib/pytest-lsp/dist
-      if: always() && matrix.python-version == '3.10'
+      if: always() && matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
