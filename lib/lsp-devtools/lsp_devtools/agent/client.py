@@ -3,7 +3,7 @@ from typing import Any
 from typing import Optional
 
 import stamina
-from pygls.client import Client
+from pygls.client import JsonRPCClient
 from pygls.client import aio_readline
 from pygls.protocol import default_converter
 
@@ -29,7 +29,7 @@ from lsp_devtools.agent.protocol import AgentProtocol
 #         asyncio.ensure_future(self._ws.send(data))
 
 
-class AgentClient(Client):
+class AgentClient(JsonRPCClient):
     """Client for connecting to an AgentServer instance."""
 
     protocol: AgentProtocol
