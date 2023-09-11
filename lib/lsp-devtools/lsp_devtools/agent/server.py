@@ -3,7 +3,6 @@ import json
 import re
 import threading
 from typing import Any
-from typing import Callable
 from typing import Optional
 
 from pygls.client import aio_readline
