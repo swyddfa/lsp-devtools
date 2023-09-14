@@ -20,13 +20,30 @@ final: prev: {
 
       });
 
+      lsprotocol = python-prev.lsprotocol.overridePythonAttrs(oldAttrs: rec {
+        version = "2023.0.0a3";
+
+        src = prev.fetchFromGitHub {
+          rev = version;
+          owner = "microsoft";
+          repo = oldAttrs.pname;
+          sha256 = "sha256-Q4jvUIMMaDX8mvdmRtYKHB2XbMEchygO2NMmMQdNkTc=";
+        };
+      });
+
       pygls = python-prev.pygls.overridePythonAttrs (_: {
+        format = "pyproject";
+
         src = prev.fetchFromGitHub {
           owner = "openlawlibrary";
           repo = "pygls";
           rev = "main";
-          hash = "sha256-KjnuGQy3/YBSZyXYNWz4foUsFRbinujGxCkQjRSK4PE=";
+          hash = "sha256-JpopfqeLNi23TuZ5mkPEShUPScd1fB0IDXSVGvDYFXE=";
         };
+
+        nativeBuildInputs = with python-prev; [
+          poetry-core
+        ];
       });
 
       pytest-lsp = python-prev.buildPythonPackage {
