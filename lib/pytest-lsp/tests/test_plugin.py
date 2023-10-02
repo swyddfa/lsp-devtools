@@ -33,14 +33,14 @@ from pytest_lsp import client_capabilities
 
 @pytest_lsp.fixture(
     config=ClientServerConfig(
-        server_command=["{python}", "{server}"],
+        server_command=[r"{python}", r"{server}"],
     )
 )
 async def client(lsp_client: LanguageClient):
     await lsp_client.initialize_session(
         InitializeParams(
             capabilities=client_capabilities("visual-studio-code"),
-            root_uri="{root_uri}"
+            root_uri=r"{root_uri}"
         )
     )
     yield
