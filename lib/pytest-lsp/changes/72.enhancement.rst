@@ -1,2 +1,1 @@
 It is now possible to set the environment variables that the server under test is launched with.
-
