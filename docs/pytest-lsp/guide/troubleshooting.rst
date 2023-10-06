@@ -109,7 +109,7 @@ Depending on the version of ``pygls`` (the LSP implementation used by ``pytest-l
    -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
    =========================== 1 passed, 1 warning in 0.64s =============================
 
-This is a known issue in ``pygls v1.0.2`` and older, upgrading your ``pygls`` version to ``TBD`` should resolve the issue.
+This is a known issue in ``pygls v1.0.2`` and older, upgrading your ``pygls`` version to ``1.1.0`` or newer should resolve the issue.
 
 .. note::
 
