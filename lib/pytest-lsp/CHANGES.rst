@@ -1,3 +1,24 @@
+v0.3.1 - 2023-10-06
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- pytest-lsp's ``LanguageClient`` is now based on the one provided by ``pygls``.
+  The main benefit is that the server connection is now based on an ``asyncio.subprocess.Process`` removing the need for pytest-lsp to constantly check to see if the server is still running. (`#61 <https://github.com/swyddfa/lsp-devtools/issues/61>`_)
+- Fixtures created with the `@pytest_lsp.fixture` decorator can now request additional pytest fixtures (`#71 <https://github.com/swyddfa/lsp-devtools/issues/71>`_)
+- It is now possible to set the environment variables that the server under test is launched with. (`#72 <https://github.com/swyddfa/lsp-devtools/issues/72>`_)
+- It is now possible to test any JSON-RPC based server with ``pytest-lsp``.
+  Note however, this support will only ever extend to managing the client-server connection. (`#73 <https://github.com/swyddfa/lsp-devtools/issues/73>`_)
+
+
+Misc
+^^^^
+
+- ``make_test_client`` has been renamed to ``make_test_lsp_client`` (`#73 <https://github.com/swyddfa/lsp-devtools/issues/73>`_)
+- Drop support for Python 3.7, add support for Python 3.12 (`#75 <https://github.com/swyddfa/lsp-devtools/issues/75>`_)
+
+
 v0.3.0 - 2023-05-19
 -------------------
 

@@ -1,2 +1,0 @@
-It is now possible to test any JSON-RPC based server with ``pytest-lsp``.
-Note however, this support will only ever extend to managing the client-server connection.

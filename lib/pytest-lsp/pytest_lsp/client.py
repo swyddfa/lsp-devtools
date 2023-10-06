@@ -24,7 +24,7 @@ else:
     import importlib.resources as resources  # type: ignore[no-redef]
 
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 logger = logging.getLogger(__name__)
 
 
