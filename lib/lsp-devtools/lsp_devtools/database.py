@@ -1,8 +1,12 @@
+import asyncio
 import json
+import logging
 import pathlib
 import sys
 from contextlib import asynccontextmanager
 from typing import Optional
+from typing import Set
+from uuid import uuid4
 
 import aiosqlite
 from textual import log
@@ -16,17 +20,17 @@ else:
     import importlib.resources as resources  # type: ignore[no-redef]
 
 
-class PingMessage(Message):
-    """Sent when there are updates in the db."""
-
-
 class Database:
     """Controls access to the backing sqlite database."""
 
-    def __init__(self, dbpath: Optional[pathlib.Path] = None, app=None):
+    class Update(Message):
+        """Sent when there are updates to the database"""
+
+    def __init__(self, dbpath: Optional[pathlib.Path] = None):
         self.dbpath = dbpath or ":memory:"
         self.db: Optional[aiosqlite.Connection] = None
-        self.app = app
+        self.app = None
+        self._handlers: Dict[str, set] = {}
 
     async def close(self):
         if self.db:
@@ -80,7 +84,7 @@ class Database:
             )
 
         if self.app is not None:
-            self.app.post_message(PingMessage())
+            self.app.post_message(Database.Update())
 
     async def get_messages(
         self,
@@ -99,7 +103,7 @@ class Database:
            If set, only return messages with a row id greater than ``max_row``
         """
 
-        base_query = "SELECT * FROM protocol"
+        base_query = "SELECT rowid, * FROM protocol"
         where = []
         parameters = []
 
@@ -123,17 +127,38 @@ class Database:
             rows = await cursor.fetchall()
             results = []
             for row in rows:
-                results.append(
-                    LspMessage(
-                        session=row[0],
-                        timestamp=row[1],
-                        source=row[2],
-                        id=row[3],
-                        method=row[4],
-                        params=row[5],
-                        result=row[6],
-                        error=row[7],
-                    )
+                message = LspMessage(
+                    session=row[1],
+                    timestamp=row[2],
+                    source=row[3],
+                    id=row[4],
+                    method=row[5],
+                    params=row[6],
+                    result=row[7],
+                    error=row[8],
                 )
 
+                results.append((row[0], message))
+
             return results
+
+
+class DatabaseLogHandler(logging.Handler):
+    """A logging handler that records messages in the given database."""
+
+    def __init__(self, db: Database, *args, session=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.db = db
+        self.session = session or str(uuid4())
+        self._tasks: Set[asyncio.Task] = set()
+
+    def emit(self, record: logging.LogRecord):
+        body = json.loads(record.args[0])
+        task = asyncio.create_task(
+            self.db.add_message(
+                self.session, record.created, record.__dict__["source"], body
+            )
+        )
+
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)

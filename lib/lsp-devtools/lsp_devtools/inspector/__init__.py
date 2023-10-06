@@ -9,7 +9,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 
-import appdirs
+import platformdirs
 from rich.highlighter import ReprHighlighter
 from rich.text import Text
 from textual import events
@@ -29,10 +29,8 @@ from textual.widgets.tree import TreeNode
 from lsp_devtools.agent import MESSAGE_TEXT_NOTIFICATION
 from lsp_devtools.agent import AgentServer
 from lsp_devtools.agent import MessageText
+from lsp_devtools.database import Database
 from lsp_devtools.handlers import LspMessage
-
-from .database import Database
-from .database import PingMessage
 
 logger = logging.getLogger(__name__)
 
@@ -71,12 +69,14 @@ class MessageViewer(Tree):
 class MessagesTable(DataTable):
     """Datatable used to display all messages between client and server"""
 
-    def __init__(self, db: Database, viewer: MessageViewer):
+    def __init__(self, db: Database, viewer: MessageViewer, session=None):
         super().__init__()
 
         self.db = db
+
         self.rpcdata: Dict[int, LspMessage] = {}
         self.max_row = 0
+        self.session: Optional[str] = session
 
         self.viewer = viewer
 
@@ -91,6 +91,8 @@ class MessagesTable(DataTable):
     @on(DataTable.RowHighlighted)
     def show_object(self, event: DataTable.RowHighlighted):
         """Show the message object on the currently highlighted row."""
+        if event.cursor_row < 0:
+            return
 
         rowid = int(self.get_row_at(event.cursor_row)[0])
         if (message := self.rpcdata.get(rowid, None)) is None:
@@ -115,27 +117,30 @@ class MessagesTable(DataTable):
 
     def _get_query_params(self):
         """Return the set of query parameters to use when populating the table."""
-        return dict(max_row=self.max_row - 1)
+        query = dict(max_row=self.max_row)
+
+        if self.session is not None:
+            query["session"] = self.session
+
+        return query
 
     async def update(self):
         """Trigger a re-run of the query to pull in new data."""
 
         query_params = self._get_query_params()
         messages = await self.db.get_messages(**query_params)
-        for message in messages:
-            self.max_row += 1
-            self.rpcdata[self.max_row] = message
+        for idx, message in messages:
+            self.max_row = idx
+            self.rpcdata[idx] = message
 
             # Surely there's a more direct way to do this?
             dt = datetime.fromtimestamp(message.timestamp)
             time = dt.isoformat(timespec="milliseconds")
             time = time[time.find("T") + 1 :]
 
-            self.add_row(
-                str(self.max_row), time, message.source, message.id, message.method
-            )
+            self.add_row(str(idx), time, message.source, message.id, message.method)
 
-        self.move_cursor(row=self.max_row, animate=True)
+        self.move_cursor(row=self.row_count, animate=True)
 
 
 class Sidebar(Container):
@@ -160,7 +165,7 @@ class LSPInspector(App):
         self.server = server
         """Server used to manage connections to lsp servers."""
 
-        self._async_tasks = []
+        self._async_tasks: List[asyncio.Task] = []
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -184,10 +189,6 @@ class LSPInspector(App):
             if sidebar.query("*:focus"):
                 self.screen.set_focus(None)
             sidebar.add_class("-hidden")
-
-    @on(PingMessage)
-    async def on_ping(self, message: PingMessage):
-        await self.update_table()
 
     async def on_ready(self, event: Ready):
         self._async_tasks.append(
@@ -262,8 +263,8 @@ def tui(args, extra: List[str]):
 
 def cli(commands: argparse._SubParsersAction):
     cmd: argparse.ArgumentParser = commands.add_parser(
-        "tui",
-        help="launch TUI",
+        "inspect",
+        help="launch an interactive LSP session inspector",
         description="""\
 This command opens a text user interface that can be used to inspect and
 manipulate an LSP session interactively.
@@ -271,7 +272,7 @@ manipulate an LSP session interactively.
     )
 
     default_db = pathlib.Path(
-        appdirs.user_cache_dir(appname="lsp-devtools", appauthor="swyddfa"),
+        platformdirs.user_cache_dir(appname="lsp-devtools", appauthor="swyddfa"),
         "sessions.db",
     )
     cmd.add_argument(
