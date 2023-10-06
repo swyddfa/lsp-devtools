@@ -41,7 +41,7 @@ class LanguageClientProtocol(LanguageServerProtocol):
     async def send_request_async(self, method, params=None):
         result = await super().send_request_async(method, params)
         check_result_against_client_capabilities(
-            self._server.capabilities, method, result
+            self._server.capabilities, method, result  # type: ignore
         )
 
         return result
