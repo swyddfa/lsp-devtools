@@ -1,1 +1,0 @@
-``lsp-devtools agent`` no longer emits ``Unable to send data, no available transport!`` messages

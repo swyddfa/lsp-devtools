@@ -1,3 +1,31 @@
+v0.2.0 - 2023-10-06
+-------------------
+
+Features
+^^^^^^^^
+
+- **Experimental** Add proof of concept ``lsp-devtools client`` command that builds on textual's ``TextArea`` widget to offer an interactive language server client. (`#83 <https://github.com/swyddfa/lsp-devtools/issues/83>`_)
+
+
+Fixes
+^^^^^
+
+- The ``lsp-devtools agent`` command no longer fails to exit once an LSP session closes. (`#17 <https://github.com/swyddfa/lsp-devtools/issues/17>`_)
+- ``lsp-devtools record`` no longer emits a ``ResourceWarning`` (`#28 <https://github.com/swyddfa/lsp-devtools/issues/28>`_)
+- As a consequence of the new architecture, commands like ``lsp-devtools record`` no longer miss the start of an LSP session (`#29 <https://github.com/swyddfa/lsp-devtools/issues/29>`_)
+- ``lsp-devtools agent`` no longer emits ``Unable to send data, no available transport!`` messages (`#38 <https://github.com/swyddfa/lsp-devtools/issues/38>`_)
+
+
+Misc
+^^^^
+
+- The ``lsp-devtools agent`` now uses a TCP connection, which should make distribution easier (`#37 <https://github.com/swyddfa/lsp-devtools/issues/37>`_)
+- Drop Python 3.7 support (`#77 <https://github.com/swyddfa/lsp-devtools/issues/77>`_)
+- The ``lsp-devtools capabilities`` command has been removed in favour of ``lsp-devtools record``
+
+  The ``lsp-devtools tui`` command has been renamed to ``lsp-devtools inspect`` (`#83 <https://github.com/swyddfa/lsp-devtools/issues/83>`_)
+
+
 v0.1.1 - 2023-01-14
 -------------------
 
