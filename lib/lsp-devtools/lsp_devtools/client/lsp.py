@@ -5,7 +5,6 @@ from pygls.lsp.client import BaseLanguageClient
 from pygls.protocol import LanguageServerProtocol
 
 from lsp_devtools.agent import logger
-from lsp_devtools.database import Database
 
 VERSION = importlib.metadata.version("lsp-devtools")
 

@@ -11,6 +11,7 @@ from pygls.server import Server
 
 from lsp_devtools.agent.protocol import AgentProtocol
 from lsp_devtools.agent.protocol import MessageText
+from lsp_devtools.database import Database
 
 
 class AgentServer(Server):
@@ -27,6 +28,9 @@ class AgentServer(Server):
             kwargs["converter_factory"] = default_converter
 
         super().__init__(*args, **kwargs)
+
+        self.db: Optional[Database] = None
+
         self._client_buffer = []
         self._server_buffer = []
         self._stop_event = threading.Event()
@@ -35,7 +39,7 @@ class AgentServer(Server):
     def feature(self, feature_name: str, options: Optional[Any] = None):
         return self.lsp.fm.feature(feature_name, options)
 
-    async def start_tcp(self, host: str, port: int) -> None:
+    async def start_tcp(self, host: str, port: int) -> None:  # type: ignore[override]
         async def handle_client(reader, writer):
             self.lsp.connection_made(writer)
             await aio_readline(self._stop_event, reader, self.lsp.data_received)

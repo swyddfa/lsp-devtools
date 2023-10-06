@@ -8,12 +8,11 @@ from datetime import datetime
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 
 import platformdirs
 from rich.highlighter import ReprHighlighter
 from rich.text import Text
-from textual import events
-from textual import log
 from textual import on
 from textual.app import App
 from textual.app import ComposeResult
@@ -117,7 +116,7 @@ class MessagesTable(DataTable):
 
     def _get_query_params(self):
         """Return the set of query parameters to use when populating the table."""
-        query = dict(max_row=self.max_row)
+        query: Dict[str, Any] = dict(max_row=self.max_row)
 
         if self.session is not None:
             query["session"] = self.session
@@ -243,7 +242,10 @@ async def handle_message(ls: AgentServer, message: MessageText):
         message_buf.clear()
 
         rpc = json.loads(body)
-        await ls.db.add_message(message.session, message.timestamp, message.source, rpc)
+        if ls.db is not None:
+            await ls.db.add_message(
+                message.session, message.timestamp, message.source, rpc
+            )
 
 
 def setup_server(db: Database):

@@ -64,7 +64,7 @@ class AgentClient(JsonRPCClient):
             with attempt:
                 reader, writer = await asyncio.open_connection(host, port)
 
-        self.protocol.connection_made(writer)
+        self.protocol.connection_made(writer)  # type: ignore[arg-type]
         connection = asyncio.create_task(
             aio_readline(self._stop_event, reader, self.protocol.data_received)
         )
