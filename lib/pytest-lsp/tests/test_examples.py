@@ -27,6 +27,7 @@ asyncio_mode = auto
     [
         ("diagnostics", dict(passed=1)),
         ("getting-started", dict(passed=1)),
+        ("fixture-passthrough", dict(passed=1)),
         ("parameterised-clients", dict(passed=2)),
         ("window-log-message", dict(passed=1)),
         ("window-show-document", dict(passed=1)),
@@ -95,9 +96,21 @@ def test_getting_started_fail(pytester: pytest.Pytester):
     if sys.version_info.minor < 9:
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"  # noqa: E501
+        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"  # noqa: E501
 
     results.stdout.fnmatch_lines(message)
+
+
+def test_generic_rpc(pytester: pytest.Pytester):
+    """Ensure that the generic rpc example works as expected"""
+
+    setup_test(pytester, "generic-rpc")
+
+    results = pytester.runpytest("--log-cli-level", "info")
+    results.assert_outcomes(passed=1, failed=1)
+
+    results.stdout.fnmatch_lines(" *LOG: a=1")
+    results.stdout.fnmatch_lines(" *LOG: b=2")
 
 
 def test_window_log_message_fail(pytester: pytest.Pytester):

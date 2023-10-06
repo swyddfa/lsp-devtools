@@ -1,0 +1,1 @@
+Fixtures created with the `@pytest_lsp.fixture` decorator can now request additional pytest fixtures

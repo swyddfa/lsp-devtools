@@ -4,30 +4,18 @@ import logging
 import os
 import sys
 import traceback
-from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Type
+from typing import Union
 
+from lsprotocol import types
 from lsprotocol.converters import get_converter
-from lsprotocol.types import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
-from lsprotocol.types import WINDOW_LOG_MESSAGE
-from lsprotocol.types import WINDOW_SHOW_DOCUMENT
-from lsprotocol.types import WINDOW_SHOW_MESSAGE
-from lsprotocol.types import ClientCapabilities
-from lsprotocol.types import Diagnostic
-from lsprotocol.types import InitializedParams
-from lsprotocol.types import InitializeParams
-from lsprotocol.types import InitializeResult
-from lsprotocol.types import LogMessageParams
-from lsprotocol.types import PublishDiagnosticsParams
-from lsprotocol.types import ShowDocumentParams
-from lsprotocol.types import ShowDocumentResult
-from lsprotocol.types import ShowMessageParams
+from pygls.exceptions import JsonRpcException
+from pygls.exceptions import PyglsError
+from pygls.lsp.client import BaseLanguageClient
 from pygls.protocol import default_converter
 
-from .gen import Client
 from .protocol import LanguageClientProtocol
 
 if sys.version_info.minor < 9:
@@ -40,26 +28,31 @@ __version__ = "0.3.0"
 logger = logging.getLogger(__name__)
 
 
-class LanguageClient(Client):
+class LanguageClient(BaseLanguageClient):
     """Used to drive language servers under test."""
 
+    protocol: LanguageClientProtocol
+
     def __init__(self, *args, **kwargs):
+        if "protocol_cls" not in kwargs:
+            kwargs["protocol_cls"] = LanguageClientProtocol
+
         super().__init__("pytest-lsp-client", __version__, *args, **kwargs)
 
-        self.capabilities: Optional[ClientCapabilities] = None
+        self.capabilities: Optional[types.ClientCapabilities] = None
         """The client's capabilities."""
 
-        self.shown_documents: List[ShowDocumentParams] = []
+        self.shown_documents: List[types.ShowDocumentParams] = []
         """Used to keep track of the documents requested to be shown via a
         ``window/showDocument`` request."""
 
-        self.messages: List[ShowMessageParams] = []
+        self.messages: List[types.ShowMessageParams] = []
         """Holds any received ``window/showMessage`` requests."""
 
-        self.log_messages: List[LogMessageParams] = []
+        self.log_messages: List[types.LogMessageParams] = []
         """Holds any received ``window/logMessage`` requests."""
 
-        self.diagnostics: Dict[str, List[Diagnostic]] = {}
+        self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
         """Used to hold any recieved diagnostics."""
 
         self.error: Optional[Exception] = None
@@ -71,24 +64,33 @@ class LanguageClient(Client):
         self._last_log_index = 0
         """Used to keep track of which log messages correspond with which test case."""
 
-    def feature(
-        self,
-        feature_name: str,
-        options: Optional[Any] = None,
-    ):
-        return self.lsp.fm.feature(feature_name, options)
+    async def server_exit(self, server: asyncio.subprocess.Process):
+        """Called when the server process exits."""
+        logger.debug("Server process exited with code: %s", server.returncode)
 
-    def _report_server_error(self, error: Exception, source: Type[Exception]):
-        # This may wind up being a mistake, but let's ignore broken pipe errors...
-        # If the server process has exited, the watchdog task will give us a better
-        # error message.
-        if isinstance(error, BrokenPipeError):
+        if self._stop_event.is_set():
             return
 
+        stderr = ""
+        if server.stderr is not None:
+            stderr_bytes = await server.stderr.read()
+            stderr = stderr_bytes.decode("utf8")
+
+        loop = asyncio.get_running_loop()
+        loop.call_soon(
+            cancel_all_tasks,
+            f"Server process exited with return code: {server.returncode}\n{stderr}",
+        )
+
+    def report_server_error(
+        self, error: Exception, source: Union[PyglsError, JsonRpcException]
+    ):
+        """Called when the server does something unexpected, e.g. sending malformed
+        JSON."""
         self.error = error
         tb = "".join(traceback.format_exc())
 
-        message = f"{source.__name__}: {error}\n{tb}"
+        message = f"{source.__name__}: {error}\n{tb}"  # type: ignore
 
         loop = asyncio.get_running_loop()
         loop.call_soon(cancel_all_tasks, message)
@@ -96,7 +98,9 @@ class LanguageClient(Client):
         if self._stop_event:
             self._stop_event.set()
 
-    async def initialize_session(self, params: InitializeParams) -> InitializeResult:
+    async def initialize_session(
+        self, params: types.InitializeParams
+    ) -> types.InitializeResult:
         """Make an ``initialize`` request to a lanaguage server.
 
         It will also automatically send an ``initialized`` notification once
@@ -122,7 +126,7 @@ class LanguageClient(Client):
             params.process_id = os.getpid()
 
         response = await self.initialize_async(params)
-        self.initialized(InitializedParams())
+        self.initialized(types.InitializedParams())
 
         return response
 
@@ -141,7 +145,7 @@ class LanguageClient(Client):
         if self.error is not None or self.capabilities is None:
             return
 
-        await self.shutdown_request_async(None)
+        await self.shutdown_async(None)
         self.exit(None)
 
     async def wait_for_notification(self, method: str):
@@ -152,7 +156,7 @@ class LanguageClient(Client):
         method
            The notification method to wait for, e.g. ``textDocument/publishDiagnostics``
         """
-        return await self.lsp.wait_for_notification_async(method)
+        return await self.protocol.wait_for_notification_async(method)
 
 
 def cancel_all_tasks(message: str):
@@ -165,42 +169,42 @@ def cancel_all_tasks(message: str):
             task.cancel(message)
 
 
-def make_test_client() -> LanguageClient:
+def make_test_lsp_client() -> LanguageClient:
     """Construct a new test client instance with the handlers needed to capture
     additional responses from the server."""
 
     client = LanguageClient(
-        protocol_cls=LanguageClientProtocol,
         converter_factory=default_converter,
-        loop=asyncio.get_running_loop(),
     )
 
-    @client.feature(TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
-    def publish_diagnostics(client: LanguageClient, params: PublishDiagnosticsParams):
+    @client.feature(types.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
+    def publish_diagnostics(
+        client: LanguageClient, params: types.PublishDiagnosticsParams
+    ):
         client.diagnostics[params.uri] = params.diagnostics
 
-    @client.feature(WINDOW_LOG_MESSAGE)
-    def log_message(client: LanguageClient, params: LogMessageParams):
+    @client.feature(types.WINDOW_LOG_MESSAGE)
+    def log_message(client: LanguageClient, params: types.LogMessageParams):
         client.log_messages.append(params)
 
         levels = [logger.error, logger.warning, logger.info, logger.debug]
         levels[params.type.value - 1](params.message)
 
-    @client.feature(WINDOW_SHOW_MESSAGE)
+    @client.feature(types.WINDOW_SHOW_MESSAGE)
     def show_message(client: LanguageClient, params):
         client.messages.append(params)
 
-    @client.feature(WINDOW_SHOW_DOCUMENT)
+    @client.feature(types.WINDOW_SHOW_DOCUMENT)
     def show_document(
-        client: LanguageClient, params: ShowDocumentParams
-    ) -> ShowDocumentResult:
+        client: LanguageClient, params: types.ShowDocumentParams
+    ) -> types.ShowDocumentResult:
         client.shown_documents.append(params)
-        return ShowDocumentResult(success=True)
+        return types.ShowDocumentResult(success=True)
 
     return client
 
 
-def client_capabilities(client_spec: str) -> ClientCapabilities:
+def client_capabilities(client_spec: str) -> types.ClientCapabilities:
     """Find the capabilities that correspond to the given client spec.
 
     Parameters
@@ -230,4 +234,4 @@ def client_capabilities(client_spec: str) -> ClientCapabilities:
 
     converter = get_converter()
     capabilities = json.loads(filename.read_text())
-    return converter.structure(capabilities, ClientCapabilities)
+    return converter.structure(capabilities, types.ClientCapabilities)

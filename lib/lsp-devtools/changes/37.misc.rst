@@ -1,0 +1,1 @@
+The ``lsp-devtools agent`` now uses a TCP connection, which should make distribution easier

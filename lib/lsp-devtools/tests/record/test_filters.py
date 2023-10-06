@@ -384,7 +384,5 @@ def test_filter_format_message():
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
     record.__dict__["source"] = "client"
 
-    lsp.filter(record)
     assert lsp.filter(record) is True
-
     assert record.msg == "file:///path/to/file.txt"

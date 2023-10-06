@@ -14,6 +14,12 @@ class MessageText:
     text: str
     """The captured text."""
 
+    timestamp: float
+    """The timestamp of when the message was recorded."""
+
+    session: str
+    """The session id."""
+
     source: str
     """The source the text was captured from e.g. client."""
 

@@ -1,17 +1,12 @@
 import logging
 from typing import Dict
+from typing import Literal
 from typing import Set
 from typing import Union
 
 import attrs
 
 from .formatters import FormatString
-
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal  # type: ignore[assignment]
-
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +73,7 @@ class LSPFilter(logging.Filter):
         if self.formatter.pattern:
             try:
                 record.msg = self.formatter.format(message)
+                record.args = None
             except Exception:
                 logger.debug(
                     "Skipping message that failed to format: %s", message, exc_info=True

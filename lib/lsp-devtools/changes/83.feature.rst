@@ -1,0 +1,1 @@
+**Experimental** Add proof of concept ``lsp-devtools client`` command that builds on textual's ``TextArea`` widget to offer an interactive language server client.

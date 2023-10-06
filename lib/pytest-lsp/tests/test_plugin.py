@@ -33,14 +33,14 @@ from pytest_lsp import client_capabilities
 
 @pytest_lsp.fixture(
     config=ClientServerConfig(
-        server_command=["{python}", "{server}"],
+        server_command=[r"{python}", r"{server}"],
     )
 )
 async def client(lsp_client: LanguageClient):
     await lsp_client.initialize_session(
         InitializeParams(
             capabilities=client_capabilities("visual-studio-code"),
-            root_uri="{root_uri}"
+            root_uri=r"{root_uri}"
         )
     )
     yield
@@ -71,7 +71,7 @@ async def test_capabilities(client):
     if sys.version_info.minor < 9:
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"  # noqa: E501
+        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"  # noqa: E501
 
     results.stdout.fnmatch_lines(message)
 
@@ -102,14 +102,15 @@ async def test_capabilities(client):
     setup_test(pytester, "completion_exit.py", test_code)
     results = pytester.runpytest("-vv")
 
-    results.assert_outcomes(failed=1)
+    results.assert_outcomes(failed=1, errors=1)
 
     if sys.version_info.minor < 9:
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 0"  # noqa: E501
+        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"  # noqa: E501
 
     results.stdout.fnmatch_lines(message)
+    results.stdout.fnmatch_lines("E*RuntimeError: Client has been stopped.")
 
 
 def test_detect_server_crash(pytester: pytest.Pytester):
@@ -132,7 +133,7 @@ async def test_capabilities(client):
         message = "E*CancelledError"
     else:
         message = [
-            "E*asyncio.exceptions.CancelledError: RuntimeError: Server exited with return code: 1",  # noqa: E501
+            "E*asyncio.exceptions.CancelledError: Server process exited with return code: 1",  # noqa: E501
             "E*ZeroDivisionError: division by zero",
         ]
 

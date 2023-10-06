@@ -1,0 +1,3 @@
+The ``lsp-devtools capabilities`` command has been removed in favour of ``lsp-devtools record``
+
+The ``lsp-devtools tui`` command has been renamed to ``lsp-devtools inspect``

@@ -1,0 +1,66 @@
+name: 'Release: lsp-devtools'
+
+on:
+  push:
+    branches:
+    - release
+    paths:
+    - 'lib/lsp-devtools/**'
+
+jobs:
+  release:
+    name: lsp-devtools release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/lsp-devtools
+    permissions:
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - run: |
+        sudo apt update
+        sudo apt install pandoc
+
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install build bump2version towncrier docutils
+      name: Install Build Tools
+
+    - run: |
+        set -e
+
+        ./scripts/make-release.sh lsp-devtools
+      name: Set Version
+      id: info
+
+    - name: Package
+      run: |
+        cd lib/lsp-devtools
+        python -m build
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'dist'
+        path: lib/lsp-devtools/dist
+
+    - name: Publish
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: lib/lsp-devtools/dist/
+
+    - name: Create Release
+      run: |
+        gh release create "${RELEASE_TAG}" \
+          --title "lsp-devtools v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/lsp-devtools/.changes.html \
+          ./lib/lsp-devtools/dist/*
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

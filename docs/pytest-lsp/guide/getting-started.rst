@@ -1,7 +1,13 @@
 Getting Started
 ===============
 
+.. highlight:: none
+
 This guide will walk you through the process of writing your first test case using ``pytest-lsp``.
+
+If you have not done so already, you can install the ``pytest-lsp`` package using pip::
+
+  pip install pytest-lsp
 
 A Simple Language Server
 ------------------------
@@ -37,12 +43,11 @@ With the framework in place, we can go ahead and define our first test case
 
 .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/getting-started/t_server.py
    :language: python
-   :start-at: async def test_
+   :start-at: @pytest.mark.asyncio
 
 All that's left is to run the test suite!
 
 .. literalinclude:: ./getting-started-fail-output.txt
-   :language: none
 
 We forgot to start the server!
 Add the following to the bottom of ``server.py``.

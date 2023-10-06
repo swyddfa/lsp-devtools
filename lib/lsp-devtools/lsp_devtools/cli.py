@@ -11,9 +11,9 @@ logger = logging.getLogger(__name__)
 
 BUILTIN_COMMANDS = [
     "lsp_devtools.agent",
-    "lsp_devtools.cmds.capabilities",  # TODO: Remove in favour of record + cli args
+    "lsp_devtools.client",
+    "lsp_devtools.inspector",
     "lsp_devtools.record",
-    "lsp_devtools.tui",
 ]
 
 
@@ -37,7 +37,7 @@ def load_command(commands: argparse._SubParsersAction, name: str):
 
 def main():
     cli = argparse.ArgumentParser(
-        prog="lsp-devtools", description="Development tooling for language servers"
+        prog="lsp-devtools", description="Developer tooling for language servers"
     )
     cli.add_argument("--version", action="version", version=f"%(prog)s v{__version__}")
     commands = cli.add_subparsers(title="commands")

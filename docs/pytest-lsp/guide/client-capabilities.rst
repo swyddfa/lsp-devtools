@@ -10,6 +10,8 @@ field which is used to inform the server which parts of the specification the cl
 
 Setting this field to the right value ``pytest-lsp`` can pretend to be a particular editor at a particular version and check to see if the server adapts accordingly.
 
+.. _pytest-lsp-supported-clients:
+
 Supported Clients
 -----------------
 

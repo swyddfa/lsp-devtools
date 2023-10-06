@@ -1,3 +1,4 @@
+import json
 import re
 from typing import Any
 from typing import Callable
@@ -14,6 +15,13 @@ except ImportError:
     from functools import lru_cache
 
     cache = lru_cache(None)
+
+
+def format_json(obj: dict) -> str:
+    if isinstance(obj, str):
+        return obj
+
+    return json.dumps(obj, indent=2)
 
 
 def format_position(position: dict) -> str:
@@ -147,7 +155,7 @@ class FormatString:
     VARIABLE = re.compile(r"{\.([^}]+)}")
 
     def __init__(self, pattern: str):
-        self.pattern = pattern
+        self.pattern = pattern  # .replace("\\n", "\n").replace("\\t", "\t")
         self._parse()
 
     def _parse(self):
@@ -164,7 +172,7 @@ class FormatString:
                 formatter = get_formatter(fmt)
             else:
                 accessor = variable
-                formatter = str
+                formatter = format_json
 
             parts.append(Value(accessor=accessor, formatter=formatter))
             idx = end
