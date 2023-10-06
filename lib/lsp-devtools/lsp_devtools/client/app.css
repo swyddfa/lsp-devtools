@@ -1,0 +1,35 @@
+Screen {
+    layers: base overlay;
+}
+
+Explorer {
+    width: 30;
+    dock: left;
+    transition: offset 300ms out_cubic;
+}
+Explorer.-hidden {
+    display: none;
+}
+
+Header {
+    dock: top;
+}
+
+Devtools {
+    width: 40%;
+    dock: right;
+    transition: offset 300ms out_cubic;
+}
+Devtools.-hidden {
+    display: none;
+}
+
+MessagesTable {
+    height: 100%;
+}
+
+CompletionList {
+    height: 10;
+    width: 30;
+    layer: overlay;
+}
