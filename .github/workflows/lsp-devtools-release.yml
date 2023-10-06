@@ -1,4 +1,4 @@
-name: Release: lsp-devtools
+name: 'Release: lsp-devtools'
 
 on:
   push:

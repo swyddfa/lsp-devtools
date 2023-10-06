@@ -1,4 +1,4 @@
-name: Release: pytest-lsp
+name: 'Release: pytest-lsp'
 
 on:
   push:
