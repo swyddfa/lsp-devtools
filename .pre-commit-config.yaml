@@ -41,10 +41,11 @@ repos:
     args: [--explicit-package-bases,--check-untyped-defs]
     additional_dependencies:
     - importlib-resources
+    - platformdirs
     - pygls
     - pytest
     - pytest-asyncio
-    - types-appdirs
+    - websockets
     files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
 
   - id: mypy

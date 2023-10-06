@@ -3,6 +3,7 @@ import logging
 import sys
 import textwrap
 import typing
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -104,7 +105,7 @@ def get_fixture_arguments(
     dict
        The set of arguments to pass to the user's fixture function
     """
-    kwargs = {}
+    kwargs: Dict[str, Any] = {}
     required_parameters = set(inspect.signature(fn).parameters.keys())
 
     # Inject the 'request' fixture if requested
