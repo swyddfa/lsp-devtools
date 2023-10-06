@@ -4,5 +4,5 @@ sphinx
 sphinx-copybutton
 sphinx-design
 furo
-git+https://github.com/openlawlibrary/pygls.git#egg=pygls
+pygls>=1.1.0
 -e lib/pytest-lsp
