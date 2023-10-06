@@ -58,6 +58,7 @@ SELECT
     json_extract(params, "$.clientInfo.name") as client_name,
     json_extract(params, "$.clientInfo.version") as client_version,
     json_extract(params, "$.rootUri") as root_uri,
+    json_extract(params, "$.workspaceFolders") as workspace_folders,
     params,
     result
 FROM requests WHERE method = 'initialize';
