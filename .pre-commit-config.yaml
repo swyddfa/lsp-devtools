@@ -54,8 +54,9 @@ repos:
     - aiosqlite
     - attrs
     - importlib-resources
+    - platformdirs
     - pygls
+    - stamina
     - textual
-    - types-appdirs
     - websockets
     files: 'lib/lsp-devtools/lsp_devtools/.*\.py'

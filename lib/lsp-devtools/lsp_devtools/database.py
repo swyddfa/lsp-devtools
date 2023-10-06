@@ -4,12 +4,15 @@ import logging
 import pathlib
 import sys
 from contextlib import asynccontextmanager
+from typing import Any
+from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Set
 from uuid import uuid4
 
 import aiosqlite
-from textual import log
+from textual.app import App
 from textual.message import Message
 
 from lsp_devtools.handlers import LspMessage
@@ -29,7 +32,7 @@ class Database:
     def __init__(self, dbpath: Optional[pathlib.Path] = None):
         self.dbpath = dbpath or ":memory:"
         self.db: Optional[aiosqlite.Connection] = None
-        self.app = None
+        self.app: Optional[App] = None
         self._handlers: Dict[str, set] = {}
 
     async def close(self):
@@ -104,8 +107,8 @@ class Database:
         """
 
         base_query = "SELECT rowid, * FROM protocol"
-        where = []
-        parameters = []
+        where: List[str] = []
+        parameters: List[Any] = []
 
         if session:
             where.append("session = ?")
@@ -153,7 +156,7 @@ class DatabaseLogHandler(logging.Handler):
         self._tasks: Set[asyncio.Task] = set()
 
     def emit(self, record: logging.LogRecord):
-        body = json.loads(record.args[0])
+        body = json.loads(record.args[0])  # type: ignore
         task = asyncio.create_task(
             self.db.add_message(
                 self.session, record.created, record.__dict__["source"], body

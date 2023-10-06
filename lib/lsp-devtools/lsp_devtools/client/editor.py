@@ -48,7 +48,7 @@ class CompletionList(OptionList):
     def action_dismiss(self):
         self.remove()
         if self.parent:
-            self.app.set_focus(self.parent)
+            self.app.set_focus(self.parent)  # type: ignore
 
 
 class TextEditor(TextArea):
@@ -65,7 +65,9 @@ class TextEditor(TextArea):
     @property
     def completion_triggers(self):
         return get_capability(
-            self.capabilities, "completion_provider.trigger_characters", set()
+            self.capabilities,  # type: ignore
+            "completion_provider.trigger_characters",
+            set(),
         )
 
     def open_file(self, path: pathlib.Path):
@@ -124,6 +126,10 @@ class TextEditor(TextArea):
 
     def trigger_completion(self, line: int, character: int):
         """Trigger completion at the given location."""
+
+        if self.uri is None:
+            return
+
         task = asyncio.create_task(
             self.lsp_client.text_document_completion_async(
                 types.CompletionParams(
@@ -152,4 +158,4 @@ class TextEditor(TextArea):
     @on(OptionList.OptionSelected)
     def completion_selected(self, event: OptionList.OptionSelected):
         log(f"{event.option} was selected!")
-        event.option_list.action_dismiss()
+        event.option_list.action_dismiss()  # type: ignore

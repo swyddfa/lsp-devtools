@@ -4,16 +4,12 @@ import logging
 import os
 import pathlib
 from typing import List
-from typing import Optional
-from typing import Set
 from uuid import uuid4
 
 import platformdirs
 from lsprotocol import types
 from pygls import uris as uri
-from pygls.capabilities import get_capability
 from textual import events
-from textual import log
 from textual import on
 from textual.app import App
 from textual.app import ComposeResult
@@ -22,7 +18,6 @@ from textual.containers import Vertical
 from textual.widgets import DirectoryTree
 from textual.widgets import Footer
 from textual.widgets import Header
-from textual.widgets import TextArea
 
 from lsp_devtools.agent import logger
 from lsp_devtools.database import Database
