@@ -7,6 +7,8 @@ This also means `pytest-lsp` can be used to test language servers written in any
 
 `pytest-lsp` relies on the [`pygls`](https://github.com/openlawlibrary/pygls) library for its language server protocol implementation.
 
+See the [documentation](https://lsp-devtools.readthedocs.io/en/latest/) for details on getting started.
+
 ```python
 import sys
 
