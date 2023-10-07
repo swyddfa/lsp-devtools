@@ -1,6 +1,11 @@
 v0.3.1 - 2023-10-06
 -------------------
 
+This release includes some minor breaking changes if you were using the lower-level APIs e.g ``make_client_server``.
+
+See `this commit <https://github.com/swyddfa/esbonio/commit/8565add660ad015c989cd3c4a251dede92525997>`__ for a sample migration
+
+
 Enhancements
 ^^^^^^^^^^^^
 
