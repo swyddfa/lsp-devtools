@@ -5,7 +5,7 @@ While this is a Python package, it can be used with language servers written in 
 
 ![lsp-devtools client](https://user-images.githubusercontent.com/2675694/273293510-e43fdc92-03dd-40c9-aaca-ddb5e526031a.png)
 
-Available commands: 
+Available commands:
 
 - `agent`: Wraps a language server, allows the other commands to access the messages sent between client and server.
 - `client`: **Experimental** a language client with an embedded inspector. Powered by [textual](https://textual.textualize.io/)
