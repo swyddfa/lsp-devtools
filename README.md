@@ -80,10 +80,3 @@ async def test_completion(client: LanguageClient):
 
     assert len(result.items) > 0
 ```
-
-## `app/` - Prototype Devtools Web UI
-
-![UI Screenshot](https://user-images.githubusercontent.com/2675694/191863035-5bb5d1c9-00b6-40de-b3e2-f81cdb9eb375.png)
-
-This is little more than a proof of concept, currently setup to communicate with an agent over websockets.
-Hopefully, this can eventually be repurposed/extended to be used on lsp servers hosted entirely in the browser e.g. pyodide.
