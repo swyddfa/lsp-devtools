@@ -1,0 +1,42 @@
+name: Neovim Capabilities
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to capture capabilities for'
+        required: true
+        type: string
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - run: |
+          gh release download ${{ inputs.version }} -p '*.appimage' -R neovim/neovim
+          ls -l
+
+          chmod +x nvim.appimage
+          ./nvim.appimage -l scripts/nvim-capabilities.lua
+
+          mv neovim_v*.json lib/pytest-lsp/pytest_lsp/clients/
+          ls -l
+
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+
+          git checkout -b neovim-${{ inputs.version }}-capabilities
+          git add lib/pytest-lsp/pytest_lsp/clients/
+          git commit -m "Add client capabilities for Neovim ${{ inputs.version }}"
+          git push -u origin neovim-${{ inputs.version }}-capabilities
+
+          gh pr create --base develop --fill
+        name: Capture Neovim Capailities
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
