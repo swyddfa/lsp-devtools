@@ -5,7 +5,6 @@ import sys
 
 import pygls.uris as uri
 import pytest
-
 import pytest_lsp
 
 
@@ -32,7 +31,7 @@ def test_client_capabilities(
     clients_dir = pathlib.Path(pytest_lsp.__file__).parent / "clients"
     with (clients_dir / client_capabilities).open() as f:
         # Easiest way to reformat the JSON onto a single line
-        expected = json.dumps(json.load(f))
+        expected = json.dumps(json.load(f)["capabilities"])
 
     pytester.makeini(
         """
