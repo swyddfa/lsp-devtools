@@ -234,4 +234,5 @@ def client_capabilities(client_spec: str) -> types.ClientCapabilities:
 
     converter = get_converter()
     capabilities = json.loads(filename.read_text())
-    return converter.structure(capabilities, types.ClientCapabilities)
+    params = converter.structure(capabilities, types.InitializeParams)
+    return params.capabilities
