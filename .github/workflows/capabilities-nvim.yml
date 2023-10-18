@@ -23,7 +23,8 @@ jobs:
           ls -l
 
           chmod +x nvim.appimage
-          ./nvim.appimage -l scripts/nvim-capabilities.lua
+          ./nvim.appimage --appimage-extract
+          ./squashfs-root/usr/bin/nvim -l scripts/nvim-capabilities.lua
 
           mv neovim_v*.json lib/pytest-lsp/pytest_lsp/clients/
           ls -l
