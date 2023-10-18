@@ -21,5 +21,12 @@
         "**/*.egg-info": true,
         "**/.pytest_cache": true,
         "**/.mypy_cache": true,
-    }
+    },
+    "esbonio.sphinx.buildCommand": [
+        "sphinx-build",
+        "-M",
+        "html",
+        "docs",
+        "docs/_build"
+    ],
 }
