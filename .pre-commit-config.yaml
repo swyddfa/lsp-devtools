@@ -6,6 +6,7 @@ repos:
   hooks:
   - id: check-yaml
   - id: end-of-file-fixer
+    exclude: 'lib/pytest-lsp/pytest_lsp/clients/.*\.json'
   - id: trailing-whitespace
 
 - repo: https://github.com/psf/black
@@ -62,3 +63,13 @@ repos:
     - textual
     - websockets
     files: 'lib/lsp-devtools/lsp_devtools/.*\.py'
+
+- repo: local
+  hooks:
+  - id: check-capabilities
+    name: check-capabilities
+    language: python
+    additional_dependencies:
+    - lsprotocol
+    files: 'lib/pytest-lsp/pytest_lsp/clients/.*\.json'
+    entry: python scripts/check_capabilities.py
