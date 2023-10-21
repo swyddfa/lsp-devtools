@@ -27,15 +27,11 @@ Here are some example usages of the ``record`` command that you may find useful.
 
 **Capture the client's capabilities**
 
-The following command will only capture and show the ``ClientCapabilities`` sent during the ``initialize`` request - useful for :ref:`adding clients to pytest-lsp <pytest-lsp-supported-clients>`! 😉
+The following command will save to a JSON file only the client's info and :class:`pygls:lsprotocol.types.ClientCapabilities` sent during the ``initialize`` request - useful for :ref:`adding clients to pytest-lsp <pytest-lsp-supported-clients>`! 😉
 
 ::
 
-   lsp-devtools record -f "{.params.clientInfo.name} v{.params.clientInfo.version}\\n{.params.capabilities}"
-
-.. figure:: /images/record-client-capabilities.svg
-   :figclass: scrollable-svg
-
+   lsp-devtools record -f '{{"clientInfo": {.params.clientInfo}, "capabilities": {.params.capabilities}}}' --to-file <client_name>_v<version>.json
 
 **Format and show any window/logMessages**
 
