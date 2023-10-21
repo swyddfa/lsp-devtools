@@ -39,23 +39,6 @@ dependencies = [
 [project.entry-points.pytest11]
 pytest-lsp = "pytest_lsp"
 
-[project.optional-dependencies]
-dev = [
-    "black",
-    "flake8",
-    "pre-commit",
-    "tox",
-]
-test = [
-    "pytest",
-    "pytest-cov",
-    "pytest-timeout",
-]
-typecheck = [
-    "mypy",
-    "types-appdirs"
-]
-
 [tool.setuptools.packages.find]
 include = ["pytest_lsp*"]
 
