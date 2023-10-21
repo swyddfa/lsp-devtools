@@ -3,13 +3,16 @@ import json
 import pathlib
 import re
 import typing
+from typing import Dict
 from typing import List
+from typing import Optional
 
 import attrs
 from docutils import nodes
 from docutils.parsers.rst import directives
 from lsprotocol import types
 from lsprotocol.converters import get_converter
+from packaging.version import parse as parse_version
 from pygls.capabilities import get_capability
 from sphinx.application import Sphinx
 from sphinx.domains import Domain
@@ -37,19 +40,39 @@ class BoolTable(SphinxDirective):
 
         return header, colspecs
 
-    def build_body(self, capability: str):
-        rows = []
+    def get_client_support_for(self, capability: str) -> Dict[str, Optional[str]]:
+        """Build a dictionary containing the clients that support the given capability
+        as well as the version that support was introduced in."""
         domain = self.env.domains["capabilities"]
 
+        clients: Dict[str, Optional[str]] = {}
         for (name, version), capabilities in domain.clients.items():
             supported = get_capability(capabilities, capability, False)
+
+            if not supported:
+                if name not in clients:
+                    clients[name] = None
+                continue
+
+            if (existing := clients.get(name, None)) is None:
+                clients[name] = version
+            else:
+                clients[name] = min(existing, version, key=parse_version)
+
+        return clients
+
+    def build_body(self, capability: str):
+        rows = []
+        clients = self.get_client_support_for(capability)
+
+        for name, version in clients.items():
             rows.append(
                 nodes.row(
                     "",
                     nodes.entry("", nodes.Text(name)),
                     nodes.entry(
                         "",
-                        nodes.Text(version if supported else " - "),
+                        nodes.Text(version or " - "),
                         classes=["centered"],
                     ),
                 )
