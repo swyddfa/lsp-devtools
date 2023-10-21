@@ -126,6 +126,24 @@ from lsp_devtools.record.formatters import FormatString
             },
             "- one\n- two",
         ),
+        (
+            '{{"clientInfo": {.params.clientInfo}, '
+            '"capabilities": {.params.capabilities}}}',
+            {
+                "params": {
+                    "clientInfo": {"name": "Client", "version": "1.0"},
+                    "capabilities": {"workspace": {"symbol": True}},
+                }
+            },
+            '{"clientInfo": {\n'
+            '  "name": "Client",\n'
+            '  "version": "1.0"\n'
+            '}, "capabilities": {\n'
+            '  "workspace": {\n'
+            '    "symbol": true\n'
+            "  }\n"
+            "}}",
+        ),
     ],
 )
 def test_format_string(pattern: str, message: dict, expected: str):
