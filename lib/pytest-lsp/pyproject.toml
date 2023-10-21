@@ -67,6 +67,7 @@ underlines = ["-", "^", "\""]
 type = [
   { name = "Features", directory = "feature", showcontent = true },
   { name = "Enhancements", directory = "enhancement", showcontent = true },
+  { name = "Client Capabilities", directory = "capability", showcontent = true },
   { name = "Fixes", directory = "fix", showcontent = true },
   { name = "Docs", directory = "doc", showcontent = true },
   { name = "Breaking Changes", directory = "breaking", showcontent = true },
