@@ -29,4 +29,9 @@
         "docs",
         "docs/_build"
     ],
+    "python.testing.pytestArgs": [
+        "lib/pytest-lsp/tests"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
 }
