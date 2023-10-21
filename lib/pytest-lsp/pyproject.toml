@@ -25,6 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "importlib-resources; python_version<\"3.9\"",
+    "packaging",
     "pygls>=1.1.0",
     "pytest",
     "pytest-asyncio",

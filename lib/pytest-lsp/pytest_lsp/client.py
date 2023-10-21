@@ -2,8 +2,10 @@ import asyncio
 import json
 import logging
 import os
+import pathlib
 import sys
 import traceback
+import typing
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -11,6 +13,7 @@ from typing import Union
 
 from lsprotocol import types
 from lsprotocol.converters import get_converter
+from packaging.version import parse as parse_version
 from pygls.exceptions import JsonRpcException
 from pygls.exceptions import PyglsError
 from pygls.lsp.client import BaseLanguageClient
@@ -207,32 +210,73 @@ def make_test_lsp_client() -> LanguageClient:
 def client_capabilities(client_spec: str) -> types.ClientCapabilities:
     """Find the capabilities that correspond to the given client spec.
 
+    This function supports the following syntax
+
+    ``client-name`` or ``client-name@latest``
+       Return the capabilities of the latest version of ``client-name``
+
+    ``client-name@v2``
+       Return the latest release of the ``v2`` of ``client-name``
+
+    ``client-name@v2.3.1``
+       Return exactly ``v2.3.1`` of ``client-name``
+
     Parameters
     ----------
     client_spec
-       A string describing the client to load the corresponding
+       The string describing the client to load the corresponding
        capabilities for.
+
+    Raises
+    ------
+    ValueError
+       If the requested client's capabilities could not be found
+
+    Returns
+    -------
+    ClientCapabilities
+       The requested client capabilities
     """
 
-    # Currently, we only have a single version of each client so let's just return the
-    # first one we find.
-    #
-    # TODO: Implement support for client@x.y.z
-    # TODO: Implement support for client@latest?
-    filename = None
+    candidates: Dict[str, pathlib.Path] = {}
+
+    client_spec = client_spec.replace("-", "_")
+    target_version = "latest"
+
+    if "@" in client_spec:
+        client_spec, target_version = client_spec.split("@")
+        if target_version.startswith("v"):
+            target_version = target_version[1:]
+
     for resource in resources.files("pytest_lsp.clients").iterdir():
+        filename = typing.cast(pathlib.Path, resource)
+
         # Skip the README or any other files that we don't care about.
-        if not resource.name.endswith(".json"):
+        if not filename.suffix == ".json":
             continue
 
-        if resource.name.startswith(client_spec.replace("-", "_")):
-            filename = resource
-            break
+        name, version = filename.stem.split("_v")
+        if name == client_spec:
+            if version.startswith(target_version) or target_version == "latest":
+                candidates[version] = filename
 
-    if not filename:
-        raise ValueError(f"Unknown client: '{client_spec}'")
+    if len(candidates) == 0:
+        raise ValueError(
+            f"Could not find capabilities for '{client_spec}@{target_version}'"
+        )
+
+    # Out of the available candidates, choose the latest version
+    selected_version = sorted(candidates.keys(), key=parse_version, reverse=True)[0]
+    filename = candidates[selected_version]
 
     converter = get_converter()
     capabilities = json.loads(filename.read_text())
+
     params = converter.structure(capabilities, types.InitializeParams)
+    logger.info(
+        "Selected %s v%s",
+        params.client_info.name,  # type: ignore[union-attr]
+        params.client_info.version,  # type: ignore[union-attr]
+    )
+
     return params.capabilities
