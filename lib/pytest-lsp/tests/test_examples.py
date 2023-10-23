@@ -32,6 +32,7 @@ asyncio_mode = auto
         ("window-log-message", dict(passed=1)),
         ("window-show-document", dict(passed=1)),
         ("window-show-message", dict(passed=1)),
+        ("workspace-configuration", dict(passed=1, warnings=1)),
     ],
 )
 def test_documentation_examples(pytester: pytest.Pytester, name: str, expected: dict):
