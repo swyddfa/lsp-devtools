@@ -110,9 +110,3 @@ Depending on the version of ``pygls`` (the LSP implementation used by ``pytest-l
    =========================== 1 passed, 1 warning in 0.64s =============================
 
 This is a known issue in ``pygls v1.0.2`` and older, upgrading your ``pygls`` version to ``1.1.0`` or newer should resolve the issue.
-
-.. note::
-
-   While this issue has been `fixed <https://github.com/openlawlibrary/pygls/pull/336>`_ upstream, it is not yet generally available.
-   However, the warning itself is fairly mild - ``pytest-lsp``/``pygls`` are not cleaning the event loop up correctly but are otherwise working as expected.
-   It should be safe to ignore this while waiting for the fix to become available.
