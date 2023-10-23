@@ -48,9 +48,7 @@ def test_client_capabilities(pytester: pytest.Pytester):
 
     setup_test(pytester, "client-capabilities")
 
-    results = pytester.runpytest(
-        "-W", "ignore::DeprecationWarning:pytest_asyncio.plugin"
-    )
+    results = pytester.runpytest()
     results.assert_outcomes(passed=1, warnings=1)
 
     message = "*LspSpecificationWarning: Client does not support snippets."
@@ -79,8 +77,6 @@ def test_client_capabilities_ignore(pytester: pytest.Pytester):
     results = pytester.runpytest(
         "-W",
         "ignore::pytest_lsp.LspSpecificationWarning",
-        "-W",
-        "ignore::DeprecationWarning:pytest_asyncio.plugin",
     )
     results.assert_outcomes(passed=1, warnings=0)
 
