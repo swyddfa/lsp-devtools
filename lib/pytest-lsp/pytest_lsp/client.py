@@ -6,6 +6,7 @@ import pathlib
 import sys
 import traceback
 import typing
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -36,7 +37,7 @@ class LanguageClient(BaseLanguageClient):
 
     protocol: LanguageClientProtocol
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, configuration: Optional[Dict[str, Any]] = None, **kwargs):
         if "protocol_cls" not in kwargs:
             kwargs["protocol_cls"] = LanguageClientProtocol
 
@@ -60,6 +61,13 @@ class LanguageClient(BaseLanguageClient):
 
         self.error: Optional[Exception] = None
         """Indicates if the client encountered an error."""
+
+        config = (configuration or {"": {}}).copy()
+        if "" not in config:
+            config[""] = {}
+
+        self._configuration: Dict[str, Dict[str, Any]] = config
+        """Holds ``workspace/configuration`` values."""
 
         self._setup_log_index = 0
         """Used to keep track of which log messages occurred during startup."""
@@ -100,6 +108,88 @@ class LanguageClient(BaseLanguageClient):
 
         if self._stop_event:
             self._stop_event.set()
+
+    def get_configuration(
+        self, *, section: Optional[str] = None, scope_uri: Optional[str] = None
+    ) -> Optional[Any]:
+        """Get a configuration value.
+
+        Parameters
+        ----------
+        section
+           The optional section name to retrieve.
+           If ``None`` the top level configuration object for the requested scope will
+           be returned
+
+        scope_uri
+           The scope at which to set the configuration.
+           If ``None``, this will default to the global scope.
+
+        Returns
+        -------
+        Optional[Any]
+           The requested configuration value or ``None`` if not found.
+        """
+        section = section or ""
+        scope = scope_uri or ""
+
+        # Find the longest prefix of ``scope``. The empty string is a prefix of all
+        # strings so there will always be at least one match
+        candidates = [c for c in self._configuration.keys() if scope.startswith(c)]
+        selected = sorted(candidates, key=len, reverse=True)[0]
+
+        if (item := self._configuration.get(selected, None)) is None:
+            return None
+
+        if section == "":
+            return item
+
+        for segment in section.split("."):
+            if not hasattr(item, "get"):
+                return None
+
+            if (item := item.get(segment, None)) is None:
+                return None
+
+        return item
+
+    def set_configuration(
+        self,
+        item: Any,
+        *,
+        section: Optional[str] = None,
+        scope_uri: Optional[str] = None,
+    ):
+        """Set a configuration value.
+
+        Parameters
+        ----------
+        item
+           The value to set
+
+        section
+           The optional section name to set.
+           If ``None`` the top level configuration object will be overriden with
+           ``item``.
+
+        scope_uri
+           The scope at which to set the configuration.
+           If ``None``, this will default to the global scope.
+        """
+        section = section or ""
+        scope = scope_uri or ""
+
+        if section == "":
+            self._configuration[scope] = item
+            return
+
+        config = self._configuration.setdefault(scope, {})
+        *parents, name = section.split(".")
+
+        for segment in parents:
+            config = config.setdefault(segment, {})
+
+        config[name] = item
 
     async def initialize_session(
         self, params: types.InitializeParams
@@ -179,6 +269,13 @@ def make_test_lsp_client() -> LanguageClient:
     client = LanguageClient(
         converter_factory=default_converter,
     )
+
+    @client.feature(types.WORKSPACE_CONFIGURATION)
+    def configuration(client: LanguageClient, params: types.ConfigurationParams):
+        return [
+            client.get_configuration(section=item.section, scope_uri=item.scope_uri)
+            for item in params.items
+        ]
 
     @client.feature(types.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
     def publish_diagnostics(
