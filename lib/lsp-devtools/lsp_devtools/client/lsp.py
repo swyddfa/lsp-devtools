@@ -1,6 +1,8 @@
 import importlib.metadata
 import json
+from typing import Optional
 
+from lsprotocol import types
 from pygls.lsp.client import BaseLanguageClient
 from pygls.protocol import LanguageServerProtocol
 
@@ -37,3 +39,22 @@ class LanguageClient(BaseLanguageClient):
 
     def __init__(self):
         super().__init__("lsp-devtools", VERSION, protocol_cls=RecordingLSProtocol)
+
+        self._server_capabilities: Optional[types.ServerCapabilities] = None
+
+    @property
+    def server_capabilities(self) -> types.ServerCapabilities:
+        if self._server_capabilities is None:
+            raise RuntimeError(
+                "sever_capabilities is None - has the server been initialized?"
+            )
+
+        return self._server_capabilities
+
+    async def initialize_async(
+        self, params: types.InitializeParams
+    ) -> types.InitializeResult:
+        result = await super().initialize_async(params)
+        self._server_capabilities = result.capabilities
+
+        return result
