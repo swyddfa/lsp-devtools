@@ -25,7 +25,7 @@ from lsp_devtools.database import DatabaseLogHandler
 from lsp_devtools.inspector import MessagesTable
 from lsp_devtools.inspector import MessageViewer
 
-from .editor import TextEditor
+from .editor import EditorView
 from .lsp import LanguageClient
 
 
@@ -35,7 +35,7 @@ class Explorer(DirectoryTree):
         if not self.parent:
             return
 
-        editor = self.parent.query_one(TextEditor)
+        editor = self.parent.query_one(EditorView)
         editor.open_file(event.path)
         editor.focus()
 
@@ -51,7 +51,6 @@ class LSPClient(App):
     BINDINGS = [
         ("f2", "toggle_explorer", "Explorer"),
         ("f12", "toggle_devtools", "Devtools"),
-        # ("ctrl+g", "refresh_table", "Refresh table"),
     ]
 
     def __init__(
@@ -74,7 +73,7 @@ class LSPClient(App):
 
         yield Header()
         yield Explorer(".")
-        yield TextEditor(self.lsp_client)
+        yield EditorView(self.lsp_client)
         devtools = Devtools(ScrollableContainer(messages_table), message_viewer)
         devtools.add_class("-hidden")
         yield devtools
@@ -105,9 +104,12 @@ class LSPClient(App):
             self.screen.set_focus(explorer)
 
     async def on_ready(self, event: events.Ready):
-        editor = self.query_one(TextEditor)
-
         # Start the lsp server.
+        self.run_worker(self.start_lsp_server())
+
+    async def start_lsp_server(self):
+        """Initialize the lsp server session."""
+
         await self.lsp_client.start_io(self.server_command[0], *self.server_command[1:])
         result = await self.lsp_client.initialize_async(
             types.InitializeParams(
@@ -117,7 +119,11 @@ class LSPClient(App):
             )
         )
 
-        editor.capabilities = result.capabilities
+        if info := result.server_info:
+            name = info.name
+            version = info.version or ""
+            self.log(f"Connected to server: {name} {version}")
+
         self.lsp_client.initialized(types.InitializedParams())
 
     @on(Database.Update)
