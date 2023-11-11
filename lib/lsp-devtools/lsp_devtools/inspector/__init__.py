@@ -157,9 +157,8 @@ class LSPInspector(App):
     def __init__(self, db: Database, server: AgentServer, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        db.app = self
         self.db = db
-        """Where the data for the app is being held"""
+        db.app = self
 
         self.server = server
         """Server used to manage connections to lsp servers."""
@@ -193,9 +192,11 @@ class LSPInspector(App):
         self._async_tasks.append(
             asyncio.create_task(self.server.start_tcp("localhost", 8765))
         )
-        await self.update_table()
+        table = self.query_one(MessagesTable)
+        await table.update()
 
-    async def update_table(self):
+    @on(Database.Update)
+    async def update_table(self, event: Database.Update):
         table = self.query_one(MessagesTable)
         await table.update()
 
@@ -255,7 +256,7 @@ def setup_server(db: Database):
     return server
 
 
-def tui(args, extra: List[str]):
+def inspector(args, extra: List[str]):
     db = Database(args.dbpath)
     server = setup_server(db)
 
@@ -298,4 +299,4 @@ manipulate an LSP session interactively.
     connect.add_argument(
         "-p", "--port", type=int, default=8765, help="the port to connect to."
     )
-    cmd.set_defaults(run=tui)
+    cmd.set_defaults(run=inspector)
