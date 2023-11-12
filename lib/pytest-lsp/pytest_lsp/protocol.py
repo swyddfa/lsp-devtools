@@ -57,6 +57,8 @@ class LanguageClientProtocol(LanguageServerProtocol):
     async def send_request_async(self, method, params=None):
         """Wrap pygls' ``send_request_async`` implementation. This will
 
+        - Check the params to see if they're compatible with the client's stated
+          capabilities
         - Check the result to see if it's compatible with the client's stated
           capabilities
 
@@ -71,8 +73,11 @@ class LanguageClientProtocol(LanguageServerProtocol):
         Returns
         -------
         Any
-           The response's result
+           The result
         """
+        check_params_against_client_capabilities(
+            self._server.capabilities, method, params
+        )
         result = await super().send_request_async(method, params)
         check_result_against_client_capabilities(
             self._server.capabilities, method, result  # type: ignore

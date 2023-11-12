@@ -6,10 +6,12 @@ import pathlib
 import sys
 import traceback
 import typing
+import warnings
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Type
 from typing import Union
 
 from lsprotocol import types
@@ -20,6 +22,7 @@ from pygls.exceptions import PyglsError
 from pygls.lsp.client import BaseLanguageClient
 from pygls.protocol import default_converter
 
+from .checks import LspSpecificationWarning
 from .protocol import LanguageClientProtocol
 
 if sys.version_info.minor < 9:
@@ -47,8 +50,7 @@ class LanguageClient(BaseLanguageClient):
         """The client's capabilities."""
 
         self.shown_documents: List[types.ShowDocumentParams] = []
-        """Used to keep track of the documents requested to be shown via a
-        ``window/showDocument`` request."""
+        """Holds any received show document requests."""
 
         self.messages: List[types.ShowMessageParams] = []
         """Holds any received ``window/showMessage`` requests."""
@@ -57,7 +59,12 @@ class LanguageClient(BaseLanguageClient):
         """Holds any received ``window/logMessage`` requests."""
 
         self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
-        """Used to hold any recieved diagnostics."""
+        """Holds any recieved diagnostics."""
+
+        self.progress_reports: Dict[
+            types.ProgressToken, List[types.ProgressParams]
+        ] = {}
+        """Holds any received progress updates."""
 
         self.error: Optional[Exception] = None
         """Indicates if the client encountered an error."""
@@ -282,6 +289,42 @@ def make_test_lsp_client() -> LanguageClient:
         client: LanguageClient, params: types.PublishDiagnosticsParams
     ):
         client.diagnostics[params.uri] = params.diagnostics
+
+    @client.feature(types.WINDOW_WORK_DONE_PROGRESS_CREATE)
+    def create_work_done_progress(
+        client: LanguageClient, params: types.WorkDoneProgressCreateParams
+    ):
+        if params.token in client.progress_reports:
+            # TODO: Send an error reponse to the client - might require changes
+            #       to pygls...
+            warnings.warn(
+                f"Duplicate progress token: {params.token!r}", LspSpecificationWarning
+            )
+
+        client.progress_reports.setdefault(params.token, [])
+        return None
+
+    @client.feature(types.PROGRESS)
+    def progress(client: LanguageClient, params: types.ProgressParams):
+        if params.token not in client.progress_reports:
+            warnings.warn(
+                f"Unknown progress token: {params.token!r}", LspSpecificationWarning
+            )
+
+        if not params.value:
+            return
+
+        if (kind := params.value.get("kind", None)) == "begin":
+            type_: Type[Any] = types.WorkDoneProgressBegin
+        elif kind == "report":
+            type_ = types.WorkDoneProgressReport
+        elif kind == "end":
+            type_ = types.WorkDoneProgressEnd
+        else:
+            raise TypeError(f"Unknown progress kind: {kind!r}")
+
+        value = client.protocol._converter.structure(params.value, type_)
+        client.progress_reports.setdefault(params.token, []).append(value)
 
     @client.feature(types.WINDOW_LOG_MESSAGE)
     def log_message(client: LanguageClient, params: types.LogMessageParams):
