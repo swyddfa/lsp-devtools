@@ -245,6 +245,17 @@ def document_links(
             assert tooltip_support, "Client does not support tooltips."
 
 
+@check_params_of(method=types.WINDOW_WORK_DONE_PROGRESS_CREATE)
+def work_done_progress_create(
+    capabilities: types.ClientCapabilities,
+    params: types.WorkDoneProgressCreateParams,
+):
+    """Assert that the client has support for ``window/workDoneProgress/create``
+    requests."""
+    is_supported = get_capability(capabilities, "window.workDoneProgress", False)
+    assert is_supported, "Client does not support 'window/workDoneProgress/create'"
+
+
 @check_params_of(method=types.WORKSPACE_CONFIGURATION)
 def workspace_configuration(
     capabilities: types.ClientCapabilities,

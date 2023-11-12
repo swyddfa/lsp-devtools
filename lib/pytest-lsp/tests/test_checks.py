@@ -16,6 +16,14 @@ a_range = types.Range(
     [
         (
             types.ClientCapabilities(
+                window=types.WindowClientCapabilities(work_done_progress=False)
+            ),
+            types.WINDOW_WORK_DONE_PROGRESS_CREATE,
+            types.WorkDoneProgressCreateParams(token="id-123"),
+            "does not support 'window/workDoneProgress/create'",
+        ),
+        (
+            types.ClientCapabilities(
                 workspace=types.WorkspaceClientCapabilities(configuration=False)
             ),
             types.WORKSPACE_CONFIGURATION,
