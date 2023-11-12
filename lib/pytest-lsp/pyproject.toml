@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools >= 61.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.17.1"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pytest-lsp"
-version = "0.3.1"
-description = "pytest plugin for end-to-end testing of language servers"
+dynamic = ["version"]
+description = "A pytest plugin for end-to-end testing of language servers"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
@@ -38,9 +38,6 @@ dependencies = [
 
 [project.entry-points.pytest11]
 pytest-lsp = "pytest_lsp"
-
-[tool.setuptools.packages.find]
-include = ["pytest_lsp*"]
 
 [tool.coverage.run]
 source_pkgs = ["pytest_lsp"]
