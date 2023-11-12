@@ -143,7 +143,7 @@ def check_completion_item(
 
     if isinstance(item.documentation, types.MarkupContent):
         kind = item.documentation.kind
-        message = f"Client does not support documentation format '{kind}'"
+        message = f"Client does not support documentation format {kind.value!r}"
         assert kind in documentation_formats, message
 
     if item.insert_text_format == types.InsertTextFormat.Snippet:
