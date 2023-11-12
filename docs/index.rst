@@ -20,7 +20,7 @@ Client Capability Index
 .. toctree::
    :maxdepth: 2
    :hidden:
-   :caption: Capabilities
+   :caption: Client Capabilities
 
    capabilities/text-document
    capabilities/workspace
