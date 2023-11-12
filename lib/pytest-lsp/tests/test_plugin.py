@@ -1,8 +1,69 @@
 import pathlib
 import sys
+from typing import Any
+from typing import Dict
+from typing import List
 
 import pygls.uris as uri
 import pytest
+
+from pytest_lsp.plugin import ClientServerConfig
+
+
+@pytest.mark.parametrize(
+    "config, kwargs, expected",
+    [
+        (ClientServerConfig(server_command=["command"]), {}, ["command"]),
+        (
+            ClientServerConfig(server_command=["command"]),
+            {"devtools": "1234"},
+            [
+                "lsp-devtools",
+                "agent",
+                "--host",
+                "localhost",
+                "--port",
+                "1234",
+                "--",
+                "command",
+            ],
+        ),
+        (
+            ClientServerConfig(server_command=["command"]),
+            {"devtools": "localhost:1234"},
+            [
+                "lsp-devtools",
+                "agent",
+                "--host",
+                "localhost",
+                "--port",
+                "1234",
+                "--",
+                "command",
+            ],
+        ),
+        (
+            ClientServerConfig(server_command=["command"]),
+            {"devtools": "127.0.0.1:1234"},
+            [
+                "lsp-devtools",
+                "agent",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                "1234",
+                "--",
+                "command",
+            ],
+        ),
+    ],
+)
+def test_get_server_command(
+    config: ClientServerConfig, kwargs: Dict[str, Any], expected: List[str]
+):
+    """Ensure that we can build the server start command correctly."""
+    actual = config.get_server_command(**kwargs)
+    assert expected == actual
 
 
 def setup_test(pytester: pytest.Pytester, server_name: str, test_code: str):
