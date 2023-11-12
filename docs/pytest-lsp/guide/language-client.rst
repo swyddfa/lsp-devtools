@@ -90,6 +90,27 @@ Similar to ``window/logMessage`` above, the client records any :lsp:`window/show
       :start-at: @server.feature
       :end-at: return items
 
+``window/workDoneProgress/create``
+----------------------------------
+
+The client can respond to :lsp:`window/workDoneProgress/create` requests and handle associated :lsp:`$/progress`
+notifications
+
+.. card:: test_server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-create-progress/t_server.py
+      :language: python
+      :start-at: @pytest.mark.asyncio
+      :end-before: @pytest.mark.asyncio
+
+.. card:: server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-create-progress/server.py
+      :language: python
+      :start-at: @server.command
+      :end-at: return
+
+
 ``workspace/configuration``
 ---------------------------
 
