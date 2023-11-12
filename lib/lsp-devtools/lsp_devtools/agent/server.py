@@ -47,8 +47,11 @@ class AgentServer(Server):
             writer.close()
             await writer.wait_closed()
 
-            if self._tcp_server is not None:
-                self._tcp_server.cancel()
+            # Uncomment if we ever need to introduce a mode where the server stops
+            # automatically once a session ends.
+            #
+            # if self._tcp_server is not None:
+            #     self._tcp_server.cancel()
 
         server = await asyncio.start_server(handle_client, host, port)
         async with server:
