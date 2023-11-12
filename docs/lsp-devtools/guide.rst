@@ -6,4 +6,4 @@ User Guide
 
    guide/getting-started
    guide/record-command
-   guide/tui-command
+   guide/inspect-command
