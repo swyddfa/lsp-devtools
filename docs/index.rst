@@ -78,6 +78,7 @@ pytest-lsp
    :caption: pytest-lsp
 
    pytest-lsp/guide
+   pytest-lsp/howto
    pytest-lsp/reference
    pytest-lsp/changelog
 

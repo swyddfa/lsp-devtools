@@ -1,5 +1,5 @@
-Testing JSON-RPC Servers
-========================
+How To Test Generic JSON-RPC Servers
+====================================
 
 While ``pytest-lsp`` is primarily focused on writing tests for LSP servers it is possible to reuse some of the machinery to test other JSON-RPC servers.
 
