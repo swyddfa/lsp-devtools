@@ -4,5 +4,6 @@ sphinx
 sphinx-copybutton
 sphinx-design
 furo
+myst-parser
 pygls>=1.1.0
 -e lib/pytest-lsp

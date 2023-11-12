@@ -29,6 +29,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     # 3rd party extensions
+    "myst_parser",
     "sphinx_copybutton",
     "sphinx_design",
     # local extensions
