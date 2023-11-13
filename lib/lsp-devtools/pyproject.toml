@@ -49,7 +49,6 @@ typecheck=[
     "importlib_resources",
     "types-setuptools",
 ]
-prometheus = ["prometheus_client"]
 
 [project.scripts]
 lsp-devtools = "lsp_devtools.cli:main"
