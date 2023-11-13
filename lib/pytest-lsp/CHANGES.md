@@ -1,3 +1,23 @@
+## v0.4.0 - 2023-11-13
+
+
+### Features
+
+- The test ``LanguageClient`` now supports ``workspace/configuration`` requests ([#90](https://github.com/swyddfa/lsp-devtools/issues/90))
+- pytest-lsp's ``LanguageClient`` is now able to handle ``window/workDoneProgress/create`` requests. ([#91](https://github.com/swyddfa/lsp-devtools/issues/91))
+- ``pytest-lsp`` is now able to integrate with ``lsp-devtools``, run ``pytest`` with the ``--lsp-devtools`` flag to enable the integration. ([#97](https://github.com/swyddfa/lsp-devtools/issues/97))
+
+### Enhancements
+
+- It is now possible to select a specific version of a client when using the ``client_capabilities()`` function.
+  e.g. ``client-name@latest``, ``client-name@v2`` or ``client-name@2.1.3``. ``pytest-lsp`` will choose the latest available version of the client that satisfies the given constraint. ([#101](https://github.com/swyddfa/lsp-devtools/issues/101))
+
+### Client Capabilities
+
+- Add client capabilities for Neovim versions ``v0.7.0`` and ``v0.8.0`` ([#89](https://github.com/swyddfa/lsp-devtools/issues/89))
+- Add client capabilities for Neovim ``v0.9.1`` ([#100](https://github.com/swyddfa/lsp-devtools/issues/100))
+
+
 ## v0.3.1 - 2023-10-06
 
 This release includes some minor breaking changes if you were using the lower-level APIs e.g `make_client_server`.
