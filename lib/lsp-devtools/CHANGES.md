@@ -1,3 +1,13 @@
+## v0.2.1 - 2023-11-13
+
+
+### Enhancements
+
+- If the agent is unable to connect to a server app immediately, it will now retry indefinitely until it succeeds or the language server exits ([#77](https://github.com/swyddfa/lsp-devtools/issues/77))
+- It is now possible to select completion items in the ``lsp-devtools client`` ([#108](https://github.com/swyddfa/lsp-devtools/issues/108))
+- Commands like ``lsp-devtools record`` and ``lsp-devtools inspect`` will no longer exit/stop capturing messages after the first LSP session exits ([#110](https://github.com/swyddfa/lsp-devtools/issues/110))
+
+
 ## v0.2.0 - 2023-10-06
 
 ### Features
