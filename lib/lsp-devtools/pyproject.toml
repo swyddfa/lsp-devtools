@@ -53,11 +53,11 @@ force_single_line = true
 profile = "black"
 
 [tool.towncrier]
-filename = "CHANGES.rst"
+filename = "CHANGES.md"
 directory = "changes/"
-title_format = "v{version} - {project_date}"
-issue_format = "`#{issue} <https://github.com/swyddfa/lsp-devtools/issues/{issue}>`_"
-underlines = ["-", "^", "\""]
+title_format = "## v{version} - {project_date}"
+issue_format = "[#{issue}](https://github.com/swyddfa/lsp-devtools/issues/{issue})"
+underlines = ["", "", ""]
 
 type = [
   { name = "Features", directory = "feature", showcontent = true },
