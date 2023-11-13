@@ -18,19 +18,14 @@ from typing import Optional
 from typing import Set
 from typing import Union
 
-from lsprotocol.types import COMPLETION_ITEM_RESOLVE
-from lsprotocol.types import TEXT_DOCUMENT_COMPLETION
-from lsprotocol.types import TEXT_DOCUMENT_DOCUMENT_LINK
-from lsprotocol.types import ClientCapabilities
-from lsprotocol.types import CompletionItem
-from lsprotocol.types import CompletionList
-from lsprotocol.types import DocumentLink
-from lsprotocol.types import InsertTextFormat
-from lsprotocol.types import MarkupContent
+from lsprotocol import types
 from pygls.capabilities import get_capability
 
 logger = logging.getLogger(__name__)
-ResultChecker = Callable[[ClientCapabilities, Any], None]
+ParamsChecker = Callable[[types.ClientCapabilities, Any], None]
+ResultChecker = Callable[[types.ClientCapabilities, Any], None]
+
+PARAMS_CHECKS: Dict[str, ParamsChecker] = {}
 RESULT_CHECKS: Dict[str, ResultChecker] = {}
 
 
@@ -38,29 +33,56 @@ class LspSpecificationWarning(UserWarning):
     """Warning raised when encountering results that fall outside the spec."""
 
 
-def check_result_for(maybe_fn: Optional[ResultChecker] = None, *, method: str):
+def check_result_for(*, method: str) -> Callable[[ResultChecker], ResultChecker]:
     """Define a result check."""
 
     def defcheck(fn: ResultChecker):
+        if (existing := RESULT_CHECKS.get(method, None)) is not None:
+            raise ValueError(f"{fn!r} conflicts with existing check {existing!r}")
+
         RESULT_CHECKS[method] = fn
         return fn
 
-    if maybe_fn:
-        return defcheck(maybe_fn)
+    return defcheck
+
+
+def check_params_of(*, method: str) -> Callable[[ParamsChecker], ParamsChecker]:
+    """Define a params check."""
+
+    def defcheck(fn: ParamsChecker):
+        if (existing := PARAMS_CHECKS.get(method, None)) is not None:
+            raise ValueError(f"{fn!r} conflicts with existing check {existing!r}")
+
+        PARAMS_CHECKS[method] = fn
+        return fn
 
     return defcheck
 
 
 def check_result_against_client_capabilities(
-    capabilities: Optional[ClientCapabilities], method: str, result: Any
+    capabilities: Optional[types.ClientCapabilities], method: str, result: Any
 ):
-    """Check that the given result respects the client's declared capabilities."""
+    """Check that the given result respects the client's declared capabilities.
+
+    This will emit an ``LspSpecificationWarning`` if any issues are detected.
+
+    Parameters
+    ----------
+    capabilities
+       The client's capabilities
+
+    method
+       The method name to validate the result of
+
+    result
+       The result to validate
+    """
 
     if capabilities is None:
         raise RuntimeError("Client has not been initialized")
 
     # Only run checks if the user provided some capabilities for the client.
-    if capabilities == ClientCapabilities():
+    if capabilities == types.ClientCapabilities():
         return
 
     result_checker = RESULT_CHECKS.get(method, None)
@@ -73,8 +95,43 @@ def check_result_against_client_capabilities(
         warnings.warn(str(e), LspSpecificationWarning, stacklevel=4)
 
 
+def check_params_against_client_capabilities(
+    capabilities: Optional[types.ClientCapabilities], method: str, params: Any
+):
+    """Check that the given params respect the client's declared capabilities.
+
+    This will emit an ``LspSpecificationWarning`` if any issues are detected.
+
+    Parameters
+    ----------
+    capabilities
+       The client's capabilities
+
+    method
+       The method name to validate the result of
+
+    params
+       The params to validate
+    """
+    if capabilities is None:
+        raise RuntimeError("Client has not been initialized")
+
+    # Only run checks if the user provided some capabilities for the client.
+    if capabilities == types.ClientCapabilities():
+        return
+
+    params_checker = PARAMS_CHECKS.get(method, None)
+    if params_checker is None:
+        return
+
+    try:
+        params_checker(capabilities, params)
+    except AssertionError as e:
+        warnings.warn(str(e), LspSpecificationWarning, stacklevel=2)
+
+
 def check_completion_item(
-    item: CompletionItem,
+    item: types.CompletionItem,
     commit_characters_support: bool,
     documentation_formats: Set[str],
     snippet_support: bool,
@@ -84,19 +141,19 @@ def check_completion_item(
     if item.commit_characters:
         assert commit_characters_support, "Client does not support commit characters"
 
-    if isinstance(item.documentation, MarkupContent):
+    if isinstance(item.documentation, types.MarkupContent):
         kind = item.documentation.kind
-        message = f"Client does not support documentation format '{kind}'"
+        message = f"Client does not support documentation format {kind.value!r}"
         assert kind in documentation_formats, message
 
-    if item.insert_text_format == InsertTextFormat.Snippet:
+    if item.insert_text_format == types.InsertTextFormat.Snippet:
         assert snippet_support, "Client does not support snippets."
 
 
-@check_result_for(method=TEXT_DOCUMENT_COMPLETION)
+@check_result_for(method=types.TEXT_DOCUMENT_COMPLETION)
 def completion_items(
-    capabilities: ClientCapabilities,
-    result: Union[CompletionList, List[CompletionItem], None],
+    capabilities: types.ClientCapabilities,
+    result: Union[types.CompletionList, List[types.CompletionItem], None],
 ):
     """Ensure that the completion items returned from the server are compliant with the
     spec and the client's declared capabilities."""
@@ -122,7 +179,7 @@ def completion_items(
         False,
     )
 
-    if isinstance(result, CompletionList):
+    if isinstance(result, types.CompletionList):
         items = result.items
     else:
         items = result
@@ -136,8 +193,10 @@ def completion_items(
         )
 
 
-@check_result_for(method=COMPLETION_ITEM_RESOLVE)
-def completion_item_resolve(capabilities: ClientCapabilities, item: CompletionItem):
+@check_result_for(method=types.COMPLETION_ITEM_RESOLVE)
+def completion_item_resolve(
+    capabilities: types.ClientCapabilities, item: types.CompletionItem
+):
     """Ensure that the completion item returned from the server is compliant with the
     spec and the client's declared capbabilities."""
 
@@ -167,9 +226,9 @@ def completion_item_resolve(capabilities: ClientCapabilities, item: CompletionIt
     )
 
 
-@check_result_for(method=TEXT_DOCUMENT_DOCUMENT_LINK)
+@check_result_for(method=types.TEXT_DOCUMENT_DOCUMENT_LINK)
 def document_links(
-    capabilities: ClientCapabilities, result: Optional[List[DocumentLink]]
+    capabilities: types.ClientCapabilities, result: Optional[List[types.DocumentLink]]
 ):
     """Ensure that the document links returned from the server are compliant with the
     Spec and the client's declared capabilities."""
@@ -184,3 +243,24 @@ def document_links(
     for item in result:
         if item.tooltip:
             assert tooltip_support, "Client does not support tooltips."
+
+
+@check_params_of(method=types.WINDOW_WORK_DONE_PROGRESS_CREATE)
+def work_done_progress_create(
+    capabilities: types.ClientCapabilities,
+    params: types.WorkDoneProgressCreateParams,
+):
+    """Assert that the client has support for ``window/workDoneProgress/create``
+    requests."""
+    is_supported = get_capability(capabilities, "window.workDoneProgress", False)
+    assert is_supported, "Client does not support 'window/workDoneProgress/create'"
+
+
+@check_params_of(method=types.WORKSPACE_CONFIGURATION)
+def workspace_configuration(
+    capabilities: types.ClientCapabilities,
+    params: types.WorkspaceConfigurationParams,
+):
+    """Ensure that the client has support for ``workspace/configuration`` requests."""
+    is_supported = get_capability(capabilities, "workspace.configuration", False)
+    assert is_supported, "Client does not support 'workspace/configuration'"

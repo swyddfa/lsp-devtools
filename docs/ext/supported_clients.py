@@ -2,6 +2,7 @@ import importlib.resources as resources
 
 from docutils import nodes
 from docutils.parsers.rst import Directive
+from packaging.version import parse as parse_version
 from sphinx.application import Sphinx
 
 
@@ -26,6 +27,7 @@ class SupportedClients(Directive):
         clients = self.load_clients()
 
         for client, versions in clients.items():
+            version_string = ", ".join(sorted(versions, key=parse_version))
             rows.append(
                 nodes.row(
                     "",
@@ -35,7 +37,7 @@ class SupportedClients(Directive):
                     ),
                     nodes.entry(
                         "",
-                        nodes.paragraph("", ", ".join(versions)),
+                        nodes.paragraph("", version_string),
                     ),
                 ),
             )

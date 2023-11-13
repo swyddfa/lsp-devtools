@@ -1,0 +1,9 @@
+[version]
+path = "pytest_lsp/client.py"
+validate-bump = false
+
+[build.targets.sdist]
+include = ["pytest_lsp", "tests", "CHANGES.md"]
+
+[build.targets.wheel]
+packages = ["pytest_lsp"]

@@ -89,3 +89,47 @@ Similar to ``window/logMessage`` above, the client records any :lsp:`window/show
       :language: python
       :start-at: @server.feature
       :end-at: return items
+
+``window/workDoneProgress/create``
+----------------------------------
+
+The client can respond to :lsp:`window/workDoneProgress/create` requests and handle associated :lsp:`$/progress`
+notifications
+
+.. card:: test_server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-create-progress/t_server.py
+      :language: python
+      :start-at: @pytest.mark.asyncio
+      :end-before: @pytest.mark.asyncio
+
+.. card:: server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/window-create-progress/server.py
+      :language: python
+      :start-at: @server.command
+      :end-at: return
+
+
+``workspace/configuration``
+---------------------------
+
+The client can respond to :lsp:`workspace/configuration` requests.
+
+The client supports settings different configuration values for different ``scope_uris`` as well as getting/setting specific configuration ``sections``.
+However, to keep the implementation simple the client **will not** fallback to more general configuration scopes if it cannot find a value in the requested scope.
+
+See the documentation on :meth:`~pytest_lsp.LanguageClient.set_configuration` and :meth:`~pytest_lsp.LanguageClient.get_configuration` for details
+
+.. card:: test_server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/workspace-configuration/t_server.py
+      :language: python
+      :start-at: @pytest.mark.asyncio
+
+.. card:: server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/workspace-configuration/server.py
+      :language: python
+      :start-at: @server.command
+      :end-at: return a + c

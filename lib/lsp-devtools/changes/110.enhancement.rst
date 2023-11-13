@@ -1,0 +1,1 @@
+Commands like ``lsp-devtools record`` and ``lsp-devtools inspect`` will no longer exit/stop capturing messages after the first LSP session exits

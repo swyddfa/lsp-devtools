@@ -25,16 +25,28 @@ asyncio_mode = auto
 @pytest.mark.parametrize(
     "name, expected",
     [
-        ("diagnostics", dict(passed=1)),
-        ("getting-started", dict(passed=1)),
-        ("fixture-passthrough", dict(passed=1)),
-        ("parameterised-clients", dict(passed=2)),
-        ("window-log-message", dict(passed=1)),
-        ("window-show-document", dict(passed=1)),
-        ("window-show-message", dict(passed=1)),
+        pytest.param("diagnostics", dict(passed=1), id="diagnostics"),
+        pytest.param("getting-started", dict(passed=1), id="getting-started"),
+        pytest.param("fixture-passthrough", dict(passed=1), id="fixture-passthrough"),
+        pytest.param(
+            "parameterised-clients", dict(passed=2), id="parameterised-clients"
+        ),
+        pytest.param("window-log-message", dict(passed=1), id="window-log-message"),
+        pytest.param(
+            "window-create-progress",
+            dict(passed=3),
+            id="window-create-progress",
+        ),
+        pytest.param("window-show-document", dict(passed=1), id="window-show-document"),
+        pytest.param("window-show-message", dict(passed=1), id="window-show-message"),
+        pytest.param(
+            "workspace-configuration",
+            dict(passed=1, warnings=1),
+            id="workspace-configuration",
+        ),
     ],
 )
-def test_documentation_examples(pytester: pytest.Pytester, name: str, expected: dict):
+def test_examples(pytester: pytest.Pytester, name: str, expected: dict):
     """Ensure that the examples included in the documentation work as expected."""
 
     setup_test(pytester, name)
@@ -48,9 +60,7 @@ def test_client_capabilities(pytester: pytest.Pytester):
 
     setup_test(pytester, "client-capabilities")
 
-    results = pytester.runpytest(
-        "-W", "ignore::DeprecationWarning:pytest_asyncio.plugin"
-    )
+    results = pytester.runpytest()
     results.assert_outcomes(passed=1, warnings=1)
 
     message = "*LspSpecificationWarning: Client does not support snippets."
@@ -79,8 +89,6 @@ def test_client_capabilities_ignore(pytester: pytest.Pytester):
     results = pytester.runpytest(
         "-W",
         "ignore::pytest_lsp.LspSpecificationWarning",
-        "-W",
-        "ignore::DeprecationWarning:pytest_asyncio.plugin",
     )
     results.assert_outcomes(passed=1, warnings=0)
 

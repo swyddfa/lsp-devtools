@@ -1,0 +1,9 @@
+[version]
+path = "lsp_devtools/__init__.py"
+validate-bump = false
+
+[build.targets.sdist]
+include = ["lsp_devtools", "tests", "CHANGES.md"]
+
+[build.targets.wheel]
+packages = ["lsp_devtools"]

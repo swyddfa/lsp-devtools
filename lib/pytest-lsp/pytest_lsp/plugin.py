@@ -35,12 +35,64 @@ class ClientServerConfig:
     server_env: Optional[Dict[str, str]] = attrs.field(default=None)
     """Environment variables to set when starting the server."""
 
-    async def start(self) -> JsonRPCClient:
-        """Return the client instance to use for the test."""
-        client = self.client_factory()
+    def _get_devtools_command(self, server: str) -> List[str]:
+        """Get the lsp-devtools command required to connect to the given ``server``"""
 
-        await client.start_io(*self.server_command, env=self.server_env)
+        if ":" in server:
+            host, port = server.split(":")
+        else:
+            host, port = "localhost", server
+
+        try:
+            int(port)
+        except ValueError as e:
+            raise ValueError(f"Invalid port number: {port!r}") from e
+
+        return ["lsp-devtools", "agent", "--host", host, "--port", port, "--"]
+
+    def get_server_command(self, devtools: Optional[str] = None) -> List[str]:
+        """Get the command to start the server with."""
+        server_command = []
+        if devtools is not None:
+            server_command.extend(self._get_devtools_command(devtools))
+
+        server_command.extend(self.server_command)
+
+        return server_command
+
+    async def start(self, devtools: Optional[str] = None) -> JsonRPCClient:
+        """Return the client instance to use for the test.
+
+        Parameters
+        ----------
+        devtools
+           If set, enable ``lsp-devtools`` integration, should be of the form
+           ``<port>`` or ``<host>:<port>``. Where ``<host>`` and ``<port>``
+           describe how to connect to an ``lsp-devtools`` server program.
+
+        Returns
+        -------
+        JsonRPCClient
+           The client instance to use in the test.
+        """
+        client = self.client_factory()
+        server_command = self.get_server_command(devtools)
+
+        await client.start_io(*server_command, env=self.server_env)
         return client
+
+
+def pytest_addoption(parser):
+    group = parser.getgroup("lsp")
+    group.addoption(
+        "--lsp-devtools",
+        dest="devtools",
+        nargs="?",
+        action="store",
+        default=None,
+        const="localhost:8765",
+        help="Enable lsp-devtools integration.",
+    )
 
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
@@ -144,7 +196,8 @@ def fixture(
     def wrapper(fn):
         @pytest_asyncio.fixture(**kwargs)
         async def the_fixture(request):
-            client = await config.start()
+            devtools = request.config.getoption("devtools")
+            client = await config.start(devtools=devtools)
 
             kwargs = get_fixture_arguments(fn, client, request)
             result = fn(**kwargs)

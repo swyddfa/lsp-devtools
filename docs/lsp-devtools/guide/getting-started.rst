@@ -97,9 +97,9 @@ Currently ``lsp-devtools`` provides the following applications
 
    See :doc:`/lsp-devtools/guide/record-command` for details
 
-``lsp-devtools tui``
+``lsp-devtools inspect``
    An interactive terminal application, powered by `textual <https://pypi.org/project/textual>`_.
 
    .. figure:: /images/tui-screenshot.svg
 
-   See :doc:`/lsp-devtools/guide/tui-command` for details
+   See :doc:`/lsp-devtools/guide/inspect-command` for details

@@ -24,11 +24,16 @@ author = "Alex Carney"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    # built-in extensions
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
+    # 3rd party extensions
+    "myst_parser",
     "sphinx_copybutton",
     "sphinx_design",
+    # local extensions
+    "capabilities",
     "supported_clients",
 ]
 

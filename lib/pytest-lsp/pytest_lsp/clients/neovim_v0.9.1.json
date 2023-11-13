@@ -1,0 +1,290 @@
+{
+  "clientInfo": {
+    "version": "0.9.1",
+    "name": "Neovim"
+  },
+  "capabilities": {
+    "textDocument": {
+      "declaration": {
+        "linkSupport": true
+      },
+      "synchronization": {
+        "didSave": true,
+        "willSave": true,
+        "dynamicRegistration": false,
+        "willSaveWaitUntil": true
+      },
+      "callHierarchy": [
+        {
+          "dynamicRegistration": false
+        }
+      ],
+      "codeAction": {
+        "isPreferredSupport": true,
+        "dataSupport": true,
+        "resolveSupport": {
+          "properties": [
+            "edit"
+          ]
+        },
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        },
+        "dynamicRegistration": false
+      },
+      "publishDiagnostics": {
+        "tagSupport": {
+          "valueSet": [
+            1,
+            2
+          ]
+        },
+        "relatedInformation": true
+      },
+      "rename": {
+        "dynamicRegistration": false,
+        "prepareSupport": true
+      },
+      "implementation": {
+        "linkSupport": true
+      },
+      "typeDefinition": {
+        "linkSupport": true
+      },
+      "documentSymbol": {
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "dynamicRegistration": false,
+        "hierarchicalDocumentSymbolSupport": true
+      },
+      "signatureHelp": {
+        "dynamicRegistration": false,
+        "signatureInformation": {
+          "parameterInformation": {
+            "labelOffsetSupport": true
+          },
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "activeParameterSupport": true
+        }
+      },
+      "hover": {
+        "dynamicRegistration": false,
+        "contentFormat": [
+          "markdown",
+          "plaintext"
+        ]
+      },
+      "definition": {
+        "linkSupport": true
+      },
+      "completion": {
+        "contextSupport": false,
+        "completionItem": {
+          "preselectSupport": false,
+          "deprecatedSupport": false,
+          "documentationFormat": [
+            "markdown",
+            "plaintext"
+          ],
+          "snippetSupport": false,
+          "commitCharactersSupport": false
+        },
+        "dynamicRegistration": false,
+        "completionItemKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25
+          ]
+        }
+      },
+      "semanticTokens": {
+        "augmentsSyntaxTokens": true,
+        "requests": {
+          "range": false,
+          "full": {
+            "delta": true
+          }
+        },
+        "tokenModifiers": [
+          "declaration",
+          "definition",
+          "readonly",
+          "static",
+          "deprecated",
+          "abstract",
+          "async",
+          "modification",
+          "documentation",
+          "defaultLibrary"
+        ],
+        "formats": [
+          "relative"
+        ],
+        "dynamicRegistration": false,
+        "tokenTypes": [
+          "namespace",
+          "type",
+          "class",
+          "enum",
+          "interface",
+          "struct",
+          "typeParameter",
+          "parameter",
+          "variable",
+          "property",
+          "enumMember",
+          "event",
+          "function",
+          "method",
+          "macro",
+          "keyword",
+          "modifier",
+          "comment",
+          "string",
+          "number",
+          "regexp",
+          "operator",
+          "decorator"
+        ],
+        "overlappingTokenSupport": true,
+        "multilineTokenSupport": false,
+        "serverCancelSupport": false
+      },
+      "references": {
+        "dynamicRegistration": false
+      },
+      "documentHighlight": {
+        "dynamicRegistration": false
+      }
+    },
+    "window": {
+      "showDocument": {
+        "support": true
+      },
+      "workDoneProgress": true,
+      "showMessage": {
+        "messageActionItem": {
+          "additionalPropertiesSupport": false
+        }
+      }
+    },
+    "workspace": {
+      "workspaceFolders": true,
+      "configuration": true,
+      "applyEdit": true,
+      "workspaceEdit": {
+        "resourceOperations": [
+          "rename",
+          "create",
+          "delete"
+        ]
+      },
+      "semanticTokens": {
+        "refreshSupport": true
+      },
+      "symbol": {
+        "symbolKind": {
+          "valueSet": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ]
+        },
+        "dynamicRegistration": false,
+        "hierarchicalWorkspaceSymbolSupport": true
+      },
+      "didChangeWatchedFiles": {
+        "dynamicRegistration": false,
+        "relativePatternSupport": true
+      }
+    }
+  }
+}

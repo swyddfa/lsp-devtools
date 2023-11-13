@@ -2,14 +2,15 @@ exclude: '.bumpversion.cfg$'
 repos:
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.4.0
+  rev: v4.5.0
   hooks:
   - id: check-yaml
   - id: end-of-file-fixer
+    exclude: 'lib/pytest-lsp/pytest_lsp/clients/.*\.json'
   - id: trailing-whitespace
 
 - repo: https://github.com/psf/black
-  rev: 23.9.1
+  rev: 23.11.0
   hooks:
   - id: black
     exclude: 'lib/pytest-lsp/pytest_lsp/gen.py'
@@ -35,7 +36,7 @@ repos:
     exclude: 'lib/pytest-lsp/pytest_lsp/gen.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.5.1'
+  rev: 'v1.7.0'
   hooks:
   - id: mypy
     name: mypy (pytest-lsp)
@@ -62,3 +63,13 @@ repos:
     - textual
     - websockets
     files: 'lib/lsp-devtools/lsp_devtools/.*\.py'
+
+- repo: local
+  hooks:
+  - id: check-capabilities
+    name: check-capabilities
+    language: python
+    additional_dependencies:
+    - lsprotocol
+    files: 'lib/pytest-lsp/pytest_lsp/clients/.*\.json'
+    entry: python scripts/check_capabilities.py

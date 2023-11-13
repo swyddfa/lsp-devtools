@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools >= 61.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.17.1"]
+build-backend = "hatchling.build"
 
 [project]
 name = "pytest-lsp"
-version = "0.3.1"
-description = "pytest plugin for end-to-end testing of language servers"
+dynamic = ["version"]
+description = "A pytest plugin for end-to-end testing of language servers"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
@@ -25,6 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "importlib-resources; python_version<\"3.9\"",
+    "packaging",
     "pygls>=1.1.0",
     "pytest",
     "pytest-asyncio",
@@ -37,26 +38,6 @@ dependencies = [
 
 [project.entry-points.pytest11]
 pytest-lsp = "pytest_lsp"
-
-[project.optional-dependencies]
-dev = [
-    "black",
-    "flake8",
-    "pre-commit",
-    "tox",
-]
-test = [
-    "pytest",
-    "pytest-cov",
-    "pytest-timeout",
-]
-typecheck = [
-    "mypy",
-    "types-appdirs"
-]
-
-[tool.setuptools.packages.find]
-include = ["pytest_lsp*"]
 
 [tool.coverage.run]
 source_pkgs = ["pytest_lsp"]
@@ -74,15 +55,16 @@ profile = "black"
 asyncio_mode = "auto"
 
 [tool.towncrier]
-filename = "CHANGES.rst"
+filename = "CHANGES.md"
 directory = "changes/"
-title_format = "v{version} - {project_date}"
-issue_format = "`#{issue} <https://github.com/swyddfa/lsp-devtools/issues/{issue}>`_"
-underlines = ["-", "^", "\""]
+title_format = "## v{version} - {project_date}"
+issue_format = "[#{issue}](https://github.com/swyddfa/lsp-devtools/issues/{issue})"
+underlines = ["", "", ""]
 
 type = [
   { name = "Features", directory = "feature", showcontent = true },
   { name = "Enhancements", directory = "enhancement", showcontent = true },
+  { name = "Client Capabilities", directory = "capability", showcontent = true },
   { name = "Fixes", directory = "fix", showcontent = true },
   { name = "Docs", directory = "doc", showcontent = true },
   { name = "Breaking Changes", directory = "breaking", showcontent = true },
