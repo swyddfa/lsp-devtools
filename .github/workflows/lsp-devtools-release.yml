@@ -19,19 +19,16 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - uses: actions/setup-python@v4
       with:
         python-version: "3.10"
 
     - run: |
-        sudo apt update
-        sudo apt install pandoc
-
         python --version
         python -m pip install --upgrade pip
-        python -m pip install build bump2version towncrier docutils
+        python -m pip install hatch towncrier docutils
       name: Install Build Tools
 
     - run: |
@@ -44,7 +41,7 @@ jobs:
     - name: Package
       run: |
         cd lib/lsp-devtools
-        python -m build
+        hatch build
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v3
