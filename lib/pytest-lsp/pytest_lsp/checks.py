@@ -252,7 +252,7 @@ def work_done_progress_create(
 ):
     """Assert that the client has support for ``window/workDoneProgress/create``
     requests."""
-    is_supported = get_capability(capabilities, "window.workDoneProgress", False)
+    is_supported = get_capability(capabilities, "window.work_done_progress", False)
     assert is_supported, "Client does not support 'window/workDoneProgress/create'"
 
 
