@@ -5,8 +5,13 @@ final: prev: {
       pytest-lsp = python-prev.buildPythonPackage {
         pname = "pytest-lsp";
         version = "0.3.0";
+        format = "pyproject";
 
         src = ./..;
+
+        nativeBuildInputs = with python-final; [
+          hatchling
+        ];
 
         propagatedBuildInputs = with python-final; [
           pygls
@@ -15,12 +20,10 @@ final: prev: {
         ];
 
         doCheck = true;
-
+        pythonImportsCheck = [ "pytest_lsp" ];
         nativeCheckInputs = with python-prev; [
           pytestCheckHook
         ];
-
-        pythonImportsCheck = [ "pytest_lsp" ];
 
       };
     }
