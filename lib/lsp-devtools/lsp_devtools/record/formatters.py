@@ -1,7 +1,9 @@
 import json
 import re
+from functools import partial
 from typing import Any
 from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -17,11 +19,11 @@ except ImportError:
     cache = lru_cache(None)
 
 
-def format_json(obj: dict) -> str:
+def format_json(obj: dict, *, indent: Union[str, int, None] = 2) -> str:
     if isinstance(obj, str):
         return obj
 
-    return json.dumps(obj, indent=2)
+    return json.dumps(obj, indent=indent)
 
 
 def format_position(position: dict) -> str:
@@ -32,9 +34,11 @@ def format_range(range_: dict) -> str:
     return f"{format_position(range_['start'])}-{format_position(range_['end'])}"
 
 
-FORMATTERS = {
+FORMATTERS: Dict[str, Callable[[Any], str]] = {
     "position": format_position,
     "range": format_range,
+    "json": format_json,
+    "json-compact": partial(format_json, indent=None),
 }
 
 
