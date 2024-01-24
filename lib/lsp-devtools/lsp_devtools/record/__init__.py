@@ -78,7 +78,7 @@ def log_rpc_message(ls: AgentServer, message: MessageText):
     parse_rpc_message(ls, message, logfn)
 
 
-def setup_stdout_output(args) -> Console:
+def setup_stdout_output(args, logger: logging.Logger) -> Console:
     """Log to stdout."""
 
     console = Console(record=args.save_output is not None)
@@ -90,7 +90,7 @@ def setup_stdout_output(args) -> Console:
             exclude_message_types=args.exclude_message_types,
             include_methods=args.include_methods,
             exclude_methods=args.exclude_methods,
-            formatter=args.format_message,
+            formatter=args.format_message or "{.|json}",
         )
     )
 
@@ -98,7 +98,7 @@ def setup_stdout_output(args) -> Console:
     return console
 
 
-def setup_file_output(args):
+def setup_file_output(args, logger: logging.Logger):
     handler = logging.FileHandler(filename=str(args.to_file))
     handler.setLevel(logging.INFO)
     handler.addFilter(
@@ -108,14 +108,14 @@ def setup_file_output(args):
             exclude_message_types=args.exclude_message_types,
             include_methods=args.include_methods,
             exclude_methods=args.exclude_methods,
-            formatter=args.format_message,
+            formatter=args.format_message or "{.|json-compact}",
         )
     )
 
     logger.addHandler(handler)
 
 
-def setup_sqlite_output(args):
+def setup_sqlite_output(args, logger: logging.Logger):
     handler = SqlHandler(args.to_sqlite)
     handler.setLevel(logging.INFO)
     handler.addFilter(
@@ -142,13 +142,13 @@ def start_recording(args, extra: List[str]):
     port = args.port
 
     if args.to_file:
-        setup_file_output(args)
+        setup_file_output(args, logger)
 
     elif args.to_sqlite:
-        setup_sqlite_output(args)
+        setup_sqlite_output(args, logger)
 
     else:
-        console = setup_stdout_output(args)
+        console = setup_stdout_output(args, logger)
 
     try:
         print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
@@ -266,7 +266,7 @@ default) and push messages to it and have them be recorded.
     format.add_argument(
         "-f",
         "--format-message",
-        default="",
+        default=None,
         help=(
             "format messages according to given format string, "
             "see example commands above for syntax. "
