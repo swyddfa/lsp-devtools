@@ -19,6 +19,20 @@ from lsp_devtools.record.formatters import FormatString
             "The method 'textDocument/completion' was called",
         ),
         (
+            "{.position|json}",
+            {
+                "position": {"line": 1, "character": 2},
+            },
+            '{\n  "line": 1,\n  "character": 2\n}',
+        ),
+        (
+            "{.position|json-compact}",
+            {
+                "position": {"line": 1, "character": 2},
+            },
+            '{"line": 1, "character": 2}',
+        ),
+        (
             "{.method} {.params.textDocument.uri}:{.params.position}",
             {
                 "method": "textDocument/completion",

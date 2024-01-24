@@ -29,6 +29,7 @@ Here are some example usages of the ``record`` command that you may find useful.
 
 The following command will save to a JSON file only the client's info and :class:`pygls:lsprotocol.types.ClientCapabilities` sent during the ``initialize`` request - useful for :ref:`adding clients to pytest-lsp <pytest-lsp-supported-clients>`! 😉
 
+
 ::
 
    lsp-devtools record -f '{{"clientInfo": {.params.clientInfo}, "capabilities": {.params.capabilities}}}' --to-file <client_name>_v<version>.json
@@ -291,21 +292,28 @@ Formatting messages
 Formatters
 ^^^^^^^^^^
 
-``lsp-devtools`` knows how to format the following LSP Types
+``lsp-devtools`` provides the following formatters
 
-``Position``
+``json`` (default)
+  Renders objects as "pretty" JSON, equivalent to ``json.dumps(obj, indent=2)``
+
+``json-compact``
+  Renders objects as JSON with no additional formatting, equivalent to ``json.dumps(obj)``
+
+``position``
    ``{"line": 1, "character": 2}`` will be rendered as ``1:2``
 
-``Range``
+``range``
    ``{"start": {"line": 1, "character": 2}, "end": {"line": 3, "character": 4}}`` will be rendered as ``1:2-3:4``
 
-Additionally, any enum type can be used as a formatter in which case a number will be replaced with the corresponding name, for example::
+
+Additionally, any enum type can be used as a formatter, where numbers will be replaced with their corresponding name, for example::
 
   Format String:
   "{.type|MessageType}"
 
-  Value:    Result:
-  1         Error
-  2         Warning
-  3         Info
-  4         Log
+  Value:          Result:
+  {"type": 1}     Error
+  {"type": 2}     Warning
+  {"type": 3}     Info
+  {"type": 4}     Log
