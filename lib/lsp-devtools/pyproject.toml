@@ -11,25 +11,25 @@ requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "aiosqlite",
-    "importlib-resources; python_version<\"3.9\"",
-    "platformdirs",
-    "pygls>=1.1.0",
-    "stamina",
-    "textual>=0.41.0",
-    "typing-extensions; python_version<\"3.8\"",
+  "aiosqlite",
+  "importlib-resources; python_version<\"3.9\"",
+  "platformdirs",
+  "pygls>=1.1.0",
+  "stamina",
+  "textual>=0.41.0",
+  "typing-extensions; python_version<\"3.8\"",
 ]
 
 [project.urls]
@@ -51,6 +51,11 @@ sort = "Cover"
 [tool.isort]
 force_single_line = true
 profile = "black"
+
+[tool.pyright]
+venv = ".env"
+include = ["lsp_devtools"]
+pythonVersion = "3.8"
 
 [tool.towncrier]
 filename = "CHANGES.md"
