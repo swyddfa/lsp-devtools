@@ -42,23 +42,26 @@ class AgentServer(Server):
     async def start_tcp(self, host: str, port: int) -> None:  # type: ignore[override]
         async def handle_client(reader, writer):
             self.lsp.connection_made(writer)
-            await aio_readline(self._stop_event, reader, self.lsp.data_received)
 
-            writer.close()
-            await writer.wait_closed()
+            try:
+                await aio_readline(self._stop_event, reader, self.lsp.data_received)
+            except asyncio.CancelledError:
+                pass
+            finally:
+                writer.close()
+                await writer.wait_closed()
 
             # Uncomment if we ever need to introduce a mode where the server stops
             # automatically once a session ends.
             #
-            # if self._tcp_server is not None:
-            #     self._tcp_server.cancel()
+            # self.stop()
 
         server = await asyncio.start_server(handle_client, host, port)
         async with server:
             self._tcp_server = asyncio.create_task(server.serve_forever())
             await self._tcp_server
 
-    async def stop(self):
+    def stop(self):
         if self._tcp_server is not None:
             self._tcp_server.cancel()
 
