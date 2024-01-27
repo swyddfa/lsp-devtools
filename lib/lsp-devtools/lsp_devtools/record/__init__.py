@@ -156,7 +156,7 @@ def start_recording(args, extra: List[str]):
     except asyncio.CancelledError:
         pass
     except KeyboardInterrupt:
-        pass
+        server.stop()
 
     if console is not None and args.save_output is not None:
         destination = args.save_output
@@ -306,9 +306,3 @@ default) and push messages to it and have them be recorded.
     )
 
     cmd.set_defaults(run=start_recording)
-
-
-def _enable_pygls_logging():
-    pygls_log = logging.getLogger("pygls")
-    pygls_log.setLevel(logging.DEBUG)
-    pygls_log.addHandler(RichHandler(level=logging.DEBUG))
