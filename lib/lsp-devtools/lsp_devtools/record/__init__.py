@@ -20,6 +20,7 @@ from lsp_devtools.agent import parse_rpc_message
 from lsp_devtools.handlers.sql import SqlHandler
 
 from .filters import LSPFilter
+from .visualize import SpinnerHandler
 
 EXPORTERS = {
     ".html": ("save_html", {}),
@@ -78,10 +79,9 @@ def log_rpc_message(ls: AgentServer, message: MessageText):
     parse_rpc_message(ls, message, logfn)
 
 
-def setup_stdout_output(args) -> Console:
-    """Log to stdout."""
+def setup_stdout_output(args, logger: logging.Logger, console: Console):
+    """Log messages to stdout."""
 
-    console = Console(record=args.save_output is not None)
     handler = RichLSPHandler(level=logging.INFO, console=console)
     handler.addFilter(
         LSPFilter(
@@ -90,15 +90,15 @@ def setup_stdout_output(args) -> Console:
             exclude_message_types=args.exclude_message_types,
             include_methods=args.include_methods,
             exclude_methods=args.exclude_methods,
-            formatter=args.format_message,
+            formatter=args.format_message or "{.|json}",
         )
     )
 
     logger.addHandler(handler)
-    return console
 
 
-def setup_file_output(args):
+def setup_file_output(args, logger: logging.Logger, console: Optional[Console] = None):
+    """Log messages to a file."""
     handler = logging.FileHandler(filename=str(args.to_file))
     handler.setLevel(logging.INFO)
     handler.addFilter(
@@ -108,14 +108,23 @@ def setup_file_output(args):
             exclude_message_types=args.exclude_message_types,
             include_methods=args.include_methods,
             exclude_methods=args.exclude_methods,
-            formatter=args.format_message,
+            formatter=args.format_message or "{.|json-compact}",
         )
     )
 
+    if console:
+        spinner = SpinnerHandler(console)
+        spinner.setLevel(logging.INFO)
+        logger.addHandler(spinner)
+
+    # This must come last!
     logger.addHandler(handler)
 
 
-def setup_sqlite_output(args):
+def setup_sqlite_output(
+    args, logger: logging.Logger, console: Optional[Console] = None
+):
+    """Log messages to SQLite."""
     handler = SqlHandler(args.to_sqlite)
     handler.setLevel(logging.INFO)
     handler.addFilter(
@@ -128,6 +137,12 @@ def setup_sqlite_output(args):
         )
     )
 
+    if console:
+        spinner = SpinnerHandler(console)
+        spinner.setLevel(logging.INFO)
+        logger.addHandler(spinner)
+
+    # This must come last!
     logger.addHandler(handler)
 
 
@@ -137,36 +152,40 @@ def start_recording(args, extra: List[str]):
     logger.setLevel(logging.INFO)
     server.feature(MESSAGE_TEXT_NOTIFICATION)(log_func)
 
-    console: Optional[Console] = None
-    host = args.host
-    port = args.port
+    console = Console(record=args.save_output is not None)
 
     if args.to_file:
-        setup_file_output(args)
+        setup_file_output(args, logger, console)
 
     elif args.to_sqlite:
-        setup_sqlite_output(args)
+        setup_sqlite_output(args, logger, console)
 
     else:
-        console = setup_stdout_output(args)
+        setup_stdout_output(args, logger, console)
 
     try:
+        host = args.host
+        port = args.port
+
         print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
         asyncio.run(server.start_tcp(host, port))
     except asyncio.CancelledError:
         pass
     except KeyboardInterrupt:
-        pass
+        server.stop()
 
-    if console is not None and args.save_output is not None:
-        destination = args.save_output
-        exporter_name, kwargs = EXPORTERS.get(destination.suffix, (None, None))
-        if exporter_name is None:
-            console.print(f"Unable to save output to '{destination.suffix}' files")
-            return
+    if console is not None:
+        console.show_cursor(True)
 
-        exporter = getattr(console, exporter_name)
-        exporter(str(destination), **kwargs)
+        if args.save_output is not None:
+            destination = args.save_output
+            exporter_name, kwargs = EXPORTERS.get(destination.suffix, (None, None))
+            if exporter_name is None:
+                console.print(f"Unable to save output to '{destination.suffix}' files")
+                return
+
+            exporter = getattr(console, exporter_name)
+            exporter(str(destination), **kwargs)
 
 
 def setup_filter_args(cmd: argparse.ArgumentParser):
@@ -266,7 +285,7 @@ default) and push messages to it and have them be recorded.
     format.add_argument(
         "-f",
         "--format-message",
-        default="",
+        default=None,
         help=(
             "format messages according to given format string, "
             "see example commands above for syntax. "
@@ -306,9 +325,3 @@ default) and push messages to it and have them be recorded.
     )
 
     cmd.set_defaults(run=start_recording)
-
-
-def _enable_pygls_logging():
-    pygls_log = logging.getLogger("pygls")
-    pygls_log.setLevel(logging.DEBUG)
-    pygls_log.addHandler(RichHandler(level=logging.DEBUG))

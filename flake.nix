@@ -8,6 +8,10 @@
 
   outputs = { self, nixpkgs, utils }:
     {
-      overlays.default =  import ./lib/pytest-lsp/nix/pytest-lsp-overlay.nix;
+      overlays.default = self: super:
+        nixpkgs.lib.composeManyExtensions [
+          (import ./lib/pytest-lsp/nix/pytest-lsp-overlay.nix)
+          (import ./lib/lsp-devtools/nix/lsp-devtools-overlay.nix)
+      ] self super;
     };
 }

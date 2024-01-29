@@ -10,19 +10,25 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/psf/black
-  rev: 23.11.0
+  rev: 23.12.1
   hooks:
   - id: black
-    exclude: 'lib/pytest-lsp/pytest_lsp/gen.py'
 
 - repo: https://github.com/PyCQA/flake8
-  rev: 6.1.0
+  rev: 7.0.0
   hooks:
   - id: flake8
+    name: flake8 (lsp-devtools)
     args: [--config=lib/lsp-devtools/setup.cfg]
+    files: 'lib/lsp-devtools/lsp_devtools/.*\.py'
+
+  - id: flake8
+    name: flake8 (pytest-lsp)
+    args: [--config=lib/pytest-lsp/setup.cfg]
+    files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
 
 - repo: https://github.com/pycqa/isort
-  rev: 5.12.0
+  rev: 5.13.2
   hooks:
   - id: isort
     name: isort (lsp-devtools)
@@ -33,10 +39,9 @@ repos:
     name: isort (pytest-lsp)
     args: [--settings-file, lib/pytest-lsp/pyproject.toml]
     files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
-    exclude: 'lib/pytest-lsp/pytest_lsp/gen.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.7.0'
+  rev: 'v1.8.0'
   hooks:
   - id: mypy
     name: mypy (pytest-lsp)

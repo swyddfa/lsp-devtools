@@ -4,8 +4,6 @@
 
 This repo is an attempt at building the developer tooling I wished existed when I first started working on [Esbonio](https://github.com/swyddfa/esbonio/).
 
-**Everything here is early in its development, so expect plenty of bugs and missing features.**
-
 This is a monorepo containing a number of sub-projects.
 
 ## `lib/lsp-devtools` - A grab bag of development utilities
@@ -18,7 +16,8 @@ A collection of cli utilities aimed at aiding the development of language server
 
 - `agent`: Used to wrap an lsp server allowing messages sent between it and the client to be intercepted and inspected by other tools.
 - `record`: Connects to an agent and record traffic to file, sqlite db or console. Supports filtering and formatting the output
-- `tui`: A text user interface to visualise and inspect LSP traffic. Powered by [textual](https://textual.textualize.io/)
+- `inspect`: A browser devtools inspired TUI to visualise and inspecting LSP traffic. Powered by [textual](https://textual.textualize.io/)
+- `client`: **Experimental** A TUI language client with built in `inspect` panel. Powered by [textual](https://textual.textualize.io/)
 
 ## `lib/pytest-lsp` - End-to-end testing of language servers with pytest
 

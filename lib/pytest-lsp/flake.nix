@@ -14,27 +14,36 @@
       pytest-lsp-overlay = import ./nix/pytest-lsp-overlay.nix;
     in {
 
-    overlays.default = pytest-lsp-overlay;
+      overlays.default = pytest-lsp-overlay;
 
-    devShells = utils.lib.eachDefaultSystemMap (system:
-      let
-        pkgs = import nixpkgs { inherit system; overlays = [ pytest-lsp-overlay ]; };
-      in
-        eachPythonVersion [ "38" "39" "310" "311" ] (pyVersion:
-          with pkgs; mkShell {
-            name = "py${pyVersion}";
+      packages = utils.lib.eachDefaultSystemMap (system:
+        let
+          pkgs = import nixpkgs { inherit system; overlays = [ pytest-lsp-overlay ]; };
+        in
+          eachPythonVersion [ "38" "39" "310" "311"] (pyVersion:
+            pkgs."python${pyVersion}Packages".pytest-lsp
+          )
+      );
 
-            shellHook = ''
-              export PYTHONPATH="./:$PYTHONPATH"
-            '';
+      devShells = utils.lib.eachDefaultSystemMap (system:
+        let
+          pkgs = import nixpkgs { inherit system; overlays = [ pytest-lsp-overlay ]; };
+        in
+          eachPythonVersion [ "38" "39" "310" "311" ] (pyVersion:
+            with pkgs; mkShell {
+              name = "py${pyVersion}";
 
-            packages = with pkgs."python${pyVersion}Packages"; [
-              pygls
-              pytest
-              pytest-asyncio
-            ];
-          }
-      )
-    );
-  };
+              shellHook = ''
+                export PYTHONPATH="./:$PYTHONPATH"
+              '';
+
+              packages = with pkgs."python${pyVersion}Packages"; [
+                pygls
+                pytest
+                pytest-asyncio
+              ];
+            }
+          )
+      );
+    };
 }
