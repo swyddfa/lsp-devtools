@@ -61,9 +61,9 @@ class LanguageClient(BaseLanguageClient):
         self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
         """Holds any recieved diagnostics."""
 
-        self.progress_reports: Dict[
-            types.ProgressToken, List[types.ProgressParams]
-        ] = {}
+        self.progress_reports: Dict[types.ProgressToken, List[types.ProgressParams]] = (
+            {}
+        )
         """Holds any received progress updates."""
 
         self.error: Optional[Exception] = None
