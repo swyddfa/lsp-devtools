@@ -1,4 +1,5 @@
 """A very simple language server."""
+
 from lsprotocol import types
 from pygls.server import LanguageServer
 
