@@ -1,3 +1,18 @@
+## v0.2.2 - 2024-01-29
+
+
+### Enhancements
+
+- Added formatters `json` and `json-compact` that can be used within format strings. ([#130](https://github.com/swyddfa/lsp-devtools/issues/130))
+- When not printing messages to stdout, the `lsp-devtools record` command now displays a nice visualisation of the traffic between client and server - so that you can see that it's doing something ([#134](https://github.com/swyddfa/lsp-devtools/issues/134))
+
+### Fixes
+
+- The `lsp-devtools record` command will now produce valid JSON when using the `--to-file` option without an explicitly provided format string. ([#130](https://github.com/swyddfa/lsp-devtools/issues/130))
+- The `lsp-devtools agent` now watches for the when the server process exits and closes itself down also. ([#132](https://github.com/swyddfa/lsp-devtools/issues/132))
+- Commands like `lsp-devtools record` should now exit cleanly when hitting `Ctrl-C` ([#133](https://github.com/swyddfa/lsp-devtools/issues/133))
+
+
 ## v0.2.1 - 2023-11-13
 
 
