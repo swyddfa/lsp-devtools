@@ -1,9 +1,8 @@
-``textDocument/documentColor``
-==============================
+``documentColor``
+=================
 
 Capabilities relating to the :lsp:`textDocument/documentColor` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.color_provider.dynamic_registration
+.. bool-table:: text_document.color_provider.dynamic_registration

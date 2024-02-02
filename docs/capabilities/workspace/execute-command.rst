@@ -1,5 +1,5 @@
-``workspace/executeCommand``
-============================
+``executeCommand``
+==================
 
 Capabilities relating to the :lsp:`workspace/executeCommand` request.
 

@@ -1,9 +1,11 @@
-``textDocument/hover``
-======================
+``hover``
+=========
 
 Capabilities relating to the :lsp:`textDocument/hover` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.hover.dynamic_registration
+.. bool-table:: text_document.hover.dynamic_registration
+
+.. values-table:: text_document.hover.content_format
+   :value-set: MarkupKind

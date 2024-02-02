@@ -7,10 +7,6 @@ process of developing language servers easier.
 Client Capability Index
 -----------------------
 
-.. warning::
-
-   This is still under construction.
-
 .. important::
 
    This accuracy of this section entirely depends on the captured capabilities data that is `bundled <https://github.com/swyddfa/lsp-devtools/tree/develop/lib/pytest-lsp/pytest_lsp/clients>`__ with pytest-lsp.
@@ -18,21 +14,33 @@ Client Capability Index
    Pull requests for corrections and new data welcome!
 
 .. toctree::
-   :maxdepth: 2
+   :glob:
    :hidden:
    :caption: Client Capabilities
 
-   capabilities/text-document
-   capabilities/workspace
-   capabilities/window
+   capabilities/*
 
 Inspired by `caniuse.com <https://canisue.com>`__ this provides information on which clients support which features of the `LSP Specification <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>`__.
 
 .. grid:: 2
    :gutter: 2
 
-   .. grid-item-card:: Text Document
+   .. grid-item-card:: General
       :columns: 12
+      :link: /capabilities/general
+      :link-type: doc
+      :text-align: center
+
+      General client capabilities.
+
+   .. grid-item-card:: NotebookDocument
+      :link: /capabilities/notebook-document
+      :link-type: doc
+      :text-align: center
+
+      Capabilities for NotebookDocuments.
+
+   .. grid-item-card:: TextDocument
       :link: /capabilities/text-document
       :link-type: doc
       :text-align: center

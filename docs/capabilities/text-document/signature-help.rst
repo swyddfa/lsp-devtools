@@ -1,24 +1,21 @@
-``textDocument/signatureHelp``
-==============================
+``signatureHelp``
+=================
 
 Capabilities relating to the :lsp:`textDocument/signatureHelp` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.signature_help.dynamic_registration
+.. bool-table:: text_document.signature_help.dynamic_registration
 
-Label Offset Support
---------------------
+.. bool-table:: text_document.signature_help.context_support
 
-.. capabilities:bool-table:: text_document.signature_help.signature_information.parameter_information.label_offset_support
-
-Active Parameter Support
+``signatureInformation``
 ------------------------
 
-.. capabilities:bool-table:: text_document.signature_help.signature_information.active_parameter_support
+.. bool-table:: text_document.signature_help.signature_information.active_parameter_support
 
-Context Support
----------------
 
-.. capabilities:bool-table:: text_document.signature_help.context_support
+``parameterInformation``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. bool-table:: text_document.signature_help.signature_information.parameter_information.label_offset_support

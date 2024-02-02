@@ -1,14 +1,10 @@
-``textDocument/definition``
-============================
+``definition``
+==============
 
 Capabilities relating to the :lsp:`textDocument/definition` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.definition.dynamic_registration
+.. bool-table:: text_document.definition.dynamic_registration
 
-Link Support
-------------
-
-.. capabilities:bool-table:: text_document.definition.link_support
+.. bool-table:: text_document.definition.link_support

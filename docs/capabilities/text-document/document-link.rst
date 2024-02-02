@@ -1,14 +1,10 @@
-``textDocument/documentLink``
-==================================
+``documentLink``
+================
 
 Capabilities relating to the :lsp:`textDocument/documentLink` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.document_link.dynamic_registration
+.. bool-table:: text_document.document_link.dynamic_registration
 
-Tooltip Support
----------------
-
-.. capabilities:bool-table:: text_document.document_link.tooltip_support
+.. bool-table:: text_document.document_link.tooltip_support

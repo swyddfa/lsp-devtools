@@ -1,5 +1,5 @@
-Text Document
-=============
+``textDocument``
+================
 
 .. toctree::
    :maxdepth: 1
