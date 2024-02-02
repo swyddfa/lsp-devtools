@@ -1,9 +1,8 @@
-``textDocument/selectionRange``
-===============================
+``selectionRange``
+==================
 
 Capabilities relating to the :lsp:`textDocument/selectionRange` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.selection_range.dynamic_registration
+.. bool-table:: text_document.selection_range.dynamic_registration

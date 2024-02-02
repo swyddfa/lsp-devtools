@@ -1,9 +1,8 @@
-``textDocument/references``
-===============================
+``references``
+==============
 
 Capabilities relating to the :lsp:`textDocument/references` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.references.dynamic_registration
+.. bool-table:: text_document.references.dynamic_registration

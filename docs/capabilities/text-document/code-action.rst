@@ -1,29 +1,21 @@
-``textDocument/codeAction``
-===========================
+``codeAction``
+==============
 
 Capabilities relating to the :lsp:`textDocument/codeAction` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.code_action.dynamic_registration
+.. bool-table:: text_document.code_action.dynamic_registration
 
-Honors Change Annotations
--------------------------
+.. values-table:: text_document.code_action.code_action_literal_support.code_action_kind.value_set
+   :value-set: CodeActionKind
 
-.. capabilities:bool-table:: text_document.code_action.honors_change_annotations
+.. bool-table:: text_document.code_action.is_preferred_support
 
-``CodeAction.isPreferred``
---------------------------
+.. bool-table:: text_document.code_action.disabled_support
 
-.. capabilities:bool-table:: text_document.code_action.is_preferred_support
+.. bool-table:: text_document.code_action.data_support
 
-``CodeAction.disabled``
------------------------
+.. values-table:: text_document.code_action.resolve_support.properties
 
-.. capabilities:bool-table:: text_document.code_action.disabled_support
-
-``CodeAction.data``
--------------------
-
-.. capabilities:bool-table:: text_document.code_action.data_support
+.. bool-table:: text_document.code_action.honors_change_annotations

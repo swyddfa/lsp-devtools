@@ -1,14 +1,10 @@
-``textDocument/implementation``
-===============================
+``implementation``
+==================
 
 Capabilities relating to the :lsp:`textDocument/implementation` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.implementation.dynamic_registration
+.. bool-table:: text_document.implementation.dynamic_registration
 
-Link Support
-------------
-
-.. capabilities:bool-table:: text_document.implementation.link_support
+.. bool-table:: text_document.implementation.link_support

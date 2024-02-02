@@ -1,5 +1,5 @@
-``window/showDocument``
-=======================
+``showDocument``
+================
 
 Capabilities relating to the :lsp:`window/showDocument` request.
 

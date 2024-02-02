@@ -1,9 +1,11 @@
-``window/showMessageRequest``
-=============================
+``showMessage``
+===============
 
 Capabilities relating to the :lsp:`window/showMessageRequest` request.
 
-Additional Properties Support
------------------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: window.show_message.message_action_item.additional_properties_support
+``messageActionItem``
+---------------------
+
+.. bool-table:: window.show_message.message_action_item.additional_properties_support

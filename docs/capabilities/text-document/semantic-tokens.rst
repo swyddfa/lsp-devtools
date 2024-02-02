@@ -1,45 +1,28 @@
-``textDocument/semanticTokens``
-===============================
+``semanticTokens``
+==================
 
 Capabilities relating to :lsp:`textDocument/semanticTokens`.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.semantic_tokens.dynamic_registration
+.. bool-table:: text_document.semantic_tokens.dynamic_registration
 
-``textDocument/semanticTokens/range``
--------------------------------------
+.. bool-table:: text_document.semantic_tokens.requests.range
 
-.. capabilities:bool-table:: text_document.semantic_tokens.requests.range
+.. bool-table:: text_document.semantic_tokens.requests.full
 
-``textDocument/semanticTokens/full``
--------------------------------------
+.. bool-table:: text_document.semantic_tokens.requests.full.delta
 
-.. capabilities:bool-table:: text_document.semantic_tokens.requests.full
+.. values-table:: text_document.semantic_tokens.token_types
+   :value-set: SemanticTokenTypes
 
-``textDocument/semanticTokens/full/delta``
-------------------------------------------
+.. values-table:: text_document.semantic_tokens.token_modifiers
+   :value-set: SemanticTokenModifiers
 
-.. capabilities:bool-table:: text_document.semantic_tokens.requests.full.delta
+.. bool-table:: text_document.semantic_tokens.overlapping_token_support
 
+.. bool-table:: text_document.semantic_tokens.multiline_token_support
 
-Overlapping Tokens
-------------------
+.. bool-table:: text_document.semantic_tokens.server_cancel_support
 
-.. capabilities:bool-table:: text_document.semantic_tokens.overlapping_token_support
-
-Multiline Tokens
-----------------
-
-.. capabilities:bool-table:: text_document.semantic_tokens.multiline_token_support
-
-Server Cancel Support
----------------------
-
-.. capabilities:bool-table:: text_document.semantic_tokens.server_cancel_support
-
-Augments Syntax Tokens
-----------------------
-
-.. capabilities:bool-table:: text_document.semantic_tokens.augments_syntax_tokens
+.. bool-table:: text_document.semantic_tokens.augments_syntax_tokens

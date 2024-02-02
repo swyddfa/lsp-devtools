@@ -1,14 +1,10 @@
-``textDocument/declaration``
-============================
+``declaration``
+===============
 
 Capabilities relating to the :lsp:`textDocument/declaration` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.declaration.dynamic_registration
+.. bool-table:: text_document.declaration.dynamic_registration
 
-Link Support
-------------
-
-.. capabilities:bool-table:: text_document.declaration.link_support
+.. bool-table:: text_document.declaration.link_support

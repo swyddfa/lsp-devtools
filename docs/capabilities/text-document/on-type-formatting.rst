@@ -1,9 +1,8 @@
-``textDocument/onTypeFormatting``
-=================================
+``onTypeFormatting``
+====================
 
 Capabilities relating to the :lsp:`textDocument/onTypeFormatting` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.on_type_formatting.dynamic_registration
+.. bool-table:: text_document.on_type_formatting.dynamic_registration

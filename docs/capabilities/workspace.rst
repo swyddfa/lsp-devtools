@@ -1,5 +1,5 @@
-Workspace
-=========
+``workspace``
+=============
 
 .. toctree::
    :maxdepth: 1
