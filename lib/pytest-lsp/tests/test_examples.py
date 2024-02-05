@@ -122,6 +122,27 @@ def test_generic_rpc(pytester: pytest.Pytester):
     results.stdout.fnmatch_lines(" *LOG: b=2")
 
 
+def test_server_stderr_fail(pytester: pytest.Pytester):
+    """Ensure that the server's stderr stream is presented on failure."""
+
+    setup_test(pytester, "server-stderr")
+
+    results = pytester.runpytest()
+    results.assert_outcomes(failed=1)
+
+    results.stdout.fnmatch_lines("-* Captured stderr call -*")
+    results.stdout.fnmatch_lines("Suggesting item 0")
+    results.stdout.fnmatch_lines("Suggesting item 1")
+    results.stdout.fnmatch_lines("Suggesting item 2")
+    results.stdout.fnmatch_lines("Suggesting item 3")
+    results.stdout.fnmatch_lines("Suggesting item 4")
+    results.stdout.fnmatch_lines("Suggesting item 5")
+    results.stdout.fnmatch_lines("Suggesting item 6")
+    results.stdout.fnmatch_lines("Suggesting item 7")
+    results.stdout.fnmatch_lines("Suggesting item 8")
+    results.stdout.fnmatch_lines("Suggesting item 9")
+
+
 def test_window_log_message_fail(pytester: pytest.Pytester):
     """Ensure that the initial getting started example fails as expected."""
 
