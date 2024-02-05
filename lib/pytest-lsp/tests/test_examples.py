@@ -28,6 +28,7 @@ asyncio_mode = auto
         pytest.param("diagnostics", dict(passed=1), id="diagnostics"),
         pytest.param("getting-started", dict(passed=1), id="getting-started"),
         pytest.param("fixture-passthrough", dict(passed=1), id="fixture-passthrough"),
+        pytest.param("fixture-scope", dict(passed=2), id="fixture-scope"),
         pytest.param(
             "parameterised-clients", dict(passed=2), id="parameterised-clients"
         ),
