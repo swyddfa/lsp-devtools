@@ -33,7 +33,7 @@ dependencies = [
 
 [project.urls]
 "Bug Tracker" = "https://github.com/swyddfa/lsp-devtools/issues"
-"Documentation" = "https://swyddfa.github.io/lsp-devtools/"
+"Documentation" = "https://lsp-devtools.readthedocs.io/en/latest/"
 "Source Code" = "https://github.com/swyddfa/lsp-devtools"
 
 [project.entry-points.pytest11]
