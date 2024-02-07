@@ -1,3 +1,23 @@
+## v0.4.1 - 2024-02-07
+
+
+### Enhancements
+
+- When a test fails `pytest-lsp` will now show the server's `stderr` output (if any) ([#143](https://github.com/swyddfa/lsp-devtools/issues/143))
+
+### Client Capabilities
+
+- Add client capabilities for Emacs v29.1 ([#142](https://github.com/swyddfa/lsp-devtools/issues/142))
+
+### Fixes
+
+- `LspSpecificationWarnings` will no longer be incorrectly emitted when a client does indeed support `window/workDoneProgress/create` requests ([#119](https://github.com/swyddfa/lsp-devtools/issues/119))
+
+### Misc
+
+- Bump minimum version of `pytest-asyncio` to `0.23.0` ([#126](https://github.com/swyddfa/lsp-devtools/issues/126))
+
+
 ## v0.4.0 - 2023-11-13
 
 

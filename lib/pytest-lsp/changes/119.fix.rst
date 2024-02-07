@@ -1,1 +1,0 @@
-`LspSpecificationWarnings` will no longer be incorrectly emitted when a client does indeed support `window/workDoneProgress/create` requests
