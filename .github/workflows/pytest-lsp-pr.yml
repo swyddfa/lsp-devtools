@@ -31,7 +31,7 @@ jobs:
         ./scripts/make_release.py pytest-lsp
       name: Set Version
 
-    - uses: hynek/build-and-inspect-python-package@v1
+    - uses: hynek/build-and-inspect-python-package@v2
       with:
         path: lib/pytest-lsp
 
