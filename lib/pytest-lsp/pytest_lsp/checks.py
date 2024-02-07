@@ -8,6 +8,7 @@ standard :class:`~pytest_lsp.LanguageClient`. See :ref:`pytest-lsp-spec-checks` 
 details.
 
 """
+
 import logging
 import warnings
 from typing import Any

@@ -1,9 +1,8 @@
-``textDocument/formatting``
-=============================
+``formatting``
+==============
 
 Capabilities relating to the :lsp:`textDocument/formatting` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.formatting.dynamic_registration
+.. bool-table:: text_document.formatting.dynamic_registration

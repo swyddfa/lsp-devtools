@@ -1,24 +1,20 @@
-``textDocument/publishDiagnostics``
-===================================
+``publishDiagnostics``
+======================
 
-Capabilities relating to the :lsp:`textDocument/publishDiagnostics` notification.
+Capabilities relating to the :lsp:`textDocument/publishDiagnostics` notification
 
-Related Information
--------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.publish_diagnostics.related_information
+.. bool-table:: text_document.publish_diagnostics.related_information
 
-Version Support
----------------
+.. bool-table:: text_document.publish_diagnostics.version_support
 
-.. capabilities:bool-table:: text_document.publish_diagnostics.version_support
+.. bool-table:: text_document.publish_diagnostics.code_description_support
 
-Code Description
-----------------
+.. bool-table:: text_document.publish_diagnostics.data_support
 
-.. capabilities:bool-table:: text_document.publish_diagnostics.code_description
+``tagSupport``
+--------------
 
-Data Support
-------------
-
-.. capabilities:bool-table:: text_document.publish_diagnostics.data_support
+.. values-table:: text_document.publish_diagnostics.tag_support.value_set
+   :value-set: DiagnosticTag

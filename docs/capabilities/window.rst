@@ -1,5 +1,5 @@
-Window
-======
+``window``
+==========
 
 .. toctree::
    :maxdepth: 1

@@ -1,9 +1,8 @@
-``textDocument/codeLens``
-=========================
+``codeLens``
+============
 
 Capabilities relating to the :lsp:`textDocument/codeLens` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.code_lens.dynamic_registration
+.. bool-table:: text_document.code_lens.dynamic_registration

@@ -1,9 +1,8 @@
-``textDocument/inlineValue``
-============================
+``inlineValue``
+===============
 
 Capabilities relating to the :lsp:`textDocument/inlineValue` request.
 
-Dynamic Registration
---------------------
+.. default-domain:: capabilities
 
-.. capabilities:bool-table:: text_document.inline_value.dynamic_registration
+.. bool-table:: text_document.inline_value.dynamic_registration

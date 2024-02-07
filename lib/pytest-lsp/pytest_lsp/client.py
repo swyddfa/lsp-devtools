@@ -61,9 +61,9 @@ class LanguageClient(BaseLanguageClient):
         self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
         """Holds any recieved diagnostics."""
 
-        self.progress_reports: Dict[
-            types.ProgressToken, List[types.ProgressParams]
-        ] = {}
+        self.progress_reports: Dict[types.ProgressToken, List[types.ProgressParams]] = (
+            {}
+        )
         """Holds any received progress updates."""
 
         self.error: Optional[Exception] = None
@@ -82,6 +82,22 @@ class LanguageClient(BaseLanguageClient):
         self._last_log_index = 0
         """Used to keep track of which log messages correspond with which test case."""
 
+        self._stderr_forwarder: Optional[asyncio.Task] = None
+        """A task that forwards the server's stderr to the test process."""
+
+    async def start_io(self, cmd: str, *args, **kwargs):
+        await super().start_io(cmd, *args, **kwargs)
+
+        # Forward the server's stderr to this process' stderr
+        if self._server and self._server.stderr:
+            self._stderr_forwarder = asyncio.create_task(forward_stderr(self._server))
+
+    async def stop(self):
+        if self._stderr_forwarder:
+            self._stderr_forwarder.cancel()
+
+        return await super().stop()
+
     async def server_exit(self, server: asyncio.subprocess.Process):
         """Called when the server process exits."""
         logger.debug("Server process exited with code: %s", server.returncode)
@@ -89,15 +105,10 @@ class LanguageClient(BaseLanguageClient):
         if self._stop_event.is_set():
             return
 
-        stderr = ""
-        if server.stderr is not None:
-            stderr_bytes = await server.stderr.read()
-            stderr = stderr_bytes.decode("utf8")
-
         loop = asyncio.get_running_loop()
         loop.call_soon(
             cancel_all_tasks,
-            f"Server process exited with return code: {server.returncode}\n{stderr}",
+            f"Server process exited with return code: {server.returncode}",
         )
 
     def report_server_error(
@@ -257,6 +268,15 @@ class LanguageClient(BaseLanguageClient):
            The notification method to wait for, e.g. ``textDocument/publishDiagnostics``
         """
         return await self.protocol.wait_for_notification_async(method)
+
+
+async def forward_stderr(server: asyncio.subprocess.Process):
+    if server.stderr is None:
+        return
+
+    # EOF is signalled with an empty bytestring
+    while (line := await server.stderr.readline()) != b"":
+        sys.stderr.buffer.write(line)
 
 
 def cancel_all_tasks(message: str):

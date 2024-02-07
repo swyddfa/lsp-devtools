@@ -81,7 +81,7 @@ As well as printing to console, the record command supports a number of other ou
 
       lsp-devtools record --to-sqlite example.db
 
-   This database can then be opened in other tools like `datasette <https://datasette.io/>`_, `SQLite Browser <https://sqlitebrowser.org/>`_ or even ``lsp-devtools`` own :doc:`/lsp-devtools/guide/tui-command`.
+   This database can then be opened in other tools like `datasette <https://datasette.io/>`_, `SQLite Browser <https://sqlitebrowser.org/>`_ or even ``lsp-devtools`` own :doc:`/lsp-devtools/guide/inspect-command`.
 
    .. dropdown:: DB Schema
 

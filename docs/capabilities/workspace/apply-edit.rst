@@ -1,6 +1,8 @@
-``workspace/applyEdit``
-=======================
+``applyEdit``
+=============
 
 Capabilities relating to the :lsp:`workspace/applyEdit` request.
 
-.. capabilities:bool-table:: workspace.apply_edit
+.. default-domain:: capabilities
+
+.. bool-table:: workspace.apply_edit

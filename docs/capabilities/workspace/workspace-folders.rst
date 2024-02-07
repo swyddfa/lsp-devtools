@@ -1,5 +1,5 @@
-``workspace/workspaceFolders``
-==============================
+``workspaceFolders``
+====================
 
 Capabilities relating to the :lsp:`workspace/workspaceFolders` request.
 

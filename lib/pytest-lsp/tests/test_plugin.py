@@ -195,7 +195,7 @@ async def test_capabilities(client):
     else:
         message = [
             "E*asyncio.exceptions.CancelledError: Server process exited with return code: 1",  # noqa: E501
-            "E*ZeroDivisionError: division by zero",
+            "ZeroDivisionError: division by zero",
         ]
 
     results.stdout.fnmatch_lines(message)

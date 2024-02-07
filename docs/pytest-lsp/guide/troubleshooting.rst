@@ -49,34 +49,27 @@ Alternatively, if you prefer, you can set the following configuration option in 
 
 In which case `pytest-asyncio`_ will automatically collect and run any ``async`` test function in your test suite.
 
-``ScopeMismatch`` Error
------------------------
-
-Setting your client `fixture's scope <https://docs.pytest.org/en/7.1.x/how-to/fixtures.html#scope-sharing-fixtures-across-classes-modules-packages-or-session>`__ to something like ``session`` will allow you to reuse the same client-server connection across multiple test cases.
-However, you're likely to encounter an error like the following::
-
-  __________________________ ERROR at setup of test_capabilities _________________________
-  ScopeMismatch: You tried to access the function scoped fixture event_loop with a session
-  scoped request object, involved factories:
-  /.../site-packages/pytest_lsp/plugin.py:201:  def the_fixture(request)
-
-
-This is due to the default `event_loop <https://pytest-asyncio.readthedocs.io/en/latest/reference/fixtures.html#event-loop>`__ fixture provided by `pytest-asyncio`_ not living long enough to support your client.
-To fix this you can override the ``event_loop`` fixture, setting its scope to match that of your client.
-
-.. code-block:: python
-
-   @pytest.fixture(scope="session")
-   def event_loop():
-       """Redefine `pytest-asyncio's default event_loop fixture to match the scope
-       of our client fixture."""
-       policy = asyncio.get_event_loop_policy()
-       loop = policy.new_event_loop()
-       yield loop
-       loop.close()
-
-
 .. _pytest-asyncio: https://github.com/pytest-dev/pytest-asyncio
+
+My tests hang!
+--------------
+
+If you find that your test suite hangs with no obvious cause or errors, make sure that all of your test functions are tagged with the appropriate ``scope``.
+
+For exmaple, if you define your client fixture with ``scope="module"``
+
+.. literalinclude:: ../../../lib/pytest-lsp/tests/examples/fixture-scope/t_server.py
+   :language: python
+   :start-at: @pytest_lsp.fixture
+   :end-at: async def
+
+Then all test cases that make use of the fixture must also be tagged with the same scope.
+
+.. literalinclude:: ../../../lib/pytest-lsp/tests/examples/fixture-scope/t_server.py
+   :language: python
+   :start-at: @pytest.mark.asyncio
+   :end-at: async def
+
 
 ``DeprecationWarning``: Unclosed event loop
 -------------------------------------------
@@ -110,3 +103,33 @@ Depending on the version of ``pygls`` (the LSP implementation used by ``pytest-l
    =========================== 1 passed, 1 warning in 0.64s =============================
 
 This is a known issue in ``pygls v1.0.2`` and older, upgrading your ``pygls`` version to ``1.1.0`` or newer should resolve the issue.
+
+``ScopeMismatch`` Error
+-----------------------
+
+.. important::
+
+   This only applies to versions of ``pytest-asyncio`` prior to ``v0.23.0``
+
+Setting your client `fixture's scope <https://docs.pytest.org/en/7.1.x/how-to/fixtures.html#scope-sharing-fixtures-across-classes-modules-packages-or-session>`__ to something like ``session`` will allow you to reuse the same client-server connection across multiple test cases.
+However, you're likely to encounter an error like the following::
+
+  __________________________ ERROR at setup of test_capabilities _________________________
+  ScopeMismatch: You tried to access the function scoped fixture event_loop with a session
+  scoped request object, involved factories:
+  /.../site-packages/pytest_lsp/plugin.py:201:  def the_fixture(request)
+
+
+This is due to the default ``event_loop`` fixture provided by `pytest-asyncio`_ not living long enough to support your client.
+To fix this you can override the ``event_loop`` fixture, setting its scope to match that of your client.
+
+.. code-block:: python
+
+   @pytest.fixture(scope="session")
+   def event_loop():
+       """Redefine `pytest-asyncio's default event_loop fixture to match the scope
+       of our client fixture."""
+       policy = asyncio.get_event_loop_policy()
+       loop = policy.new_event_loop()
+       yield loop
+       loop.close()
