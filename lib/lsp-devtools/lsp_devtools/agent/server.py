@@ -1,7 +1,9 @@
 import asyncio
 import json
+import logging
 import re
 import threading
+import traceback
 from typing import Any
 from typing import Optional
 
@@ -20,7 +22,7 @@ class AgentServer(Server):
 
     lsp: AgentProtocol
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, logger: Optional[logging.Logger] = None, **kwargs):
         if "protocol_cls" not in kwargs:
             kwargs["protocol_cls"] = AgentProtocol
 
@@ -29,12 +31,19 @@ class AgentServer(Server):
 
         super().__init__(*args, **kwargs)
 
+        self.logger = logger or logging.getLogger(__name__)
         self.db: Optional[Database] = None
 
         self._client_buffer = []
         self._server_buffer = []
         self._stop_event = threading.Event()
         self._tcp_server = None
+
+    def _report_server_error(self, exc: Exception, source):
+        """Report internal server errors."""
+        tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+        self.logger.error("%s: %s", type(exc).__name__, exc)
+        self.logger.debug("%s", tb)
 
     def feature(self, feature_name: str, options: Optional[Any] = None):
         return self.lsp.fm.feature(feature_name, options)
