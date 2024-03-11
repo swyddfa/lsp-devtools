@@ -27,7 +27,6 @@ EXPORTERS = {
     ".svg": ("save_svg", {"title": ""}),
     ".txt": ("save_text", {}),
 }
-logger = logging.getLogger(__name__)
 
 
 class RichLSPHandler(RichHandler):
@@ -67,16 +66,30 @@ class RichLSPHandler(RichHandler):
         return super().format(record)
 
 
-def log_raw_message(ls: AgentServer, message: MessageText):
+def log_raw_message(logger: logging.Logger, ls: AgentServer, message: MessageText):
     """Push raw messages through the logging system."""
     logger.info(message.text, extra={"source": message.source})
 
 
-def log_rpc_message(ls: AgentServer, message: MessageText):
+def log_rpc_message(logger: logging.Logger, ls: AgentServer, message: MessageText):
     """Push parsed json-rpc messages through the logging system"""
 
     logfn = partial(logger.info, "%s", extra={"source": message.source})
     parse_rpc_message(ls, message, logfn)
+
+
+def setup_logging(logger: logging.Logger, console: Console):
+    """Setup logging of messages from other loggers."""
+
+    # Suppress pygls logging
+    pygls_logger = logging.getLogger("pygls")
+    pygls_logger.setLevel(logging.CRITICAL)
+
+    handler = RichHandler(console=console)
+    handler.setLevel(logging.ERROR)
+
+    logger.setLevel(logging.ERROR)
+    logger.addHandler(handler)
 
 
 def setup_stdout_output(args, logger: logging.Logger, console: Console):
@@ -95,6 +108,7 @@ def setup_stdout_output(args, logger: logging.Logger, console: Console):
     )
 
     logger.addHandler(handler)
+    logger.propagate = False
 
 
 def setup_file_output(args, logger: logging.Logger, console: Optional[Console] = None):
@@ -119,6 +133,7 @@ def setup_file_output(args, logger: logging.Logger, console: Optional[Console] =
 
     # This must come last!
     logger.addHandler(handler)
+    logger.propagate = False
 
 
 def setup_sqlite_output(
@@ -144,24 +159,31 @@ def setup_sqlite_output(
 
     # This must come last!
     logger.addHandler(handler)
+    logger.propagate = False
 
 
 def start_recording(args, extra: List[str]):
-    server = AgentServer()
+
+    logger = logging.getLogger("lsp_devtools")
+
+    server = AgentServer(logger=logger)
     log_func = log_raw_message if args.capture_raw_output else log_rpc_message
-    logger.setLevel(logging.INFO)
-    server.feature(MESSAGE_TEXT_NOTIFICATION)(log_func)
+
+    rpc_logger = logging.getLogger(__name__)
+    rpc_logger.setLevel(logging.INFO)
+    server.feature(MESSAGE_TEXT_NOTIFICATION)(partial(log_func, rpc_logger))
 
     console = Console(record=args.save_output is not None)
+    setup_logging(logger, console)
 
     if args.to_file:
-        setup_file_output(args, logger, console)
+        setup_file_output(args, rpc_logger, console)
 
     elif args.to_sqlite:
-        setup_sqlite_output(args, logger, console)
+        setup_sqlite_output(args, rpc_logger, console)
 
     else:
-        setup_stdout_output(args, logger, console)
+        setup_stdout_output(args, rpc_logger, console)
 
     try:
         host = args.host
