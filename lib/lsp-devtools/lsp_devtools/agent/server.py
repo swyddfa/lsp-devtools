@@ -5,6 +5,7 @@ import re
 import threading
 import traceback
 from typing import Any
+from typing import List
 from typing import Optional
 
 from pygls.client import aio_readline
@@ -34,10 +35,10 @@ class AgentServer(Server):
         self.logger = logger or logging.getLogger(__name__)
         self.db: Optional[Database] = None
 
-        self._client_buffer = []
-        self._server_buffer = []
+        self._client_buffer: List[str] = []
+        self._server_buffer: List[str] = []
         self._stop_event = threading.Event()
-        self._tcp_server = None
+        self._tcp_server: Optional[asyncio.Task] = None
 
     def _report_server_error(self, exc: Exception, source):
         """Report internal server errors."""
