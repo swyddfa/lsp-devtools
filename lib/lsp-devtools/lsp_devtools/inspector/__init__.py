@@ -1,10 +1,8 @@
 import argparse
 import asyncio
-import json
 import logging
 import pathlib
-import re
-from datetime import datetime
+from functools import partial
 from typing import Any
 from typing import Dict
 from typing import List
@@ -25,9 +23,8 @@ from textual.widgets import Header
 from textual.widgets import Tree
 from textual.widgets.tree import TreeNode
 
-from lsp_devtools.agent import MESSAGE_TEXT_NOTIFICATION
 from lsp_devtools.agent import AgentServer
-from lsp_devtools.agent import MessageText
+from lsp_devtools.agent import parse_rpc_message
 from lsp_devtools.database import Database
 from lsp_devtools.handlers import LspMessage
 
@@ -132,11 +129,7 @@ class MessagesTable(DataTable):
             self.max_row = idx
             self.rpcdata[idx] = message
 
-            # Surely there's a more direct way to do this?
-            dt = datetime.fromtimestamp(message.timestamp)
-            time = dt.isoformat(timespec="milliseconds")
-            time = time[time.find("T") + 1 :]
-
+            time = message.timestamp[message.timestamp.find("T") + 1 :]
             self.add_row(str(idx), time, message.source, message.id, message.method)
 
         self.move_cursor(row=self.row_count, animate=True)
@@ -201,64 +194,30 @@ class LSPInspector(App):
         await table.update()
 
     async def action_quit(self):
-        await self.server.stop()
+        self.server.stop()
         await self.db.close()
         await super().action_quit()
 
 
-MESSAGE_PATTERN = re.compile(
-    r"^(?:[^\r\n]+\r\n)*"
-    + r"Content-Length: (?P<length>\d+)\r\n"
-    + r"(?:[^\r\n]+\r\n)*\r\n"
-    + r"(?P<body>{.*)",
-    re.DOTALL,
-)
-
-
-async def handle_message(ls: AgentServer, message: MessageText):
+async def handle_message(db: Database, data: bytes):
     """Handle messages received from the connected lsp server."""
 
-    data = message.text
-    message_buf = ls._client_buffer if message.source == "client" else ls._server_buffer
+    try:
+        rpc = parse_rpc_message(data)
+    except ValueError:
+        # TODO: error reporting
+        return
 
-    while len(data):
-        # Append the incoming chunk to the message buffer
-        message_buf.append(data)
+    session = rpc["Message-Session"]
+    timestamp = rpc["Message-Timestamp"]
+    source = rpc["Message-Source"]
 
-        # Look for the body of the message
-        msg = "".join(message_buf)
-        found = MESSAGE_PATTERN.fullmatch(msg)
-
-        body = found.group("body") if found else ""
-        length = int(found.group("length")) if found else 1
-
-        if len(body) < length:
-            # Message is incomplete; bail until more data arrives
-            return
-
-        # Message is complete;
-        # extract the body and any remaining data,
-        # and reset the buffer for the next message
-        body, data = body[:length], body[length:]
-        message_buf.clear()
-
-        rpc = json.loads(body)
-        if ls.db is not None:
-            await ls.db.add_message(
-                message.session, message.timestamp, message.source, rpc
-            )
-
-
-def setup_server(db: Database):
-    server = AgentServer()
-    server.db = db
-    server.feature(MESSAGE_TEXT_NOTIFICATION)(handle_message)
-    return server
+    await db.add_message(session, timestamp, source, rpc.body)
 
 
 def inspector(args, extra: List[str]):
     db = Database(args.dbpath)
-    server = setup_server(db)
+    server = AgentServer(handler=partial(handle_message, db))
 
     app = LSPInspector(db, server)
     app.run()
