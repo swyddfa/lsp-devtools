@@ -25,8 +25,8 @@ from pytest_lsp import LanguageClient
             ["neovim_v0.6.1.json"],
         ),
         *itertools.product(
-            ["neovim", "neovim@latest", "neovim@v0", "neovim@v0.9", "neovim@v0.9.1"],
-            ["neovim_v0.9.1.json"],
+            ["neovim", "neovim@latest", "neovim@v0", "neovim@v0.10", "neovim@v0.10.0"],
+            ["neovim_v0.10.0.json"],
         ),
     ],
 )
