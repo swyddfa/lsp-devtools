@@ -1,57 +1,34 @@
 import argparse
 import asyncio
-import logging
 import subprocess
 import sys
 from typing import List
-from uuid import uuid4
 
 from .agent import Agent
+from .agent import RPCMessage
 from .agent import logger
+from .agent import parse_rpc_message
 from .client import AgentClient
-from .protocol import MESSAGE_TEXT_NOTIFICATION
-from .protocol import MessageText
 from .server import AgentServer
-from .server import parse_rpc_message
 
 __all__ = [
     "Agent",
     "AgentClient",
     "AgentServer",
+    "RPCMessage",
     "logger",
-    "MESSAGE_TEXT_NOTIFICATION",
-    "MessageText",
     "parse_rpc_message",
 ]
 
 
-class MessageHandler(logging.Handler):
-    """Logging handler that forwards captured JSON-RPC messages through to the
-    ``AgentServer`` instance."""
+async def forward_stderr(server: asyncio.subprocess.Process):
+    """Forward the server's stderr to the agent's stderr."""
+    if server.stderr is None:
+        return
 
-    def __init__(self, client: AgentClient, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.client = client
-        self.session = str(uuid4())
-        self._buffer: List[MessageText] = []
-
-    def emit(self, record: logging.LogRecord):
-        message = MessageText(
-            text=record.args[0],  # type: ignore
-            session=self.session,
-            timestamp=record.created,
-            source=record.__dict__["source"],
-        )
-
-        if not self.client.connected:
-            self._buffer.append(message)
-            return
-
-        # Send any buffered messages
-        while len(self._buffer) > 0:
-            self.client.protocol.message_text_notification(self._buffer.pop(0))
-
-        self.client.protocol.message_text_notification(message)
+    # EOF is signalled with an empty bytestring
+    while (line := await server.stderr.readline()) != b"":
+        sys.stderr.buffer.write(line)
 
 
 async def main(args, extra: List[str]):
@@ -60,7 +37,6 @@ async def main(args, extra: List[str]):
         return 1
 
     command, *arguments = extra
-
     server = await asyncio.create_subprocess_exec(
         command,
         *arguments,
@@ -68,18 +44,13 @@ async def main(args, extra: List[str]):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    agent = Agent(server, sys.stdin.buffer, sys.stdout.buffer)
-
     client = AgentClient()
-    handler = MessageHandler(client)
-    handler.setLevel(logging.INFO)
-
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
+    agent = Agent(server, sys.stdin.buffer, sys.stdout.buffer, client.forward_message)
 
     await asyncio.gather(
         client.start_tcp(args.host, args.port),
         agent.start(),
+        forward_stderr(server),
     )
 
 
