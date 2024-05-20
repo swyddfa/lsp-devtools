@@ -26,7 +26,7 @@ def test_filter_message_source(filter_source: str, message_source: str, expected
     message = dict(id="1", method="initialize", params={})
 
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["source"] = message_source
+    record.__dict__["Message-Source"] = message_source
 
     assert lsp.filter(record) is expected
 
@@ -96,7 +96,7 @@ def test_filter_included_message_types(message: dict, setup: Tuple[List[str], bo
 
     message_types, expected = setup
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     lsp = LSPFilter(include_message_types=message_types)
     lsp._response_method_map["1"] = ""
@@ -169,7 +169,7 @@ def test_filter_excluded_message_types(message: dict, setup: Tuple[List[str], bo
 
     message_types, expected = setup
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     lsp = LSPFilter(exclude_message_types=message_types)
     lsp._response_method_map["1"] = ""
@@ -207,7 +207,7 @@ def test_filter_included_method(message: dict, setup: Tuple[List[str], bool]):
 
     methods, expected = setup
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     lsp = LSPFilter(include_methods=methods)
     assert lsp.filter(record) is expected
@@ -257,12 +257,12 @@ def test_filter_included_method_response_message(
 
     request = dict(id="1", method=method, params={})
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     lsp.filter(record)
 
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", response, None)
-    record.__dict__["source"] = "server"
+    record.__dict__["Message-Source"] = "server"
 
     assert lsp.filter(record) is expected
 
@@ -298,7 +298,7 @@ def test_filter_excluded_method(message: dict, setup: Tuple[List[str], bool]):
 
     methods, expected = setup
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     lsp = LSPFilter(exclude_methods=methods)
     assert lsp.filter(record) is expected
@@ -348,12 +348,12 @@ def test_filter_excluded_method_response_message(
 
     request = dict(id="1", method=method, params={})
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     lsp.filter(record)
 
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", response, None)
-    record.__dict__["source"] = "server"
+    record.__dict__["Message-Source"] = "server"
 
     assert lsp.filter(record) is expected
 
@@ -365,7 +365,7 @@ def test_filter_skip_unformattable_message():
 
     request = dict(id="1", method="textDocument/completion", params={})
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     lsp.filter(record)
     assert lsp.filter(record) is False
@@ -382,7 +382,7 @@ def test_filter_format_message():
         params=dict(textDocument=dict(uri="file:///path/to/file.txt")),
     )
     record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["source"] = "client"
+    record.__dict__["Message-Source"] = "client"
 
     assert lsp.filter(record) is True
     assert record.msg == "file:///path/to/file.txt"

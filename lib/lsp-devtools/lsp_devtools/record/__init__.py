@@ -13,9 +13,7 @@ from rich.console import ConsoleRenderable
 from rich.logging import RichHandler
 from rich.traceback import Traceback
 
-from lsp_devtools.agent import MESSAGE_TEXT_NOTIFICATION
 from lsp_devtools.agent import AgentServer
-from lsp_devtools.agent import MessageText
 from lsp_devtools.agent import parse_rpc_message
 from lsp_devtools.handlers.sql import SqlHandler
 
@@ -52,7 +50,7 @@ class RichLSPHandler(RichHandler):
         )
 
         # Abuse the log level column to display the source of the message,
-        source = record.__dict__["source"]
+        source = record.__dict__["Message-Source"]
         color = "red" if source == "client" else "blue"
         message_source = f"[bold][{color}]{source.upper()}[/{color}][/bold]"
         res.columns[1]._cells[0] = message_source  # type: ignore
@@ -64,18 +62,6 @@ class RichLSPHandler(RichHandler):
         if isinstance(record.args, dict):
             record.args = (json.dumps(record.args, indent=2),)
         return super().format(record)
-
-
-def log_raw_message(logger: logging.Logger, ls: AgentServer, message: MessageText):
-    """Push raw messages through the logging system."""
-    logger.info(message.text, extra={"source": message.source})
-
-
-def log_rpc_message(logger: logging.Logger, ls: AgentServer, message: MessageText):
-    """Push parsed json-rpc messages through the logging system"""
-
-    logfn = partial(logger.info, "%s", extra={"source": message.source})
-    parse_rpc_message(ls, message, logfn)
 
 
 def setup_logging(logger: logging.Logger, console: Console):
@@ -162,16 +148,24 @@ def setup_sqlite_output(
     logger.propagate = False
 
 
+def log_message(logger: logging.Logger, message: bytes):
+    try:
+        rpc = parse_rpc_message(message)
+    except ValueError:
+        # TODO: report the error.
+        return
+
+    logger.info("%s", rpc.body, extra=rpc.headers)
+
+
 def start_recording(args, extra: List[str]):
-
     logger = logging.getLogger("lsp_devtools")
-
-    server = AgentServer(logger=logger)
-    log_func = log_raw_message if args.capture_raw_output else log_rpc_message
 
     rpc_logger = logging.getLogger(__name__)
     rpc_logger.setLevel(logging.INFO)
-    server.feature(MESSAGE_TEXT_NOTIFICATION)(partial(log_func, rpc_logger))
+
+    handler = partial(log_message, rpc_logger)
+    server = AgentServer(logger=logger, handler=handler)
 
     console = Console(record=args.save_output is not None)
     setup_logging(logger, console)
