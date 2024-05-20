@@ -47,7 +47,7 @@ class LSPFilter(logging.Filter):
         if not isinstance(message, dict):
             return False
 
-        source = record.__dict__["source"]
+        source = record.__dict__["Message-Source"]
         message_type = get_message_type(message)
         message_method = self._get_message_method(message_type, message)
 
