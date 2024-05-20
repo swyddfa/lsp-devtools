@@ -69,7 +69,9 @@ class LSPClient(App):
 
     def compose(self) -> ComposeResult:
         message_viewer = MessageViewer("")
-        messages_table = MessagesTable(self.db, message_viewer, session=self.session)
+        messages_table = MessagesTable(
+            self.db, message_viewer, session=self.lsp_client.session_id
+        )
 
         yield Header()
         yield Explorer(".")
@@ -145,7 +147,7 @@ def client(args, extra: List[str]):
     db = Database(args.dbpath)
 
     session = str(uuid4())
-    dbhandler = DatabaseLogHandler(db, session=session)
+    dbhandler = DatabaseLogHandler(db)
     dbhandler.setLevel(logging.INFO)
 
     logger.setLevel(logging.INFO)

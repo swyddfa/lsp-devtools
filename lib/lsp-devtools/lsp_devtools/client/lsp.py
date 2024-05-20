@@ -1,6 +1,8 @@
 import importlib.metadata
 import json
+from datetime import datetime
 from typing import Optional
+from uuid import uuid4
 
 from lsprotocol import types
 from pygls.lsp.client import BaseLanguageClient
@@ -16,12 +18,17 @@ class RecordingLSProtocol(LanguageServerProtocol):
 
     def __init__(self, server, converter):
         super().__init__(server, converter)
+        self.session_id = ""
 
     def _procedure_handler(self, message):
         logger.info(
             "%s",
             json.dumps(message, default=self._serialize_message),
-            extra={"source": "server"},
+            extra={
+                "Message-Source": "server",
+                "Message-Session": self.session_id,
+                "Message-Timestamp": datetime.now().isoformat(),
+            },
         )
         return super()._procedure_handler(message)
 
@@ -29,7 +36,11 @@ class RecordingLSProtocol(LanguageServerProtocol):
         logger.info(
             "%s",
             json.dumps(data, default=self._serialize_message),
-            extra={"source": "client"},
+            extra={
+                "Message-Source": "client",
+                "Message-Session": self.session_id,
+                "Message-Timestamp": datetime.now().isoformat(),
+            },
         )
         return super()._send_data(data)
 
@@ -40,6 +51,8 @@ class LanguageClient(BaseLanguageClient):
     def __init__(self):
         super().__init__("lsp-devtools", VERSION, protocol_cls=RecordingLSProtocol)
 
+        self.session_id = str(uuid4())
+        self.protocol.session_id = self.session_id  # type: ignore[attr-defined]
         self._server_capabilities: Optional[types.ServerCapabilities] = None
 
     @property
