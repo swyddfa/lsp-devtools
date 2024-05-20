@@ -7,10 +7,10 @@ from contextlib import closing
 from lsp_devtools.handlers import LspHandler
 from lsp_devtools.handlers import LspMessage
 
-if sys.version_info.minor < 9:
+if sys.version_info < (3, 9):
     import importlib_resources as resources
 else:
-    import importlib.resources as resources  # type: ignore[no-redef]
+    from importlib import resources  # type: ignore[no-redef]
 
 
 class SqlHandler(LspHandler):

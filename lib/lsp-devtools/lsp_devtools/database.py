@@ -16,10 +16,10 @@ from textual.message import Message
 
 from lsp_devtools.handlers import LspMessage
 
-if sys.version_info.minor < 9:
+if sys.version_info < (3, 9):
     import importlib_resources as resources
 else:
-    import importlib.resources as resources  # type: ignore[no-redef]
+    from importlib import resources  # type: ignore[no-redef]
 
 
 class Database:
@@ -64,11 +64,11 @@ class Database:
     async def add_message(self, session: str, timestamp: str, source: str, rpc: dict):
         """Add a new rpc message to the database."""
 
-        msg_id = rpc.get("id", None)
-        method = rpc.get("method", None)
-        params = rpc.get("params", None)
-        result = rpc.get("result", None)
-        error = rpc.get("error", None)
+        msg_id = rpc.get("id")
+        method = rpc.get("method")
+        params = rpc.get("params")
+        result = rpc.get("result")
+        error = rpc.get("error")
 
         async with self.cursor() as cursor:
             await cursor.execute(
