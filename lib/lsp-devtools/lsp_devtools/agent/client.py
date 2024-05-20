@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import asyncio
-from typing import Any
-from typing import Optional
+import typing
 
 import stamina
 from pygls.client import JsonRPCClient
@@ -8,6 +9,11 @@ from pygls.client import aio_readline
 from pygls.protocol import default_converter
 
 from lsp_devtools.agent.protocol import AgentProtocol
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import List
+    from typing import Optional
 
 # from websockets.client import WebSocketClientProtocol
 
@@ -39,6 +45,7 @@ class AgentClient(JsonRPCClient):
             protocol_cls=AgentProtocol, converter_factory=default_converter
         )
         self.connected = False
+        self._buffer: List[bytes] = []
 
     def _report_server_error(self, error, source):
         # Bail on error
@@ -70,6 +77,22 @@ class AgentClient(JsonRPCClient):
         )
         self.connected = True
         self._async_tasks.append(connection)
+
+    def forward_message(self, message: bytes):
+        """Forward the given message to the server instance."""
+
+        if not self.connected:
+            self._buffer.append(message)
+            return
+
+        if self.protocol.transport is None:
+            return
+
+        # Send any buffered messages
+        while len(self._buffer) > 0:
+            self.protocol.transport.write(self._buffer.pop(0))
+
+        self.protocol.transport.write(message)
 
     # TODO: Upstream this... or at least something equivalent.
     # def start_ws(self, host: str, port: int):

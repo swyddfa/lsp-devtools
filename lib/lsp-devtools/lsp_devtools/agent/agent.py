@@ -2,35 +2,81 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import json
 import logging
 import re
 import sys
 import typing
+from datetime import datetime
 from functools import partial
+from uuid import uuid4
+
+import attrs
 
 if typing.TYPE_CHECKING:
+    from typing import Any
     from typing import BinaryIO
+    from typing import Callable
+    from typing import Coroutine
+    from typing import Dict
     from typing import Optional
     from typing import Set
     from typing import Tuple
+    from typing import Union
+
+    MessageHandler = Callable[[bytes], Union[None, Coroutine[Any, Any, None]]]
 
 logger = logging.getLogger("lsp_devtools.agent")
 
 
-async def forward_message(source: str, dest: asyncio.StreamWriter, message: bytes):
-    """Forward the given message to the destination channel"""
-    dest.write(message)
-    await dest.drain()
+@attrs.define
+class RPCMessage:
+    """A Json-RPC message."""
 
-    # Log the full message
-    logger.info(
-        "%s",
-        message.decode("utf8"),
-        extra={"source": source},
-    )
+    headers: Dict[str, str]
+
+    body: Dict[str, Any]
+
+    def __getitem__(self, key: str):
+        return self.headers[key]
 
 
-async def aio_readline(reader: asyncio.StreamReader, message_handler):
+def parse_rpc_message(data: bytes) -> RPCMessage:
+    """Parse a JSON-RPC message from the given set of bytes."""
+
+    headers: Dict[str, str] = {}
+    body: Optional[Dict[str, Any]] = None
+    headers_complete = False
+
+    for line in data.split(b"\r\n"):
+        if line == b"":
+            if "Content-Length" not in headers:
+                raise ValueError("Missing 'Content-Length' header")
+
+            headers_complete = True
+            continue
+
+        if headers_complete:
+            length = int(headers["Content-Length"])
+            if len(line) != length:
+                raise ValueError("Incorrect 'Content-Length'")
+
+            body = json.loads(line)
+            continue
+
+        if (idx := line.find(b":")) < 0:
+            raise ValueError(f"Invalid header: {line!r}")
+
+        name, value = line[:idx], line[idx + 1 :]
+        headers[name.decode("utf8").strip()] = value.decode("utf8").strip()
+
+    if body is None:
+        raise ValueError("Missing message body")
+
+    return RPCMessage(headers, body)
+
+
+async def aio_readline(reader: asyncio.StreamReader, message_handler: MessageHandler):
     CONTENT_LENGTH_PATTERN = re.compile(rb"^Content-Length: (\d+)\r\n$")
 
     # Initialize message buffer
@@ -90,11 +136,17 @@ class Agent:
     enabling them to be recorded."""
 
     def __init__(
-        self, server: asyncio.subprocess.Process, stdin: BinaryIO, stdout: BinaryIO
+        self,
+        server: asyncio.subprocess.Process,
+        stdin: BinaryIO,
+        stdout: BinaryIO,
+        handler: MessageHandler,
     ):
         self.stdin = stdin
         self.stdout = stdout
         self.server = server
+        self.handler = handler
+        self.session_id = str(uuid4())
 
         self._tasks: Set[asyncio.Task] = set()
         self.reader: Optional[asyncio.StreamReader] = None
@@ -112,7 +164,7 @@ class Agent:
         client_to_server = asyncio.create_task(
             aio_readline(
                 self.reader,
-                partial(forward_message, "client", self.server.stdin),
+                partial(self.forward_message, "client", self.server.stdin),
             ),
         )
         self._tasks.add(client_to_server)
@@ -121,7 +173,7 @@ class Agent:
         server_to_client = asyncio.create_task(
             aio_readline(
                 self.server.stdout,
-                partial(forward_message, "server", self.writer),
+                partial(self.forward_message, "server", self.writer),
             ),
         )
         self._tasks.add(server_to_client)
@@ -132,6 +184,29 @@ class Agent:
             server_to_client,
             self._watch_server_process(),
         )
+
+    async def forward_message(
+        self, source: str, dest: asyncio.StreamWriter, message: bytes
+    ):
+        """Forward the given message to the destination channel"""
+
+        # Forward the message as-is to the client/server
+        dest.write(message)
+        await dest.drain()
+
+        # Include some additional metadata before passing it onto the devtool.
+        # TODO: How do we make sure we choose the same encoding as `message`?
+        fields = [
+            f"Message-Source: {source}\r\n".encode(),
+            f"Message-Session: {self.session_id}\r\n".encode(),
+            f"Message-Timestamp: {datetime.now().isoformat()}\r\n".encode(),
+            message,
+        ]
+
+        if inspect.iscoroutine(res := self.handler(b"".join(fields))):
+            task = asyncio.create_task(res)
+            self._tasks.add(task)
+            task.add_done_callback(self._tasks.discard)
 
     async def _watch_server_process(self):
         """Once the server process exits, ensure that the agent is also shutdown."""

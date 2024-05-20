@@ -1,20 +1,23 @@
-import asyncio
-import json
-import logging
-import re
-import threading
-import traceback
-from typing import Any
-from typing import List
-from typing import Optional
+from __future__ import annotations
 
-from pygls.client import aio_readline
+import asyncio
+import logging
+import traceback
+import typing
+
 from pygls.protocol import default_converter
 from pygls.server import Server
 
+from lsp_devtools.agent.agent import aio_readline
 from lsp_devtools.agent.protocol import AgentProtocol
-from lsp_devtools.agent.protocol import MessageText
 from lsp_devtools.database import Database
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import List
+    from typing import Optional
+
+    from lsp_devtools.agent.agent import MessageHandler
 
 
 class AgentServer(Server):
@@ -23,7 +26,13 @@ class AgentServer(Server):
 
     lsp: AgentProtocol
 
-    def __init__(self, *args, logger: Optional[logging.Logger] = None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        logger: Optional[logging.Logger] = None,
+        handler: Optional[MessageHandler] = None,
+        **kwargs,
+    ):
         if "protocol_cls" not in kwargs:
             kwargs["protocol_cls"] = AgentProtocol
 
@@ -33,11 +42,11 @@ class AgentServer(Server):
         super().__init__(*args, **kwargs)
 
         self.logger = logger or logging.getLogger(__name__)
+        self.handler = handler or self.lsp.data_received
         self.db: Optional[Database] = None
 
         self._client_buffer: List[str] = []
         self._server_buffer: List[str] = []
-        self._stop_event = threading.Event()
         self._tcp_server: Optional[asyncio.Task] = None
 
     def _report_server_error(self, exc: Exception, source):
@@ -54,7 +63,7 @@ class AgentServer(Server):
             self.lsp.connection_made(writer)
 
             try:
-                await aio_readline(self._stop_event, reader, self.lsp.data_received)
+                await aio_readline(reader, self.handler)
             except asyncio.CancelledError:
                 pass
             finally:
@@ -74,45 +83,3 @@ class AgentServer(Server):
     def stop(self):
         if self._tcp_server is not None:
             self._tcp_server.cancel()
-
-
-MESSAGE_PATTERN = re.compile(
-    r"^(?:[^\r\n]+\r\n)*"
-    + r"Content-Length: (?P<length>\d+)\r\n"
-    + r"(?:[^\r\n]+\r\n)*\r\n"
-    + r"(?P<body>{.*)",
-    re.DOTALL,
-)
-
-
-def parse_rpc_message(ls: AgentServer, message: MessageText, callback):
-    """Parse json-rpc messages coming from the agent.
-
-    Originally adatped from the ``data_received`` method on pygls' ``JsonRPCProtocol``
-    class.
-    """
-    data = message.text
-    message_buf = ls._client_buffer if message.source == "client" else ls._server_buffer
-
-    while len(data):
-        # Append the incoming chunk to the message buffer
-        message_buf.append(data)
-
-        # Look for the body of the message
-        msg = "".join(message_buf)
-        found = MESSAGE_PATTERN.fullmatch(msg)
-
-        body = found.group("body") if found else ""
-        length = int(found.group("length")) if found else 1
-
-        if len(body) < length:
-            # Message is incomplete; bail until more data arrives
-            return
-
-        # Message is complete;
-        # extract the body and any remaining data,
-        # and reset the buffer for the next message
-        body, data = body[:length], body[length:]
-        message_buf.clear()
-
-        callback(json.loads(body))
