@@ -207,20 +207,20 @@ def start_recording(args, extra: List[str]):
 def setup_filter_args(cmd: argparse.ArgumentParser):
     """Add arguments that can be used to filter messages."""
 
-    filter = cmd.add_argument_group(
+    filter_ = cmd.add_argument_group(
         title="filter options",
         description=(
             "select which messages to record, mutliple options will be ANDed together. "
             "Does not apply to raw message capture"
         ),
     )
-    filter.add_argument(
+    filter_.add_argument(
         "--message-source",
         default="both",
         choices=["client", "server", "both"],
         help="only include messages from the given source",
     )
-    filter.add_argument(
+    filter_.add_argument(
         "--include-message-type",
         action="append",
         default=[],
@@ -228,7 +228,7 @@ def setup_filter_args(cmd: argparse.ArgumentParser):
         choices=["request", "response", "result", "error", "notification"],
         help="only include the given message type(s)",
     )
-    filter.add_argument(
+    filter_.add_argument(
         "--exclude-message-type",
         action="append",
         dest="exclude_message_types",
@@ -236,7 +236,7 @@ def setup_filter_args(cmd: argparse.ArgumentParser):
         choices=["request", "response", "result", "error", "notification"],
         help="omit the given message type(s)",
     )
-    filter.add_argument(
+    filter_.add_argument(
         "--include-method",
         action="append",
         dest="include_methods",
@@ -244,7 +244,7 @@ def setup_filter_args(cmd: argparse.ArgumentParser):
         metavar="METHOD",
         help="only include the given messages for the given method(s)",
     )
-    filter.add_argument(
+    filter_.add_argument(
         "--exclude-method",
         action="append",
         dest="exclude_methods",
@@ -291,14 +291,14 @@ default) and push messages to it and have them be recorded.
     )
 
     setup_filter_args(cmd)
-    format = cmd.add_argument_group(
+    format_ = cmd.add_argument_group(
         title="formatting options",
         description=(
             "control how the recorded messages are formatted "
             "(does not apply to SQLite output or raw message capture)"
         ),
     )
-    format.add_argument(
+    format_.add_argument(
         "-f",
         "--format-message",
         default=None,

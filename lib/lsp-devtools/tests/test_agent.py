@@ -81,7 +81,6 @@ async def test_agent_exits():
     except TimeoutError as exc:
         # Make sure this timed out for the right reason.
         if server.returncode is None:
-            raise RuntimeError("Server process did not exit")
-        else:
-            exc.add_note("lsp-devtools agent did not stop")
-            raise
+            raise RuntimeError("Server process did not exit") from exc
+
+        exc.add_note("lsp-devtools agent did not stop")

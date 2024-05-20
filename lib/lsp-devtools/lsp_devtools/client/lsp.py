@@ -1,6 +1,7 @@
 import importlib.metadata
 import json
 from datetime import datetime
+from datetime import timezone
 from typing import Optional
 from uuid import uuid4
 
@@ -10,6 +11,7 @@ from pygls.protocol import LanguageServerProtocol
 
 from lsp_devtools.agent import logger
 
+UTC = timezone.utc
 VERSION = importlib.metadata.version("lsp-devtools")
 
 
@@ -27,7 +29,7 @@ class RecordingLSProtocol(LanguageServerProtocol):
             extra={
                 "Message-Source": "server",
                 "Message-Session": self.session_id,
-                "Message-Timestamp": datetime.now().isoformat(),
+                "Message-Timestamp": datetime.now(tz=UTC).isoformat(),
             },
         )
         return super()._procedure_handler(message)
@@ -39,7 +41,7 @@ class RecordingLSProtocol(LanguageServerProtocol):
             extra={
                 "Message-Source": "client",
                 "Message-Session": self.session_id,
-                "Message-Timestamp": datetime.now().isoformat(),
+                "Message-Timestamp": datetime.now(tz=UTC).isoformat(),
             },
         )
         return super()._send_data(data)

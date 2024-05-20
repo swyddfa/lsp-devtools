@@ -26,7 +26,7 @@ def record():
     return parser
 
 
-@pytest.fixture()
+@pytest.fixture
 def logger():
     """Return the logger instance to use."""
 

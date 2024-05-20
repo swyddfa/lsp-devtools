@@ -8,6 +8,7 @@ import re
 import sys
 import typing
 from datetime import datetime
+from datetime import timezone
 from functools import partial
 from uuid import uuid4
 
@@ -26,6 +27,7 @@ if typing.TYPE_CHECKING:
 
     MessageHandler = Callable[[bytes], Union[None, Coroutine[Any, Any, None]]]
 
+UTC = timezone.utc
 logger = logging.getLogger("lsp_devtools.agent")
 
 
@@ -157,8 +159,8 @@ class Agent:
         self.reader, self.writer = await get_streams(self.stdin, self.stdout)
 
         # Keep mypy happy
-        assert self.server.stdin
-        assert self.server.stdout
+        if self.server.stdin is None or self.server.stdout is None:
+            raise RuntimeError("Unable to find server I/O streams")
 
         # Connect stdin to the subprocess' stdin
         client_to_server = asyncio.create_task(
@@ -196,10 +198,11 @@ class Agent:
 
         # Include some additional metadata before passing it onto the devtool.
         # TODO: How do we make sure we choose the same encoding as `message`?
+        now = datetime.now(tz=UTC).isoformat()
         fields = [
             f"Message-Source: {source}\r\n".encode(),
             f"Message-Session: {self.session_id}\r\n".encode(),
-            f"Message-Timestamp: {datetime.now().isoformat()}\r\n".encode(),
+            f"Message-Timestamp: {now}\r\n".encode(),
             message,
         ]
 
@@ -224,7 +227,7 @@ class Agent:
                 self.server.kill()
 
         args = {}
-        if sys.version_info.minor > 8:
+        if sys.version_info >= (3, 9):
             args["msg"] = "lsp-devtools agent is stopping."
 
         # Cancel the tasks connecting client to server

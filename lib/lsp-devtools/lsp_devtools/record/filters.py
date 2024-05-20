@@ -51,7 +51,7 @@ class LSPFilter(logging.Filter):
         message_type = get_message_type(message)
         message_method = self._get_message_method(message_type, message)
 
-        if self.message_source != "both" and source != self.message_source:
+        if self.message_source not in {"both", source}:
             return False
 
         if self.include_message_types and not message_matches_type(
