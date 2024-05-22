@@ -58,13 +58,11 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox
+        python -m pip install --upgrade hatch
       name: Setup Environment
 
     - run: |
         cd lib/pytest-lsp
-
-        version=$(echo ${{ matrix.python-version }} | tr -d .)
-        python -m tox run -f "py${version}"
+        hatch test -i py=${{ matrix.python-version }}
       shell: bash
       name: Run Tests
