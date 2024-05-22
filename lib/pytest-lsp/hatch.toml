@@ -21,3 +21,6 @@ matrix.pytest.dependencies = [
     { value = "pytest>=8,<9", if = ["8"] },
 ]
 
+[envs.hatch-static-analysis]
+config-path = "ruff_defaults.toml"
+dependencies = ["ruff==0.4.4"]

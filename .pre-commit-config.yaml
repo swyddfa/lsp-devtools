@@ -9,39 +9,15 @@ repos:
     exclude: 'lib/pytest-lsp/pytest_lsp/clients/.*\.json'
   - id: trailing-whitespace
 
-- repo: https://github.com/psf/black
-  rev: 24.4.2
-  hooks:
-  - id: black
-    name: black (pytest-lsp)
-    files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
-
-- repo: https://github.com/PyCQA/flake8
-  rev: 7.0.0
-  hooks:
-  - id: flake8
-    name: flake8 (pytest-lsp)
-    args: [--config=lib/pytest-lsp/setup.cfg]
-    files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
-
-- repo: https://github.com/pycqa/isort
-  rev: 5.13.2
-  hooks:
-  - id: isort
-    name: isort (pytest-lsp)
-    args: [--settings-file, lib/pytest-lsp/pyproject.toml]
-    files: 'lib/pytest-lsp/pytest_lsp/.*\.py'
-
-
 - repo: https://github.com/astral-sh/ruff-pre-commit
   rev: v0.4.4
   hooks:
   - id: ruff
     args: [--fix]
-    files: 'lib/lsp-devtools/.*\.py'
+    files: 'lib/.*\.py'
 
   - id: ruff-format
-    files: 'lib/lsp-devtools/.*\.py'
+    files: 'lib/.*\.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
   rev: 'v1.10.0'
