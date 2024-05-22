@@ -229,6 +229,9 @@ class ValueSetCapabilityTable(CapabilityTable):
 
             supported_values = set(supported_values)
             for value in clients[name]:
+                if value not in supported_values:
+                    continue
+
                 if (existing := clients[name][value]) is None:
                     clients[name][value] = version
                 else:
