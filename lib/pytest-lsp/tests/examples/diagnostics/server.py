@@ -1,8 +1,10 @@
-from lsprotocol.types import TEXT_DOCUMENT_DID_OPEN
-from lsprotocol.types import Diagnostic
-from lsprotocol.types import DidOpenTextDocumentParams
-from lsprotocol.types import Position
-from lsprotocol.types import Range
+from lsprotocol.types import (
+    TEXT_DOCUMENT_DID_OPEN,
+    Diagnostic,
+    DidOpenTextDocumentParams,
+    Position,
+    Range,
+)
 from pygls.server import LanguageServer
 
 server = LanguageServer("diagnostic-server", "v1")

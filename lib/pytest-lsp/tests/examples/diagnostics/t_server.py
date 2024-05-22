@@ -1,15 +1,15 @@
 import sys
 
-from lsprotocol.types import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
-from lsprotocol.types import ClientCapabilities
-from lsprotocol.types import DidOpenTextDocumentParams
-from lsprotocol.types import InitializeParams
-from lsprotocol.types import TextDocumentItem
-
 import pytest
 import pytest_lsp
-from pytest_lsp import ClientServerConfig
-from pytest_lsp import LanguageClient
+from lsprotocol.types import (
+    TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS,
+    ClientCapabilities,
+    DidOpenTextDocumentParams,
+    InitializeParams,
+    TextDocumentItem,
+)
+from pytest_lsp import ClientServerConfig, LanguageClient
 
 
 @pytest_lsp.fixture(

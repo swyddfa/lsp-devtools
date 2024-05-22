@@ -1,11 +1,9 @@
 import sys
 
 import pytest
-from lsprotocol import types
-
 import pytest_lsp
-from pytest_lsp import ClientServerConfig
-from pytest_lsp import LanguageClient
+from lsprotocol import types
+from pytest_lsp import ClientServerConfig, LanguageClient
 
 
 @pytest_lsp.fixture(

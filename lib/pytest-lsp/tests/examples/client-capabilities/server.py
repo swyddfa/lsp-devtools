@@ -1,7 +1,9 @@
-from lsprotocol.types import TEXT_DOCUMENT_COMPLETION
-from lsprotocol.types import CompletionItem
-from lsprotocol.types import CompletionParams
-from lsprotocol.types import InsertTextFormat
+from lsprotocol.types import (
+    TEXT_DOCUMENT_COMPLETION,
+    CompletionItem,
+    CompletionParams,
+    InsertTextFormat,
+)
 from pygls.server import LanguageServer
 
 server = LanguageServer("hello-world", "v1")

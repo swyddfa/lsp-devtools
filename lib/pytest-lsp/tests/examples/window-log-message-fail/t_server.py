@@ -1,15 +1,16 @@
 import sys
 
-from lsprotocol.types import ClientCapabilities
-from lsprotocol.types import CompletionList
-from lsprotocol.types import CompletionParams
-from lsprotocol.types import InitializeParams
-from lsprotocol.types import Position
-from lsprotocol.types import TextDocumentIdentifier
-
+import pytest
 import pytest_lsp
-from pytest_lsp import ClientServerConfig
-from pytest_lsp import LanguageClient
+from lsprotocol.types import (
+    ClientCapabilities,
+    CompletionList,
+    CompletionParams,
+    InitializeParams,
+    Position,
+    TextDocumentIdentifier,
+)
+from pytest_lsp import ClientServerConfig, LanguageClient
 
 
 @pytest_lsp.fixture(
@@ -47,4 +48,4 @@ async def test_completions(client: LanguageClient):
     for idx, log_message in enumerate(client.log_messages):
         assert log_message.message == f"Suggesting item {idx}"
 
-    assert False  # Force the test case to fail.
+    pytest.fail("Failing test!")  # Force the test case to fail.
