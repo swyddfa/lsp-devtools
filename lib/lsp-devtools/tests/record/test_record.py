@@ -26,7 +26,7 @@ def record():
     return parser
 
 
-@pytest.fixture()
+@pytest.fixture
 def logger():
     """Return the logger instance to use."""
 
@@ -118,6 +118,6 @@ def test_file_output(
     setup_file_output(parsed_args, logger)
 
     for message in messages:
-        logger.info("%s", message, extra={"source": "client"})
+        logger.info("%s", message, extra={"Message-Source": "client"})
 
     assert log.read_text() == expected

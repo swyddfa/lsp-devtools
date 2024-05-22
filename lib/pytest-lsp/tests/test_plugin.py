@@ -129,10 +129,10 @@ async def test_capabilities(client):
 
     results.assert_outcomes(errors=1)
 
-    if sys.version_info.minor < 9:
+    if sys.version_info < (3, 9):
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"  # noqa: E501
+        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"
 
     results.stdout.fnmatch_lines(message)
 
@@ -165,10 +165,10 @@ async def test_capabilities(client):
 
     results.assert_outcomes(failed=1, errors=1)
 
-    if sys.version_info.minor < 9:
+    if sys.version_info < (3, 9):
         message = "E*CancelledError"
     else:
-        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"  # noqa: E501
+        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"
 
     results.stdout.fnmatch_lines(message)
     results.stdout.fnmatch_lines("E*RuntimeError: Client has been stopped.")
@@ -190,11 +190,11 @@ async def test_capabilities(client):
 
     results.assert_outcomes(errors=1)
 
-    if sys.version_info.minor < 9:
+    if sys.version_info < (3, 9):
         message = "E*CancelledError"
     else:
         message = [
-            "E*asyncio.exceptions.CancelledError: Server process exited with return code: 1",  # noqa: E501
+            "E*asyncio.exceptions.CancelledError: Server process exited with return code: 1",
             "ZeroDivisionError: division by zero",
         ]
 
@@ -230,7 +230,7 @@ async def test_capabilities(client):
 
     results.assert_outcomes(errors=1, failed=1)
 
-    if sys.version_info.minor < 9:
+    if sys.version_info < (3, 9):
         message = "E*CancelledError"
     else:
         message = "E*asyncio.exceptions.CancelledError: JsonRpcInternalError: *"

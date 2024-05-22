@@ -98,7 +98,8 @@ class Value:
                 if isinstance(index, int):
                     obj = obj[index]
                     continue
-                elif isinstance(index, slice):
+
+                if isinstance(index, slice):
                     obj = obj[index]
 
                 return sep.join([self.format(o, remainder) for o in obj])

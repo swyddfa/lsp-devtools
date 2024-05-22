@@ -1,14 +1,19 @@
+from __future__ import annotations
+
 import json
 import logging
-from typing import Any
-from typing import Literal
-from typing import Mapping
-from typing import Optional
-from uuid import uuid4
+import typing
+from datetime import datetime
 
 import attrs
 
-MessageSource = Literal["client", "server"]
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Literal
+    from typing import Mapping
+    from typing import Optional
+
+    MessageSource = Literal["client", "server"]
 
 
 def maybe_json(value):
@@ -23,12 +28,10 @@ class LspMessage:
     """A container that holds a message from the LSP protocol, with some additional
     metadata."""
 
-    Source = MessageSource
-
     session: str
     """An id representing the session the message is a part of."""
 
-    timestamp: float
+    timestamp: datetime
     """When the message was sent."""
 
     source: MessageSource
@@ -51,12 +54,12 @@ class LspMessage:
 
     @classmethod
     def from_rpc(
-        cls, session: str, timestamp: float, source: str, message: Mapping[str, Any]
+        cls, session: str, timestamp: str, source: str, message: Mapping[str, Any]
     ):
         """Create an instance from a JSON-RPC message."""
         return cls(
             session=session,
-            timestamp=timestamp,
+            timestamp=datetime.fromisoformat(timestamp),
             source=source,  # type: ignore
             id=message.get("id", None),
             method=message.get("method", None),
@@ -84,7 +87,6 @@ class LspHandler(logging.Handler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.session_id = str(uuid4())
 
     def handle_message(self, message: LspMessage):
         """Called each time a message is processed."""
@@ -94,13 +96,12 @@ class LspHandler(logging.Handler):
             return
 
         message = record.args
-        timestamp = record.created
-        source = record.__dict__["source"]
+        source = record.__dict__["Message-Source"]
 
         self.handle_message(
             LspMessage.from_rpc(
-                session=self.session_id,
-                timestamp=timestamp,
+                session=record.__dict__["Message-Session"],
+                timestamp=record.__dict__["Message-Timestamp"],
                 source=source,
                 message=message,
             )

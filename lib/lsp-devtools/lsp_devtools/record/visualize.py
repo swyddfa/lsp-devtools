@@ -156,7 +156,7 @@ class SpinnerHandler(logging.Handler):
         self.progress.start()
 
         method = message.get("method", None)
-        source = record.__dict__["source"]
+        source = record.__dict__["Message-Source"]
         args = {}
 
         if method:

@@ -24,6 +24,11 @@ def format_message(obj):
     return message.encode()
 
 
+def echo_handler(d: bytes):
+    sys.stdout.buffer.write(d)
+    sys.stdout.flush()
+
+
 @pytest.mark.asyncio
 async def test_agent_exits():
     """Ensure that when the client closes down the lsp session and the server process
@@ -44,6 +49,7 @@ async def test_agent_exits():
         server,
         os.fdopen(stdin_read, mode="rb"),
         os.fdopen(stdout_write, mode="wb"),
+        echo_handler,
     )
 
     os.write(
@@ -75,7 +81,6 @@ async def test_agent_exits():
     except TimeoutError as exc:
         # Make sure this timed out for the right reason.
         if server.returncode is None:
-            raise RuntimeError("Server process did not exit")
-        else:
-            exc.add_note("lsp-devtools agent did not stop")
-            raise
+            raise RuntimeError("Server process did not exit") from exc
+
+        exc.add_note("lsp-devtools agent did not stop")

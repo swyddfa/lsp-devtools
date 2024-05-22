@@ -9,6 +9,7 @@ details.
 
 """
 
+# ruff: noqa: S101
 import logging
 import warnings
 from typing import Any
@@ -38,7 +39,7 @@ def check_result_for(*, method: str) -> Callable[[ResultChecker], ResultChecker]
     """Define a result check."""
 
     def defcheck(fn: ResultChecker):
-        if (existing := RESULT_CHECKS.get(method, None)) is not None:
+        if (existing := RESULT_CHECKS.get(method)) is not None:
             raise ValueError(f"{fn!r} conflicts with existing check {existing!r}")
 
         RESULT_CHECKS[method] = fn
@@ -51,7 +52,7 @@ def check_params_of(*, method: str) -> Callable[[ParamsChecker], ParamsChecker]:
     """Define a params check."""
 
     def defcheck(fn: ParamsChecker):
-        if (existing := PARAMS_CHECKS.get(method, None)) is not None:
+        if (existing := PARAMS_CHECKS.get(method)) is not None:
             raise ValueError(f"{fn!r} conflicts with existing check {existing!r}")
 
         PARAMS_CHECKS[method] = fn
@@ -86,7 +87,7 @@ def check_result_against_client_capabilities(
     if capabilities == types.ClientCapabilities():
         return
 
-    result_checker = RESULT_CHECKS.get(method, None)
+    result_checker = RESULT_CHECKS.get(method)
     if result_checker is None:
         return
 
@@ -121,7 +122,7 @@ def check_params_against_client_capabilities(
     if capabilities == types.ClientCapabilities():
         return
 
-    params_checker = PARAMS_CHECKS.get(method, None)
+    params_checker = PARAMS_CHECKS.get(method)
     if params_checker is None:
         return
 

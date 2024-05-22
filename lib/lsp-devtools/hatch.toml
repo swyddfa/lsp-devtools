@@ -7,3 +7,10 @@ include = ["lsp_devtools", "tests", "CHANGES.md"]
 
 [build.targets.wheel]
 packages = ["lsp_devtools"]
+
+[envs.hatch-test]
+extra-dependencies = ["pytest-asyncio"]
+
+[envs.hatch-static-analysis]
+config-path = "ruff_defaults.toml"
+dependencies = ["ruff==0.4.4"]

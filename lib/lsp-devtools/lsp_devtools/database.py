@@ -9,7 +9,6 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Set
-from uuid import uuid4
 
 import aiosqlite
 from textual.app import App
@@ -17,10 +16,10 @@ from textual.message import Message
 
 from lsp_devtools.handlers import LspMessage
 
-if sys.version_info.minor < 9:
+if sys.version_info < (3, 9):
     import importlib_resources as resources
 else:
-    import importlib.resources as resources  # type: ignore[no-redef]
+    from importlib import resources  # type: ignore[no-redef]
 
 
 class Database:
@@ -62,14 +61,14 @@ class Database:
 
         await self.db.commit()
 
-    async def add_message(self, session: str, timestamp: float, source: str, rpc: dict):
+    async def add_message(self, session: str, timestamp: str, source: str, rpc: dict):
         """Add a new rpc message to the database."""
 
-        msg_id = rpc.get("id", None)
-        method = rpc.get("method", None)
-        params = rpc.get("params", None)
-        result = rpc.get("result", None)
-        error = rpc.get("error", None)
+        msg_id = rpc.get("id")
+        method = rpc.get("method")
+        params = rpc.get("params")
+        result = rpc.get("result")
+        error = rpc.get("error")
 
         async with self.cursor() as cursor:
             await cursor.execute(
@@ -149,17 +148,19 @@ class Database:
 class DatabaseLogHandler(logging.Handler):
     """A logging handler that records messages in the given database."""
 
-    def __init__(self, db: Database, *args, session=None, **kwargs):
+    def __init__(self, db: Database, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = db
-        self.session = session or str(uuid4())
         self._tasks: Set[asyncio.Task] = set()
 
     def emit(self, record: logging.LogRecord):
         body = json.loads(record.args[0])  # type: ignore
         task = asyncio.create_task(
             self.db.add_message(
-                self.session, record.created, record.__dict__["source"], body
+                record.__dict__["Message-Session"],
+                record.__dict__["Message-Timestamp"],
+                record.__dict__["Message-Source"],
+                body,
             )
         )
 
