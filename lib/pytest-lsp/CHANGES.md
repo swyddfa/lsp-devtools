@@ -1,3 +1,15 @@
+## v0.4.2 - 2024-05-22
+
+
+### Client Capabilities
+
+- Add client capabilities for Neovim v0.10.0 ([#164](https://github.com/swyddfa/lsp-devtools/issues/164))
+
+### Misc
+
+- Start testing against pytest v8 ([#145](https://github.com/swyddfa/lsp-devtools/issues/145))
+
+
 ## v0.4.1 - 2024-02-07
 
 
