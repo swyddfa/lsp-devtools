@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -7,12 +9,6 @@ import sys
 import traceback
 import typing
 import warnings
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Type
-from typing import Union
 
 from lsprotocol import types
 from lsprotocol.converters import get_converter
@@ -25,10 +21,18 @@ from pygls.protocol import default_converter
 from .checks import LspSpecificationWarning
 from .protocol import LanguageClientProtocol
 
-if sys.version_info.minor < 9:
+if sys.version_info < (3, 9):
     import importlib_resources as resources
 else:
-    import importlib.resources as resources  # type: ignore[no-redef]
+    from importlib import resources  # type: ignore[no-redef]
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Type
+    from typing import Union
 
 
 __version__ = "0.4.1"
@@ -61,9 +65,9 @@ class LanguageClient(BaseLanguageClient):
         self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
         """Holds any recieved diagnostics."""
 
-        self.progress_reports: Dict[types.ProgressToken, List[types.ProgressParams]] = (
-            {}
-        )
+        self.progress_reports: Dict[
+            types.ProgressToken, List[types.ProgressParams]
+        ] = {}
         """Holds any received progress updates."""
 
         self.error: Optional[Exception] = None
@@ -283,7 +287,7 @@ def cancel_all_tasks(message: str):
     """Called to cancel all awaited tasks."""
 
     for task in asyncio.all_tasks():
-        if sys.version_info.minor < 9:
+        if sys.version_info < (3, 9):
             task.cancel()
         else:
             task.cancel(message)
@@ -318,17 +322,20 @@ def make_test_lsp_client() -> LanguageClient:
             # TODO: Send an error reponse to the client - might require changes
             #       to pygls...
             warnings.warn(
-                f"Duplicate progress token: {params.token!r}", LspSpecificationWarning
+                f"Duplicate progress token: {params.token!r}",
+                LspSpecificationWarning,
+                stacklevel=2,
             )
 
         client.progress_reports.setdefault(params.token, [])
-        return None
 
     @client.feature(types.PROGRESS)
     def progress(client: LanguageClient, params: types.ProgressParams):
         if params.token not in client.progress_reports:
             warnings.warn(
-                f"Unknown progress token: {params.token!r}", LspSpecificationWarning
+                f"Unknown progress token: {params.token!r}",
+                LspSpecificationWarning,
+                stacklevel=2,
             )
 
         if not params.value:
@@ -412,7 +419,7 @@ def client_capabilities(client_spec: str) -> types.ClientCapabilities:
         filename = typing.cast(pathlib.Path, resource)
 
         # Skip the README or any other files that we don't care about.
-        if not filename.suffix == ".json":
+        if filename.suffix != ".json":
             continue
 
         name, version = filename.stem.split("_v")

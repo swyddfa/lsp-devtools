@@ -80,7 +80,9 @@ class LanguageClientProtocol(LanguageServerProtocol):
         )
         result = await super().send_request_async(method, params)
         check_result_against_client_capabilities(
-            self._server.capabilities, method, result  # type: ignore
+            self._server.capabilities,
+            method,
+            result,  # type: ignore
         )
 
         return result

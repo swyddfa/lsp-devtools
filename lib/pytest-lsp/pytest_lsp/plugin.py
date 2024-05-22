@@ -1,13 +1,10 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import sys
 import textwrap
 import typing
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
 
 import attrs
 import pytest
@@ -16,6 +13,14 @@ from pygls.client import JsonRPCClient
 
 from pytest_lsp.client import LanguageClient
 from pytest_lsp.client import make_test_lsp_client
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Callable
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+
 
 logger = logging.getLogger("client")
 
@@ -128,9 +133,9 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
 
 
 # anext() was added in 3.10
-if sys.version_info.minor < 10:
+if sys.version_info < (3, 10):
 
-    async def anext(it):
+    async def anext(it):  # noqa: A001
         return await it.__anext__()
 
 
