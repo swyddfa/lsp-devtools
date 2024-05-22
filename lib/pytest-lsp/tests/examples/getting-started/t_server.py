@@ -1,16 +1,16 @@
 import sys
 
-from lsprotocol.types import ClientCapabilities
-from lsprotocol.types import CompletionList
-from lsprotocol.types import CompletionParams
-from lsprotocol.types import InitializeParams
-from lsprotocol.types import Position
-from lsprotocol.types import TextDocumentIdentifier
-
 import pytest
 import pytest_lsp
-from pytest_lsp import ClientServerConfig
-from pytest_lsp import LanguageClient
+from lsprotocol.types import (
+    ClientCapabilities,
+    CompletionList,
+    CompletionParams,
+    InitializeParams,
+    Position,
+    TextDocumentIdentifier,
+)
+from pytest_lsp import ClientServerConfig, LanguageClient
 
 
 @pytest_lsp.fixture(
