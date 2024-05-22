@@ -1,3 +1,16 @@
+## v0.2.3 - 2024-05-22
+
+
+### Enhancements
+
+- The `lsp-devtools agent` now forwards the server's `stderr` channel ([#165](https://github.com/swyddfa/lsp-devtools/issues/165))
+
+### Fixes
+
+- All `lsp-devtools` commands should no longer crash when encountering messages containing unicode characters ([#157](https://github.com/swyddfa/lsp-devtools/issues/157))
+- Commands like `lsp-devtools record` should now continue to function after encountering an error ([#158](https://github.com/swyddfa/lsp-devtools/issues/158))
+
+
 ## v0.2.2 - 2024-01-29
 
 

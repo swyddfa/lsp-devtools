@@ -1,1 +1,0 @@
-The `lsp-devtools agent` now forwards the server's `stderr` channel
