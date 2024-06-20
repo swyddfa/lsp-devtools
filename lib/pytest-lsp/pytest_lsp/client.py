@@ -261,7 +261,10 @@ class LanguageClient(BaseLanguageClient):
             return
 
         await self.shutdown_async(None)
+        
         self.exit(None)
+        if self._server:
+            await self._server.wait()
 
     async def wait_for_notification(self, method: str):
         """Block until a notification with the given method is received.
