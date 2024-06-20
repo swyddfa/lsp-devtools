@@ -261,7 +261,7 @@ class LanguageClient(BaseLanguageClient):
             return
 
         await self.shutdown_async(None)
-        
+
         self.exit(None)
         if self._server:
             await self._server.wait()
