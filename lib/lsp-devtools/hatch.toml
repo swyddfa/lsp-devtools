@@ -13,4 +13,4 @@ extra-dependencies = ["pytest-asyncio"]
 
 [envs.hatch-static-analysis]
 config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.4.10"]
+dependencies = ["ruff==0.5.2"]
