@@ -1,7 +1,7 @@
 import sys
 
 from lsprotocol import types
-from pygls.server import LanguageServer
+from pygls.lsp.server import LanguageServer
 
 server = LanguageServer("server-stderr", "v1")
 
