@@ -260,7 +260,7 @@ def work_done_progress_create(
 @check_params_of(method=types.WORKSPACE_CONFIGURATION)
 def workspace_configuration(
     capabilities: types.ClientCapabilities,
-    params: types.WorkspaceConfigurationParams,
+    params: types.ConfigurationParams,
 ):
     """Ensure that the client has support for ``workspace/configuration`` requests."""
     is_supported = get_capability(capabilities, "workspace.configuration", False)

@@ -11,6 +11,9 @@ packages = ["pytest_lsp"]
 [envs.hatch-test]
 dependencies = ["pytest-asyncio"]
 
+[envs.hatch-test.env-vars]
+UV_PRERELEASE="allow"
+
 [[envs.hatch-test.matrix]]
 python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
 pytest = ["8"]

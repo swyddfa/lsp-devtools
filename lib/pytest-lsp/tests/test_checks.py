@@ -36,7 +36,7 @@ a_range = types.Range(
                 workspace=types.WorkspaceClientCapabilities(configuration=False)
             ),
             types.WORKSPACE_CONFIGURATION,
-            types.WorkspaceConfigurationParams(items=[]),
+            types.ConfigurationParams(items=[]),
             "does not support 'workspace/configuration'",
         ),
         (
@@ -44,7 +44,7 @@ a_range = types.Range(
                 workspace=types.WorkspaceClientCapabilities(configuration=True)
             ),
             types.WORKSPACE_CONFIGURATION,
-            types.WorkspaceConfigurationParams(items=[]),
+            types.ConfigurationParams(items=[]),
             None,
         ),
     ],
@@ -104,7 +104,7 @@ def test_params_check_warning(
             types.ClientCapabilities(
                 text_document=types.TextDocumentClientCapabilities(
                     completion=types.CompletionClientCapabilities(
-                        completion_item=types.CompletionClientCapabilitiesCompletionItemType(
+                        completion_item=types.ClientCompletionItemOptions(
                             commit_characters_support=True
                         )
                     )
@@ -135,7 +135,7 @@ def test_params_check_warning(
             types.ClientCapabilities(
                 text_document=types.TextDocumentClientCapabilities(
                     completion=types.CompletionClientCapabilities(
-                        completion_item=types.CompletionClientCapabilitiesCompletionItemType(
+                        completion_item=types.ClientCompletionItemOptions(
                             documentation_format=[types.MarkupKind.Markdown]
                         )
                     )
@@ -171,7 +171,7 @@ def test_params_check_warning(
             types.ClientCapabilities(
                 text_document=types.TextDocumentClientCapabilities(
                     completion=types.CompletionClientCapabilities(
-                        completion_item=types.CompletionClientCapabilitiesCompletionItemType(
+                        completion_item=types.ClientCompletionItemOptions(
                             snippet_support=True
                         )
                     )

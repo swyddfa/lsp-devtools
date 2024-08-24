@@ -1,27 +1,29 @@
 from pygls.protocol import JsonRPCProtocol, default_converter
-from pygls.server import Server
+from pygls.server import JsonRPCServer
 
-server = Server(protocol_cls=JsonRPCProtocol, converter_factory=default_converter)
+server = JsonRPCServer(
+    protocol_cls=JsonRPCProtocol, converter_factory=default_converter
+)
 
 
-@server.lsp.fm.feature("math/add")
-def addition(ls: Server, params):
+@server.feature("math/add")
+def addition(ls: JsonRPCServer, params):
     a = params.a
     b = params.b
 
-    ls.lsp.notify("log/message", dict(message=f"{a=}"))
-    ls.lsp.notify("log/message", dict(message=f"{b=}"))
+    ls.protocol.notify("log/message", dict(message=f"{a=}"))
+    ls.protocol.notify("log/message", dict(message=f"{b=}"))
 
     return dict(total=a + b)
 
 
-@server.lsp.fm.feature("math/sub")
-def subtraction(ls: Server, params):
+@server.feature("math/sub")
+def subtraction(ls: JsonRPCServer, params):
     a = params.a
     b = params.b
 
-    ls.lsp.notify("log/message", dict(message=f"{a=}"))
-    ls.lsp.notify("log/message", dict(message=f"{b=}"))
+    ls.protocol.notify("log/message", dict(message=f"{a=}"))
+    ls.protocol.notify("log/message", dict(message=f"{b=}"))
 
     return dict(total=b - a)
 
