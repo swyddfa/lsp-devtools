@@ -17,9 +17,6 @@ from pytest_lsp.client import make_test_lsp_client
 if typing.TYPE_CHECKING:
     from typing import Any
     from typing import Callable
-    from typing import Dict
-    from typing import List
-    from typing import Optional
 
 
 logger = logging.getLogger("client")
@@ -29,7 +26,7 @@ logger = logging.getLogger("client")
 class ClientServerConfig:
     """Configuration for a Client-Server connection."""
 
-    server_command: List[str]
+    server_command: list[str]
     """The command to use to start the language server."""
 
     client_factory: Callable[[], JsonRPCClient] = attrs.field(
@@ -37,10 +34,10 @@ class ClientServerConfig:
     )
     """Factory function to use when constructing the test client instance."""
 
-    server_env: Optional[Dict[str, str]] = attrs.field(default=None)
+    server_env: dict[str, str] | None = attrs.field(default=None)
     """Environment variables to set when starting the server."""
 
-    def _get_devtools_command(self, server: str) -> List[str]:
+    def _get_devtools_command(self, server: str) -> list[str]:
         """Get the lsp-devtools command required to connect to the given ``server``"""
 
         if ":" in server:
@@ -55,7 +52,7 @@ class ClientServerConfig:
 
         return ["lsp-devtools", "agent", "--host", host, "--port", port, "--"]
 
-    def get_server_command(self, devtools: Optional[str] = None) -> List[str]:
+    def get_server_command(self, devtools: str | None = None) -> list[str]:
         """Get the command to start the server with."""
         server_command = []
         if devtools is not None:
@@ -65,7 +62,7 @@ class ClientServerConfig:
 
         return server_command
 
-    async def start(self, devtools: Optional[str] = None) -> JsonRPCClient:
+    async def start(self, devtools: str | None = None) -> JsonRPCClient:
         """Return the client instance to use for the test.
 
         Parameters
@@ -102,7 +99,7 @@ def pytest_addoption(parser):
 
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     """Add any captured log messages to the report."""
-    client: Optional[LanguageClient] = None
+    client: LanguageClient | None = None
 
     if not hasattr(item, "funcargs"):
         return
@@ -162,7 +159,7 @@ def get_fixture_arguments(
     dict
        The set of arguments to pass to the user's fixture function
     """
-    kwargs: Dict[str, Any] = {}
+    kwargs: dict[str, Any] = {}
     required_parameters = set(inspect.signature(fn).parameters.keys())
 
     # Inject the 'request' fixture if requested

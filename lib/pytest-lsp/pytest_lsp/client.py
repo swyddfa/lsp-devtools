@@ -9,6 +9,7 @@ import sys
 import traceback
 import typing
 import warnings
+from importlib import resources  # type: ignore[no-redef]
 
 from lsprotocol import types
 from lsprotocol.converters import get_converter
@@ -21,18 +22,8 @@ from pygls.protocol import default_converter
 from .checks import LspSpecificationWarning
 from .protocol import LanguageClientProtocol
 
-if sys.version_info < (3, 9):
-    import importlib_resources as resources
-else:
-    from importlib import resources  # type: ignore[no-redef]
-
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Type
-    from typing import Union
 
 
 __version__ = "0.4.2"
@@ -44,40 +35,40 @@ class LanguageClient(BaseLanguageClient):
 
     protocol: LanguageClientProtocol
 
-    def __init__(self, *args, configuration: Optional[Dict[str, Any]] = None, **kwargs):
+    def __init__(self, *args, configuration: dict[str, Any] | None = None, **kwargs):
         if "protocol_cls" not in kwargs:
             kwargs["protocol_cls"] = LanguageClientProtocol
 
         super().__init__("pytest-lsp-client", __version__, *args, **kwargs)
 
-        self.capabilities: Optional[types.ClientCapabilities] = None
+        self.capabilities: types.ClientCapabilities | None = None
         """The client's capabilities."""
 
-        self.shown_documents: List[types.ShowDocumentParams] = []
+        self.shown_documents: list[types.ShowDocumentParams] = []
         """Holds any received show document requests."""
 
-        self.messages: List[types.ShowMessageParams] = []
+        self.messages: list[types.ShowMessageParams] = []
         """Holds any received ``window/showMessage`` requests."""
 
-        self.log_messages: List[types.LogMessageParams] = []
+        self.log_messages: list[types.LogMessageParams] = []
         """Holds any received ``window/logMessage`` requests."""
 
-        self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
+        self.diagnostics: dict[str, list[types.Diagnostic]] = {}
         """Holds any recieved diagnostics."""
 
-        self.progress_reports: Dict[
-            types.ProgressToken, List[types.ProgressParams]
+        self.progress_reports: dict[
+            types.ProgressToken, list[types.ProgressParams]
         ] = {}
         """Holds any received progress updates."""
 
-        self.error: Optional[Exception] = None
+        self.error: Exception | None = None
         """Indicates if the client encountered an error."""
 
         config = (configuration or {"": {}}).copy()
         if "" not in config:
             config[""] = {}
 
-        self._configuration: Dict[str, Dict[str, Any]] = config
+        self._configuration: dict[str, dict[str, Any]] = config
         """Holds ``workspace/configuration`` values."""
 
         self._setup_log_index = 0
@@ -86,7 +77,7 @@ class LanguageClient(BaseLanguageClient):
         self._last_log_index = 0
         """Used to keep track of which log messages correspond with which test case."""
 
-        self._stderr_forwarder: Optional[asyncio.Task] = None
+        self._stderr_forwarder: asyncio.Task | None = None
         """A task that forwards the server's stderr to the test process."""
 
     async def start_io(self, cmd: str, *args, **kwargs):
@@ -116,7 +107,7 @@ class LanguageClient(BaseLanguageClient):
         )
 
     def report_server_error(
-        self, error: Exception, source: Union[PyglsError, JsonRpcException]
+        self, error: Exception, source: PyglsError | JsonRpcException
     ):
         """Called when the server does something unexpected, e.g. sending malformed
         JSON."""
@@ -132,8 +123,8 @@ class LanguageClient(BaseLanguageClient):
             self._stop_event.set()
 
     def get_configuration(
-        self, *, section: Optional[str] = None, scope_uri: Optional[str] = None
-    ) -> Optional[Any]:
+        self, *, section: str | None = None, scope_uri: str | None = None
+    ) -> Any | None:
         """Get a configuration value.
 
         Parameters
@@ -179,8 +170,8 @@ class LanguageClient(BaseLanguageClient):
         self,
         item: Any,
         *,
-        section: Optional[str] = None,
-        scope_uri: Optional[str] = None,
+        section: str | None = None,
+        scope_uri: str | None = None,
     ):
         """Set a configuration value.
 
@@ -287,10 +278,7 @@ def cancel_all_tasks(message: str):
     """Called to cancel all awaited tasks."""
 
     for task in asyncio.all_tasks():
-        if sys.version_info < (3, 9):
-            task.cancel()
-        else:
-            task.cancel(message)
+        task.cancel(message)
 
 
 def make_test_lsp_client() -> LanguageClient:
@@ -342,7 +330,7 @@ def make_test_lsp_client() -> LanguageClient:
             return
 
         if (kind := params.value.get("kind", None)) == "begin":
-            type_: Type[Any] = types.WorkDoneProgressBegin
+            type_: type[Any] = types.WorkDoneProgressBegin
         elif kind == "report":
             type_ = types.WorkDoneProgressReport
         elif kind == "end":
@@ -405,7 +393,7 @@ def client_capabilities(client_spec: str) -> types.ClientCapabilities:
        The requested client capabilities
     """
 
-    candidates: Dict[str, pathlib.Path] = {}
+    candidates: dict[str, pathlib.Path] = {}
 
     client_spec = client_spec.replace("-", "_")
     target_version = "latest"
