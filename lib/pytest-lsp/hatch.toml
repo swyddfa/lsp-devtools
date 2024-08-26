@@ -12,7 +12,7 @@ packages = ["pytest_lsp"]
 dependencies = ["pytest-asyncio"]
 
 [[envs.hatch-test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3.9", "3.10", "3.11", "3.12"]
 pytest = ["7", "8"]
 
 [envs.hatch-test.overrides]

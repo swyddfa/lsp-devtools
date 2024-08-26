@@ -89,9 +89,10 @@ COMPONENTS: Dict[str, Component] = {
     for c in [
         Component(
             name="pytest-lsp",
-            bump_breaking="major",
-            bump_minor="minor",
-            bump_patch="patch",
+            # Everything is a beta version bump until we make a proper release
+            bump_breaking="b",
+            bump_minor="b",
+            bump_patch="b",
             commit_prefix="pytest-lsp v",
             src="lib/pytest-lsp",
             tag_prefix="pytest-lsp-v",
