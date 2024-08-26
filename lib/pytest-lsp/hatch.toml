@@ -13,11 +13,10 @@ dependencies = ["pytest-asyncio"]
 
 [[envs.hatch-test.matrix]]
 python = ["3.9", "3.10", "3.11", "3.12"]
-pytest = ["7", "8"]
+pytest = ["8"]
 
 [envs.hatch-test.overrides]
 matrix.pytest.dependencies = [
-    { value = "pytest>=7,<8", if = ["7"] },
     { value = "pytest>=8,<9", if = ["8"] },
 ]
 
