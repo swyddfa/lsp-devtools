@@ -1,3 +1,10 @@
+## v0.4.3 - 2024-08-28
+
+### Fixes
+
+- The client now waits for the server process to gracefully exit by @OhioDschungel6 ([#173](https://github.com/swyddfa/lsp-devtools/issues/173))
+
+
 ## v0.4.2 - 2024-05-22
 
 

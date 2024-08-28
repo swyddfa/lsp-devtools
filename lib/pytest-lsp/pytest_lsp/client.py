@@ -35,7 +35,7 @@ if typing.TYPE_CHECKING:
     from typing import Union
 
 
-__version__ = "0.4.2"
+__version__ = "0.4.3"
 logger = logging.getLogger(__name__)
 
 
