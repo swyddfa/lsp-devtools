@@ -1,5 +1,4 @@
 import pathlib
-import sys
 
 import pytest
 
@@ -102,12 +101,8 @@ def test_getting_started_fail(pytester: pytest.Pytester):
     results = pytester.runpytest()
     results.assert_outcomes(errors=1)
 
-    if sys.version_info < (3, 9):
-        message = "E*CancelledError"
-    else:
-        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"
-
-    results.stdout.fnmatch_lines(message)
+    message = r"E\s+RuntimeError: Server process \d+ exited with code: 0"
+    results.stdout.re_match_lines(message)
 
 
 def test_generic_rpc(pytester: pytest.Pytester):
