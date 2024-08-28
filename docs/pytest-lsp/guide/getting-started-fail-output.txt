@@ -1,17 +1,18 @@
 $ pytest
-================================================ test session starts ================================================
-platform linux -- Python 3.11.3, pytest-7.2.0, pluggy-1.0.0
-rootdir: /tmp/pytest-of-alex/pytest-38/test_getting_started_fail0, configfile: tox.ini
-plugins: asyncio-0.21.0, typeguard-3.0.2, lsp-0.3.0
+============================= test session starts ==============================
+platform linux -- Python 3.11.9, pytest-7.4.4, pluggy-1.5.0
+rootdir: /tmp/pytest-of-alex/pytest-12/test_getting_started_fail0
+configfile: tox.ini
+plugins: lsp-0.4.2, asyncio-0.23.8
 asyncio: mode=Mode.AUTO
 collected 1 item
 
-test_server.py E                                                                                              [100%]
+test_server.py E                                                         [100%]
 
-====================================================== ERRORS =======================================================
-________________________________________ ERROR at setup of test_completions _________________________________________
+==================================== ERRORS ====================================
+______________________ ERROR at setup of test_completions ______________________
 
-lsp_client = <pytest_lsp.client.LanguageClient object at 0x7fa2c4168310>
+lsp_client = <pytest_lsp.client.LanguageClient object at 0x7ff8e78d7f10>
 
     @pytest_lsp.fixture(
         config=ClientServerConfig(server_command=[sys.executable, "server.py"]),
@@ -22,24 +23,45 @@ lsp_client = <pytest_lsp.client.LanguageClient object at 0x7fa2c4168310>
 >       await lsp_client.initialize_session(params)
 
 test_server.py:21:
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
-/var/home/alex/Projects/lsp-devtools/.env/lib64/python3.11/site-packages/pytest_lsp/client.py:137: in initialize_sess
-ion
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+/var/home/alex/Projects/swyddfa/lsp-devtools/release/lib/pytest-lsp/pytest_lsp/client.py:245: in initialize_session
     response = await self.initialize_async(params)
-/var/home/alex/Projects/lsp-devtools/.env/lib64/python3.11/site-packages/pygls/lsp/client.py:349: in initialize_async
+/var/home/alex/.local/share/hatch/env/virtual/pytest-lsp/oa_H1-lS/hatch-test.py3.11-7/lib/python3.11/site-packages/pygls/lsp/client.py:244: in initialize_async
     return await self.protocol.send_request_async("initialize", params)
-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
 
-self = <pytest_lsp.protocol.LanguageClientProtocol object at 0x7fa2c417a190>, method = 'initialize'
-params = InitializeParams(capabilities=ClientCapabilities(workspace=None, text_document=None, notebook_document=None,
- window=No..., root_path=None, root_uri=None, initialization_options=None, trace=None, work_done_token=None, workspac
-e_folders=None)
+self = <pytest_lsp.protocol.LanguageClientProtocol object at 0x7ff8e78ebf90>
+method = 'initialize'
+params = InitializeParams(capabilities=ClientCapabilities(workspace=None, text_document=None, notebook_document=None, window=No..., root_path=None, root_uri=None, initialization_options=None, trace=None, work_done_token=None, workspace_folders=None)
 
     async def send_request_async(self, method, params=None):
->       result = await super().send_request_async(method, params)
-E       asyncio.exceptions.CancelledError: Server process exited with return code: 0
+        """Wrap pygls' ``send_request_async`` implementation. This will
 
-/var/home/alex/Projects/lsp-devtools/.env/lib64/python3.11/site-packages/pytest_lsp/protocol.py:42: CancelledError
-============================================== short test summary info ==============================================
-ERROR test_server.py::test_completions - asyncio.exceptions.CancelledError: Server process exited with return code: 0
-================================================= 1 error in 1.15s ==================================================
+        - Check the params to see if they're compatible with the client's stated
+          capabilities
+        - Check the result to see if it's compatible with the client's stated
+          capabilities
+
+        Parameters
+        ----------
+        method
+           The method name of the request to send
+
+        params
+           The associated parameters to go with the request
+
+        Returns
+        -------
+        Any
+           The result
+        """
+        check_params_against_client_capabilities(
+            self._server.capabilities, method, params
+        )
+>       result = await super().send_request_async(method, params)
+E       RuntimeError: Server process 42326 exited with code: 0
+
+/var/home/alex/Projects/swyddfa/lsp-devtools/release/lib/pytest-lsp/pytest_lsp/protocol.py:81: RuntimeError
+=========================== short test summary info ============================
+ERROR test_server.py::test_completions - RuntimeError: Server process 42326 e...
+=============================== 1 error in 1.12s ===============================
