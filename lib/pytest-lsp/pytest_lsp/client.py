@@ -104,16 +104,18 @@ class LanguageClient(BaseLanguageClient):
 
     async def server_exit(self, server: asyncio.subprocess.Process):
         """Called when the server process exits."""
-        logger.debug("Server process exited with code: %s", server.returncode)
 
         if self._stop_event.is_set():
             return
 
-        loop = asyncio.get_running_loop()
-        loop.call_soon(
-            cancel_all_tasks,
-            f"Server process exited with return code: {server.returncode}",
-        )
+        # TODO: Should the upstream base client be doing this?
+        # Cancel any pending futures.
+        reason = f"Server process {server.pid} exited with code: {server.returncode}"
+
+        for id_, fut in self.protocol._request_futures.items():
+            if not fut.done():
+                fut.set_exception(RuntimeError(reason))
+                logger.debug("Cancelled pending request '%s': %s", id_, reason)
 
     def report_server_error(
         self, error: Exception, source: Union[PyglsError, JsonRpcException]
@@ -261,7 +263,10 @@ class LanguageClient(BaseLanguageClient):
             return
 
         await self.shutdown_async(None)
+
         self.exit(None)
+        if self._server:
+            await self._server.wait()
 
     async def wait_for_notification(self, method: str):
         """Block until a notification with the given method is received.

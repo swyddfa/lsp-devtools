@@ -129,12 +129,8 @@ async def test_capabilities(client):
 
     results.assert_outcomes(errors=1)
 
-    if sys.version_info < (3, 9):
-        message = "E*CancelledError"
-    else:
-        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"
-
-    results.stdout.fnmatch_lines(message)
+    message = r"E\s+RuntimeError: Server process \d+ exited with code: 0"
+    results.stdout.re_match_lines(message)
 
 
 def test_detect_server_exit_mid_request(pytester: pytest.Pytester):
@@ -165,12 +161,8 @@ async def test_capabilities(client):
 
     results.assert_outcomes(failed=1, errors=1)
 
-    if sys.version_info < (3, 9):
-        message = "E*CancelledError"
-    else:
-        message = "E*asyncio.exceptions.CancelledError: Server process exited with return code: 0"
-
-    results.stdout.fnmatch_lines(message)
+    message = r"E\s+RuntimeError: Server process \d+ exited with code: 0"
+    results.stdout.re_match_lines(message)
     results.stdout.fnmatch_lines("E*RuntimeError: Client has been stopped.")
 
 
@@ -190,15 +182,9 @@ async def test_capabilities(client):
 
     results.assert_outcomes(errors=1)
 
-    if sys.version_info < (3, 9):
-        message = "E*CancelledError"
-    else:
-        message = [
-            "E*asyncio.exceptions.CancelledError: Server process exited with return code: 1",
-            "ZeroDivisionError: division by zero",
-        ]
-
-    results.stdout.fnmatch_lines(message)
+    message = r"E\s+RuntimeError: Server process \d+ exited with code: 1"
+    results.stdout.re_match_lines(message)
+    results.stdout.fnmatch_lines("ZeroDivisionError: division by zero")
 
 
 def test_detect_invalid_json(pytester: pytest.Pytester):
