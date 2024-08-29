@@ -79,6 +79,7 @@ def setup_test(pytester: pytest.Pytester, server_name: str, test_code: str):
         """\
 [pytest]
 asyncio_mode = auto
+asyncio_default_fixture_loop_scope = function
 """
     )
 

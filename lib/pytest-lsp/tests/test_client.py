@@ -61,6 +61,7 @@ def test_client_capabilities(
         """
         [pytest]
         asyncio_mode = auto
+        asyncio_default_fixture_loop_scope = function
         """
     )
 
@@ -116,7 +117,7 @@ async def test_capabilities(client):
     )
 
     results = pytester.runpytest("-vv")
-    results.assert_outcomes(passed=1)
+    results.assert_outcomes(passed=1, warnings=0)
 
 
 @pytest.mark.parametrize(

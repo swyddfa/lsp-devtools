@@ -196,6 +196,11 @@ def fixture(
     """
 
     def wrapper(fn):
+        # pytest-asyncio says `loop_scope` should be present and match `scope`
+        # https://pytest-asyncio.readthedocs.io/en/latest/how-to-guides/migrate_from_0_23.html
+        if "scope" in kwargs:
+            kwargs["loop_scope"] = kwargs["scope"]
+
         @pytest_asyncio.fixture(**kwargs)
         async def the_fixture(request):
             devtools = request.config.getoption("devtools")
