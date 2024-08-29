@@ -21,7 +21,7 @@ async def client(lsp_client: LanguageClient):
     await lsp_client.shutdown_session()
 
 
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio(loop_scope="module")
 async def test_completion_hello(client: LanguageClient):
     """Ensure that the server implements completions correctly."""
 
@@ -42,7 +42,7 @@ async def test_completion_hello(client: LanguageClient):
     assert "hello" in labels
 
 
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio(loop_scope="module")
 async def test_completion_world(client: LanguageClient):
     """Ensure that the server implements completions correctly."""
 

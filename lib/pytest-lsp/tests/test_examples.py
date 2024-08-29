@@ -10,6 +10,7 @@ def setup_test(pytester: pytest.Pytester, example_name: str):
         """\
 [pytest]
 asyncio_mode = auto
+asyncio_default_fixture_loop_scope = function
 """
     )
 
@@ -24,21 +25,35 @@ asyncio_mode = auto
 @pytest.mark.parametrize(
     "name, expected",
     [
-        pytest.param("diagnostics", dict(passed=1), id="diagnostics"),
-        pytest.param("getting-started", dict(passed=1), id="getting-started"),
-        pytest.param("fixture-passthrough", dict(passed=1), id="fixture-passthrough"),
-        pytest.param("fixture-scope", dict(passed=2), id="fixture-scope"),
+        pytest.param("diagnostics", dict(passed=1, warnings=0), id="diagnostics"),
         pytest.param(
-            "parameterised-clients", dict(passed=2), id="parameterised-clients"
+            "getting-started", dict(passed=1, warnings=0), id="getting-started"
         ),
-        pytest.param("window-log-message", dict(passed=1), id="window-log-message"),
+        pytest.param(
+            "fixture-passthrough", dict(passed=1, warnings=0), id="fixture-passthrough"
+        ),
+        pytest.param("fixture-scope", dict(passed=2, warnings=0), id="fixture-scope"),
+        pytest.param(
+            "parameterised-clients",
+            dict(passed=2, warnings=0),
+            id="parameterised-clients",
+        ),
+        pytest.param(
+            "window-log-message", dict(passed=1, warnings=0), id="window-log-message"
+        ),
         pytest.param(
             "window-create-progress",
-            dict(passed=3),
+            dict(passed=3, warnings=0),
             id="window-create-progress",
         ),
-        pytest.param("window-show-document", dict(passed=1), id="window-show-document"),
-        pytest.param("window-show-message", dict(passed=1), id="window-show-message"),
+        pytest.param(
+            "window-show-document",
+            dict(passed=1, warnings=0),
+            id="window-show-document",
+        ),
+        pytest.param(
+            "window-show-message", dict(passed=1, warnings=0), id="window-show-message"
+        ),
         pytest.param(
             "workspace-configuration",
             dict(passed=1, warnings=1),
