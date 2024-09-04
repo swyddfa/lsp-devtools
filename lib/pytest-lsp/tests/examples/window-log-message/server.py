@@ -1,16 +1,20 @@
-from lsprotocol.types import TEXT_DOCUMENT_COMPLETION, CompletionItem, CompletionParams
-from pygls.server import LanguageServer
+from lsprotocol import types
+from pygls.lsp.server import LanguageServer
 
 server = LanguageServer("window-log-message", "v1")
 
 
-@server.feature(TEXT_DOCUMENT_COMPLETION)
-def completion(ls: LanguageServer, params: CompletionParams):
+@server.feature(types.TEXT_DOCUMENT_COMPLETION)
+def completion(ls: LanguageServer, params: types.CompletionParams):
     items = []
 
     for i in range(10):
-        ls.show_message_log(f"Suggesting item {i}")
-        items.append(CompletionItem(label=f"item-{i}"))
+        ls.window_log_message(
+            types.LogMessageParams(
+                message=f"Suggesting item {i}", type=types.MessageType.Log
+            )
+        )
+        items.append(types.CompletionItem(label=f"item-{i}"))
 
     return items
 

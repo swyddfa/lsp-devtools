@@ -9,15 +9,14 @@ details.
 
 """
 
+from __future__ import annotations
+
 # ruff: noqa: S101
 import logging
 import warnings
 from typing import Any
 from typing import Callable
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Set
 from typing import Union
 
 from lsprotocol import types
@@ -27,8 +26,8 @@ logger = logging.getLogger(__name__)
 ParamsChecker = Callable[[types.ClientCapabilities, Any], None]
 ResultChecker = Callable[[types.ClientCapabilities, Any], None]
 
-PARAMS_CHECKS: Dict[str, ParamsChecker] = {}
-RESULT_CHECKS: Dict[str, ResultChecker] = {}
+PARAMS_CHECKS: dict[str, ParamsChecker] = {}
+RESULT_CHECKS: dict[str, ResultChecker] = {}
 
 
 class LspSpecificationWarning(UserWarning):
@@ -135,7 +134,7 @@ def check_params_against_client_capabilities(
 def check_completion_item(
     item: types.CompletionItem,
     commit_characters_support: bool,
-    documentation_formats: Set[str],
+    documentation_formats: set[str],
     snippet_support: bool,
 ):
     """Ensure that the given ``CompletionItem`` complies with the given capabilities."""
@@ -155,7 +154,7 @@ def check_completion_item(
 @check_result_for(method=types.TEXT_DOCUMENT_COMPLETION)
 def completion_items(
     capabilities: types.ClientCapabilities,
-    result: Union[types.CompletionList, List[types.CompletionItem], None],
+    result: Union[types.CompletionList, list[types.CompletionItem], None],
 ):
     """Ensure that the completion items returned from the server are compliant with the
     spec and the client's declared capabilities."""
@@ -230,7 +229,7 @@ def completion_item_resolve(
 
 @check_result_for(method=types.TEXT_DOCUMENT_DOCUMENT_LINK)
 def document_links(
-    capabilities: types.ClientCapabilities, result: Optional[List[types.DocumentLink]]
+    capabilities: types.ClientCapabilities, result: Optional[list[types.DocumentLink]]
 ):
     """Ensure that the document links returned from the server are compliant with the
     Spec and the client's declared capabilities."""
@@ -261,7 +260,7 @@ def work_done_progress_create(
 @check_params_of(method=types.WORKSPACE_CONFIGURATION)
 def workspace_configuration(
     capabilities: types.ClientCapabilities,
-    params: types.WorkspaceConfigurationParams,
+    params: types.ConfigurationParams,
 ):
     """Ensure that the client has support for ``workspace/configuration`` requests."""
     is_supported = get_capability(capabilities, "workspace.configuration", False)

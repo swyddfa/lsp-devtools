@@ -1,21 +1,18 @@
-from lsprotocol.types import (
-    TEXT_DOCUMENT_COMPLETION,
-    CompletionItem,
-    CompletionParams,
-    ShowDocumentParams,
-)
-from pygls.server import LanguageServer
+from lsprotocol import types
+from pygls.lsp.server import LanguageServer
 
 server = LanguageServer("window-show-document", "v1")
 
 
-@server.feature(TEXT_DOCUMENT_COMPLETION)
-async def completion(ls: LanguageServer, params: CompletionParams):
+@server.feature(types.TEXT_DOCUMENT_COMPLETION)
+async def completion(ls: LanguageServer, params: types.CompletionParams):
     items = []
-    await ls.show_document_async(ShowDocumentParams(uri=params.text_document.uri))
+    await ls.window_show_document_async(
+        types.ShowDocumentParams(uri=params.text_document.uri)
+    )
 
     for i in range(10):
-        items.append(CompletionItem(label=f"item-{i}"))
+        items.append(types.CompletionItem(label=f"item-{i}"))
 
     return items
 

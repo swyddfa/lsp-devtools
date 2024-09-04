@@ -11,16 +11,18 @@ packages = ["pytest_lsp"]
 [envs.hatch-test]
 dependencies = ["pytest-asyncio"]
 
+[envs.hatch-test.env-vars]
+UV_PRERELEASE="allow"
+
 [[envs.hatch-test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
-pytest = ["7", "8"]
+python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+pytest = ["8"]
 
 [envs.hatch-test.overrides]
 matrix.pytest.dependencies = [
-    { value = "pytest>=7,<8", if = ["7"] },
     { value = "pytest>=8,<9", if = ["8"] },
 ]
 
 [envs.hatch-static-analysis]
 config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.4.8"]
+dependencies = ["ruff==0.5.2"]

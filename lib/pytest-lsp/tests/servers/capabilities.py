@@ -1,5 +1,5 @@
 from lsprotocol.converters import get_converter
-from pygls.server import LanguageServer
+from pygls.lsp.server import LanguageServer
 
 converter = get_converter()
 server = LanguageServer(name="capabilities-server", version="v1.0")

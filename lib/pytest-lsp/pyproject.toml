@@ -7,28 +7,27 @@ name = "pytest-lsp"
 dynamic = ["version"]
 description = "A pytest plugin for end-to-end testing of language servers"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
     "Framework :: Pytest",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "importlib-resources; python_version<\"3.9\"",
     "packaging",
-    "pygls>=1.1.0",
+    "pygls>=2.0.0a1",
     "pytest",
-    "pytest-asyncio>=0.23",
+    "pytest-asyncio>=0.24",
 ]
 
 [project.urls]
@@ -49,6 +48,7 @@ sort = "Cover"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.towncrier]
 filename = "CHANGES.md"

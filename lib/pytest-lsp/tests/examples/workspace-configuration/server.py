@@ -1,13 +1,13 @@
 from lsprotocol import types
-from pygls.server import LanguageServer
+from pygls.lsp.server import LanguageServer
 
 server = LanguageServer("workspace-configuration", "v1")
 
 
 @server.command("server.configuration")
 async def configuration(ls: LanguageServer, *args):
-    results = await ls.get_configuration_async(
-        types.WorkspaceConfigurationParams(
+    results = await ls.workspace_configuration_async(
+        types.ConfigurationParams(
             items=[
                 types.ConfigurationItem(scope_uri="file://workspace/file.txt"),
                 types.ConfigurationItem(section="not.found"),
