@@ -33,13 +33,9 @@ This also means `pytest-lsp` can be used to test language servers written in any
 ```python
 import sys
 
+import pytest
 import pytest_lsp
-from lsprotocol.types import (
-    CompletionParams,
-    InitializeParams,
-    Position,
-    TextDocumentIdentifier,
-)
+from lsprotocol import types
 from pytest_lsp import (
     ClientServerConfig,
     LanguageClient,
@@ -48,6 +44,7 @@ from pytest_lsp import (
 
 
 @pytest_lsp.fixture(
+    scope="module",
     config=ClientServerConfig(
         server_command=[sys.executable, "-m", "esbonio"],
     ),
@@ -55,9 +52,13 @@ from pytest_lsp import (
 async def client(lsp_client: LanguageClient):
     # Setup
     response = await lsp_client.initialize_session(
-        InitializeParams(
+        types.InitializeParams(
             capabilities=client_capabilities("visual-studio-code"),
-            root_uri="file:///path/to/test/project/root/",
+            workspace_folders=[
+                types.WorkspaceFolder(
+                    uri="file:///path/to/test/project/root/", name="project"
+                ),
+            ],
         )
     )
 
@@ -67,11 +68,12 @@ async def client(lsp_client: LanguageClient):
     await lsp_client.shutdown_session()
 
 
+@pytest.mark.asyncio(loop_scope="module")
 async def test_completion(client: LanguageClient):
     result = await client.text_document_completion_async(
-        params=CompletionParams(
-            position=Position(line=5, character=23),
-            text_document=TextDocumentIdentifier(
+        params=types.CompletionParams(
+            position=types.Position(line=5, character=23),
+            text_document=types.TextDocumentIdentifier(
                 uri="file:///path/to/test/project/root/test_file.rst"
             ),
         )
