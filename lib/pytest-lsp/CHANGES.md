@@ -1,3 +1,17 @@
+## v1.0.0b1 - 2024-09-04
+
+### Breaking Changes
+
+- Drop Python 3.8 support ([#178](https://github.com/swyddfa/lsp-devtools/issues/178))
+- Drop support for pytest v7 ([#180](https://github.com/swyddfa/lsp-devtools/issues/180))
+
+### Misc
+
+- Migrate to pygls v2 ([#177](https://github.com/swyddfa/lsp-devtools/issues/177))
+- Add support for Python 3.13 ([#180](https://github.com/swyddfa/lsp-devtools/issues/180))
+- Bump minimum `pytest-asyncio` verision to `v0.24` ([#182](https://github.com/swyddfa/lsp-devtools/issues/182))
+
+
 ## v0.4.3 - 2024-08-28
 
 ### Fixes

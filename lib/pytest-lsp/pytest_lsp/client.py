@@ -26,7 +26,7 @@ if typing.TYPE_CHECKING:
     from typing import Any
 
 
-__version__ = "1.0.0b0"
+__version__ = "1.0.0b1"
 logger = logging.getLogger(__name__)
 
 
