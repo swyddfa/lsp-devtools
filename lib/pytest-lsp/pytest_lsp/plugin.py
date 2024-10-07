@@ -132,7 +132,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
 # anext() was added in 3.10
 if sys.version_info < (3, 10):
 
-    async def anext(it):  # noqa: A001
+    async def anext(it):
         return await it.__anext__()
 
 
