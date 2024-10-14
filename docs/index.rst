@@ -20,7 +20,7 @@ Client Capability Index
 
    capabilities/*
 
-Inspired by `caniuse.com <https://canisue.com>`__ this provides information on which clients support which features of the `LSP Specification <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>`__.
+Inspired by `caniuse.com <https://caniuse.com>`__ this provides information on which clients support which features of the `LSP Specification <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/>`__.
 
 .. grid:: 2
    :gutter: 2
