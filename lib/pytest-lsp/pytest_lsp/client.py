@@ -99,15 +99,6 @@ class LanguageClient(BaseLanguageClient):
         if self._stop_event.is_set():
             return
 
-        # TODO: Should the upstream base client be doing this?
-        # Cancel any pending futures.
-        reason = f"Server process {server.pid} exited with code: {server.returncode}"
-
-        for id_, fut in self.protocol._request_futures.items():
-            if not fut.done():
-                fut.set_exception(RuntimeError(reason))
-                logger.debug("Cancelled pending request '%s': %s", id_, reason)
-
     def report_server_error(
         self, error: Exception, source: PyglsError | JsonRpcException
     ):
