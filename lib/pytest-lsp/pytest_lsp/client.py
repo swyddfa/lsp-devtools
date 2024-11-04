@@ -108,12 +108,13 @@ class LanguageClient(BaseLanguageClient):
         tb = "".join(traceback.format_exc())
 
         message = f"{source.__name__}: {error}\n{tb}"  # type: ignore
+        for id_, fut in self.protocol._request_futures.items():
+            if not fut.done():
+                fut.set_exception(RuntimeError(message))
+                logger.debug("Cancelled pending request '%s': %s", id_, message)
 
-        loop = asyncio.get_running_loop()
-        loop.call_soon(cancel_all_tasks, message)
-
-        if self._stop_event:
-            self._stop_event.set()
+        if self._server:
+            self._server.terminate()
 
     def get_configuration(
         self, *, section: str | None = None, scope_uri: str | None = None
