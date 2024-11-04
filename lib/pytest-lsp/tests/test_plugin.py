@@ -130,7 +130,7 @@ async def test_capabilities(client):
 
     results.assert_outcomes(errors=1)
 
-    message = r"E\s+RuntimeError: Server process \d+ exited with code: 0"
+    message = r"E\s+RuntimeError: Server process \d+ exited with return code: 0"
     results.stdout.re_match_lines(message)
 
 
@@ -162,7 +162,7 @@ async def test_capabilities(client):
 
     results.assert_outcomes(failed=1, errors=1)
 
-    message = r"E\s+RuntimeError: Server process \d+ exited with code: 0"
+    message = r"E\s+RuntimeError: Server process \d+ exited with return code: 0"
     results.stdout.re_match_lines(message)
     results.stdout.fnmatch_lines("E*RuntimeError: Client has been stopped.")
 
@@ -183,7 +183,7 @@ async def test_capabilities(client):
 
     results.assert_outcomes(errors=1)
 
-    message = r"E\s+RuntimeError: Server process \d+ exited with code: 1"
+    message = r"E\s+RuntimeError: Server process \d+ exited with return code: 1"
     results.stdout.re_match_lines(message)
     results.stdout.fnmatch_lines("ZeroDivisionError: division by zero")
 
@@ -215,11 +215,7 @@ async def test_capabilities(client):
     setup_test(pytester, "invalid_json.py", test_code)
     results = pytester.runpytest("-vv")
 
-    results.assert_outcomes(errors=1, failed=1)
+    results.assert_outcomes(failed=1)
 
-    if sys.version_info < (3, 9):
-        message = "E*CancelledError"
-    else:
-        message = "E*asyncio.exceptions.CancelledError: JsonRpcInternalError: *"
-
+    message = "E*json.decoder.JSONDecodeError: *"
     results.stdout.fnmatch_lines(message)

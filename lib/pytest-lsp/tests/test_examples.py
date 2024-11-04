@@ -116,7 +116,7 @@ def test_getting_started_fail(pytester: pytest.Pytester):
     results = pytester.runpytest()
     results.assert_outcomes(errors=1)
 
-    message = r"E\s+RuntimeError: Server process \d+ exited with code: 0"
+    message = r"E\s+RuntimeError: Server process \d+ exited with return code: 0"
     results.stdout.re_match_lines(message)
 
 

@@ -27,7 +27,8 @@ async def client(rpc_client: JsonRPCClient):
 
     yield
 
-    # Teardown code here (if any)
+    # Teardown code here
+    rpc_client.protocol.notify("server/exit", {})
 
 
 @pytest.mark.asyncio

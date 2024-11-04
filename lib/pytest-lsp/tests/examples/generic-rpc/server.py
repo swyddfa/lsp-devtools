@@ -1,3 +1,5 @@
+import sys
+
 from pygls.protocol import JsonRPCProtocol, default_converter
 from pygls.server import JsonRPCServer
 
@@ -26,6 +28,11 @@ def subtraction(ls: JsonRPCServer, params):
     ls.protocol.notify("log/message", dict(message=f"{b=}"))
 
     return dict(total=b - a)
+
+
+@server.feature("server/exit")
+def server_exit(ls: JsonRPCServer, params):
+    sys.exit(0)
 
 
 if __name__ == "__main__":
