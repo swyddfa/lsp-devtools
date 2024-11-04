@@ -25,7 +25,7 @@ classifiers = [
 ]
 dependencies = [
     "packaging",
-    "pygls>=2.0.0a1",
+    "pygls>=2.0.0a2",
     "pytest",
     "pytest-asyncio>=0.24",
 ]
