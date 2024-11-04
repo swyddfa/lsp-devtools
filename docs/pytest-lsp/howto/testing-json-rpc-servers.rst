@@ -10,6 +10,7 @@ As an example we'll reuse some of the `pygls`_ internals to write a simple JSON-
 
 - client to server request ``math/add``, returns the sum of two numbers ``a`` and ``b``
 - client to server request ``math/sub``, returns the difference of two numbers ``a`` and ``b``
+- client to server notification ``server/exit`` that instructs the server to exit
 - server to client notification ``log/message``, allows the server to send debug messages to the client.
 
 .. note::
@@ -40,7 +41,7 @@ Once you have your factory function defined you can pass it to the :class:`~pyte
 .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/generic-rpc/t_server.py
    :language: python
    :start-at: @pytest_lsp.fixture(
-   :end-at: # Teardown code
+   :end-at: rpc_client.protocol.notify
 
 Writing Test Cases
 ------------------
