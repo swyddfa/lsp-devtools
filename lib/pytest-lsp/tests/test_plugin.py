@@ -167,6 +167,43 @@ async def test_capabilities(client):
     results.stdout.fnmatch_lines("E*RuntimeError: Client has been stopped.")
 
 
+def test_detect_server_exit_pending_notification(pytester: pytest.Pytester):
+    """Ensure that the plugin can detect when the server process exits while the client
+    is waiting for a notification to arrive."""
+
+    test_code = """\
+import pytest
+from lsprotocol.types import CompletionParams
+from lsprotocol.types import Position
+from lsprotocol.types import TextDocumentIdentifier
+
+
+@pytest.mark.asyncio
+async def test_capabilities(client):
+    expected = {str(i) for i in range(10)}
+
+    for i in range(10):
+        client.protocol.notify("server/exit")
+        await client.wait_for_notification("never/happening")
+
+        params = CompletionParams(
+            text_document=TextDocumentIdentifier(uri="file:///test.txt"),
+            position=Position(line=0, character=0)
+        )
+        items = await client.text_document_completion_async(params)
+        assert len({i.label for i in items} & expected) == len(items)
+"""
+
+    setup_test(pytester, "notify_exit.py", test_code)
+    results = pytester.runpytest("-vv")
+
+    results.assert_outcomes(failed=1, errors=1)
+
+    message = r"E\s+RuntimeError: Server process \d+ exited with return code: 0"
+    results.stdout.re_match_lines(message)
+    results.stdout.fnmatch_lines("E*RuntimeError: Client has been stopped.")
+
+
 def test_detect_server_crash(pytester: pytest.Pytester):
     """Ensure the plugin can detect when the server process crashes on boot."""
 

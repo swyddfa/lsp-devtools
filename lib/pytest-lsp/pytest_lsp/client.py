@@ -99,6 +99,14 @@ class LanguageClient(BaseLanguageClient):
         if self._stop_event.is_set():
             return
 
+        reason = (
+            f"Server process {server.pid} exited with return code: {server.returncode}"
+        )
+        for id_, fut in self.protocol._notification_futures.items():
+            if not fut.done():
+                fut.set_exception(RuntimeError(reason))
+                logger.debug("Cancelled pending request '%s': %s", id_, reason)
+
     def report_server_error(
         self, error: Exception, source: PyglsError | JsonRpcException
     ):
