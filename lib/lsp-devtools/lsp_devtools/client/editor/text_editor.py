@@ -3,7 +3,6 @@ from __future__ import annotations
 import contextlib
 import pathlib
 import typing
-from typing import List
 from typing import Union
 
 from lsprotocol import types
@@ -15,7 +14,7 @@ from textual.widgets import TextArea
 if typing.TYPE_CHECKING:
     from lsp_devtools.client.lsp import LanguageClient
 
-CompletionResult = Union[List[types.CompletionItem], types.CompletionList, None]
+CompletionResult = Union[list[types.CompletionItem], types.CompletionList, None]
 
 
 # TODO: Refactor to

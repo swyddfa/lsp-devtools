@@ -9,9 +9,6 @@ from rich.segment import Segment
 from rich.style import Style
 
 if typing.TYPE_CHECKING:
-    from typing import List
-    from typing import Optional
-
     from rich.console import Console
     from rich.console import ConsoleOptions
     from rich.console import RenderResult
@@ -59,19 +56,19 @@ class PacketPipeColumn(progress.ProgressColumn):
     """Visualizes messages sent between client and server as "packets"."""
 
     def __init__(
-        self, duration: float = 1.0, table_column: Optional[Column] = None
+        self, duration: float = 1.0, table_column: Column | None = None
     ) -> None:
         self.client_count = 0
         self.server_count = 0
-        self.server_times: List[float] = []
-        self.client_times: List[float] = []
+        self.server_times: list[float] = []
+        self.client_times: list[float] = []
 
         # How long it should take for a packet to propogate.
         self.duration = duration
 
         super().__init__(table_column)
 
-    def _update_packets(self, task: progress.Task, source: str) -> List[float]:
+    def _update_packets(self, task: progress.Task, source: str) -> list[float]:
         """Update the packet positions for the given message source.
 
         Parameters

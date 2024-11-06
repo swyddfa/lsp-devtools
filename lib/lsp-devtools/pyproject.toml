@@ -46,9 +46,8 @@ skip_covered = true
 sort = "Cover"
 
 [tool.pyright]
-venv = ".env"
 include = ["lsp_devtools"]
-pythonVersion = "3.8"
+pythonVersion = "3.9"
 
 [tool.towncrier]
 filename = "CHANGES.md"

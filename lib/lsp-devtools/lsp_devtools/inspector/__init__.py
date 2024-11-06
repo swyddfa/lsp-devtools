@@ -1,12 +1,11 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import logging
 import pathlib
+import typing
 from functools import partial
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 
 import platformdirs
 from rich.highlighter import ReprHighlighter
@@ -27,6 +26,10 @@ from lsp_devtools.agent import AgentServer
 from lsp_devtools.agent import parse_rpc_message
 from lsp_devtools.database import Database
 from lsp_devtools.handlers import LspMessage
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+
 
 logger = logging.getLogger(__name__)
 
@@ -70,9 +73,9 @@ class MessagesTable(DataTable):
 
         self.db = db
 
-        self.rpcdata: Dict[int, LspMessage] = {}
+        self.rpcdata: dict[int, LspMessage] = {}
         self.max_row = 0
-        self.session: Optional[str] = session
+        self.session: str | None = session
 
         self.viewer = viewer
 
@@ -113,7 +116,7 @@ class MessagesTable(DataTable):
 
     def _get_query_params(self):
         """Return the set of query parameters to use when populating the table."""
-        query: Dict[str, Any] = dict(max_row=self.max_row)
+        query: dict[str, Any] = dict(max_row=self.max_row)
 
         if self.session is not None:
             query["session"] = self.session
@@ -156,7 +159,7 @@ class LSPInspector(App):
         self.server = server
         """Server used to manage connections to lsp servers."""
 
-        self._async_tasks: List[asyncio.Task] = []
+        self._async_tasks: list[asyncio.Task] = []
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -215,7 +218,7 @@ async def handle_message(db: Database, data: bytes):
     await db.add_message(session, timestamp, source, rpc.body)
 
 
-def inspector(args, extra: List[str]):
+def inspector(args, extra: list[str]):
     db = Database(args.dbpath)
     server = AgentServer(handler=partial(handle_message, db))
 

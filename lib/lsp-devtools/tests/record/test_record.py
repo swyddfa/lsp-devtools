@@ -12,8 +12,6 @@ from lsp_devtools.record import setup_file_output
 if typing.TYPE_CHECKING:
     import pathlib
     from typing import Any
-    from typing import Dict
-    from typing import List
 
 
 @pytest.fixture(scope="module")
@@ -89,8 +87,8 @@ def test_file_output(
     tmp_path: pathlib.Path,
     record: argparse.ArgumentParser,
     logger: logging.Logger,
-    args: List[str],
-    messages: List[Dict[str, Any]],
+    args: list[str],
+    messages: list[dict[str, Any]],
     expected: str,
 ):
     """Ensure that we can log to files correctly.

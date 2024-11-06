@@ -8,10 +8,9 @@ from datetime import datetime
 import attrs
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Mapping
     from typing import Any
     from typing import Literal
-    from typing import Mapping
-    from typing import Optional
 
     MessageSource = Literal["client", "server"]
 
@@ -37,19 +36,19 @@ class LspMessage:
     source: MessageSource
     """Indicates if the message was sent by the client or the server."""
 
-    id: Optional[str]
+    id: str | None
     """The ``id`` field, if it exists."""
 
-    method: Optional[str]
+    method: str | None
     """The ``method`` field, if it exists."""
 
-    params: Optional[Any] = attrs.field(converter=maybe_json)
+    params: Any | None = attrs.field(converter=maybe_json)
     """The ``params`` field, if it exists."""
 
-    result: Optional[Any] = attrs.field(converter=maybe_json)
+    result: Any | None = attrs.field(converter=maybe_json)
     """The ``result`` field, if it exists."""
 
-    error: Optional[Any] = attrs.field(converter=maybe_json)
+    error: Any | None = attrs.field(converter=maybe_json)
     """The ``error`` field, if it exists."""
 
     @classmethod

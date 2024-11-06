@@ -1,17 +1,19 @@
+from __future__ import annotations
+
 import logging
-from typing import Dict
-from typing import Literal
-from typing import Set
-from typing import Union
+import typing
 
 import attrs
 
 from .formatters import FormatString
 
-logger = logging.getLogger(__name__)
+if typing.TYPE_CHECKING:
+    from typing import Literal
 
-MessageSource = Literal["client", "server", "both"]
-MessageType = Literal["request", "response", "result", "error", "notification"]
+    MessageSource = Literal["client", "server", "both"]
+    MessageType = Literal["request", "response", "result", "error", "notification"]
+
+logger = logging.getLogger(__name__)
 
 
 @attrs.define
@@ -21,16 +23,16 @@ class LSPFilter(logging.Filter):
     message_source: MessageSource = attrs.field(default="both")
     """Only include messages from the given source."""
 
-    include_message_types: Set[MessageType] = attrs.field(factory=set, converter=set)
+    include_message_types: set[MessageType] = attrs.field(factory=set, converter=set)
     """Only include the given message types."""
 
-    exclude_message_types: Set[MessageType] = attrs.field(factory=set, converter=set)
+    exclude_message_types: set[MessageType] = attrs.field(factory=set, converter=set)
     """Exclude the given message types."""
 
-    include_methods: Set[str] = attrs.field(factory=set, converter=set)
+    include_methods: set[str] = attrs.field(factory=set, converter=set)
     """Only include messages associated with the given method."""
 
-    exclude_methods: Set[str] = attrs.field(factory=set, converter=set)
+    exclude_methods: set[str] = attrs.field(factory=set, converter=set)
     """Exclude messages associated with the given method."""
 
     formatter: FormatString = attrs.field(
@@ -39,7 +41,7 @@ class LSPFilter(logging.Filter):
     )  # type: ignore
     """Format messages according to the given string"""
 
-    _response_method_map: Dict[Union[int, str], str] = attrs.field(factory=dict)
+    _response_method_map: dict[int | str, str] = attrs.field(factory=dict)
     """Used to determine the method for response messages"""
 
     def filter(self, record: logging.LogRecord) -> bool:
@@ -95,7 +97,7 @@ class LSPFilter(logging.Filter):
         return self._response_method_map[message["id"]]
 
 
-def message_matches_type(message_type: str, types: Set[MessageType]) -> bool:
+def message_matches_type(message_type: str, types: set[MessageType]) -> bool:
     """Determine if the type of message is included in the given set of types"""
 
     if message_type == "result":

@@ -14,8 +14,6 @@ from lsp_devtools.database import Database
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import List
-    from typing import Optional
 
     from lsp_devtools.agent.agent import MessageHandler
 
@@ -29,8 +27,8 @@ class AgentServer(Server):
     def __init__(
         self,
         *args,
-        logger: Optional[logging.Logger] = None,
-        handler: Optional[MessageHandler] = None,
+        logger: logging.Logger | None = None,
+        handler: MessageHandler | None = None,
         **kwargs,
     ):
         if "protocol_cls" not in kwargs:
@@ -43,11 +41,11 @@ class AgentServer(Server):
 
         self.logger = logger or logging.getLogger(__name__)
         self.handler = handler or self.lsp.data_received
-        self.db: Optional[Database] = None
+        self.db: Database | None = None
 
-        self._client_buffer: List[str] = []
-        self._server_buffer: List[str] = []
-        self._tcp_server: Optional[asyncio.Task] = None
+        self._client_buffer: list[str] = []
+        self._server_buffer: list[str] = []
+        self._tcp_server: asyncio.Task | None = None
 
     def _report_server_error(self, exc: Exception, source):
         """Report internal server errors."""
@@ -55,7 +53,7 @@ class AgentServer(Server):
         self.logger.error("%s: %s", type(exc).__name__, exc)
         self.logger.debug("%s", tb)
 
-    def feature(self, feature_name: str, options: Optional[Any] = None):
+    def feature(self, feature_name: str, options: Any | None = None):
         return self.lsp.fm.feature(feature_name, options)
 
     async def start_tcp(self, host: str, port: int) -> None:  # type: ignore[override]

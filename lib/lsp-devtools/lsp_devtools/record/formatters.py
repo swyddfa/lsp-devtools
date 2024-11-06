@@ -1,25 +1,19 @@
+from __future__ import annotations
+
 import json
 import re
+import typing
+from functools import cache
 from functools import partial
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Union
 
 import lsprotocol.types
 
-try:
-    from functools import cache
-except ImportError:
-    from functools import lru_cache
-
-    cache = lru_cache(None)
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Callable
 
 
-def format_json(obj: dict, *, indent: Union[str, int, None] = 2) -> str:
+def format_json(obj: dict, *, indent: str | int | None = 2) -> str:
     if isinstance(obj, str):
         return obj
 
@@ -34,7 +28,7 @@ def format_range(range_: dict) -> str:
     return f"{format_position(range_['start'])}-{format_position(range_['end'])}"
 
 
-FORMATTERS: Dict[str, Callable[[Any], str]] = {
+FORMATTERS: dict[str, Callable[[Any], str]] = {
     "position": format_position,
     "range": format_range,
     "json": format_json,
@@ -73,7 +67,7 @@ class Value:
     def __repr__(self):
         return f'Value(accessor="{self.accessor}", formatter={self.formatter})'
 
-    def format(self, message: dict, accessor: Optional[str] = None) -> str:
+    def format(self, message: dict, accessor: str | None = None) -> str:
         """Convert a message to a string according to the current accessor and
         formatter."""
 
@@ -110,7 +104,7 @@ class Value:
 
 
 @cache
-def get_separator_index(separator: str) -> Tuple[str, Union[int, slice, None]]:
+def get_separator_index(separator: str) -> tuple[str, int | slice | None]:
     if not separator:
         return "\n", None
 
@@ -134,7 +128,7 @@ def get_separator(sep: str) -> str:
     return sep.replace("\\n", "\n").replace("\\t", "\t")
 
 
-def get_index(idx: str) -> Union[int, slice, None]:
+def get_index(idx: str) -> int | slice | None:
     try:
         return int(idx)
     except ValueError:
@@ -165,7 +159,7 @@ class FormatString:
 
     def _parse(self):
         idx = 0
-        parts: List[Union[str, Value]] = []
+        parts: list[str | Value] = []
 
         for match in self.VARIABLE.finditer(self.pattern):
             start, end = match.span()

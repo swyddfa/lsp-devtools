@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import json
@@ -5,8 +7,6 @@ import logging
 import pathlib
 from functools import partial
 from logging import LogRecord
-from typing import List
-from typing import Optional
 
 from rich.console import Console
 from rich.console import ConsoleRenderable
@@ -41,9 +41,9 @@ class RichLSPHandler(RichHandler):
         self,
         *,
         record: logging.LogRecord,
-        traceback: Optional[Traceback],
-        message_renderable: "ConsoleRenderable",
-    ) -> "ConsoleRenderable":
+        traceback: Traceback | None,
+        message_renderable: ConsoleRenderable,
+    ) -> ConsoleRenderable:
         # Delegate most of the rendering to the base RichHandler class.
         res = super().render(
             record=record, traceback=traceback, message_renderable=message_renderable
@@ -97,7 +97,7 @@ def setup_stdout_output(args, logger: logging.Logger, console: Console):
     logger.propagate = False
 
 
-def setup_file_output(args, logger: logging.Logger, console: Optional[Console] = None):
+def setup_file_output(args, logger: logging.Logger, console: Console | None = None):
     """Log messages to a file."""
     handler = logging.FileHandler(filename=str(args.to_file))
     handler.setLevel(logging.INFO)
@@ -122,9 +122,7 @@ def setup_file_output(args, logger: logging.Logger, console: Optional[Console] =
     logger.propagate = False
 
 
-def setup_sqlite_output(
-    args, logger: logging.Logger, console: Optional[Console] = None
-):
+def setup_sqlite_output(args, logger: logging.Logger, console: Console | None = None):
     """Log messages to SQLite."""
     handler = SqlHandler(args.to_sqlite)
     handler.setLevel(logging.INFO)
@@ -158,7 +156,7 @@ def log_message(logger: logging.Logger, message: bytes):
     logger.info("%s", rpc.body, extra=rpc.headers)
 
 
-def start_recording(args, extra: List[str]):
+def start_recording(args, extra: list[str]):
     logger = logging.getLogger("lsp_devtools")
 
     rpc_logger = logging.getLogger(__name__)

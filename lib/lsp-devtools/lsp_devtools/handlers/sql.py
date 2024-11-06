@@ -1,16 +1,11 @@
 import json
 import pathlib
 import sqlite3
-import sys
 from contextlib import closing
+from importlib import resources
 
 from lsp_devtools.handlers import LspHandler
 from lsp_devtools.handlers import LspMessage
-
-if sys.version_info < (3, 9):
-    import importlib_resources as resources
-else:
-    from importlib import resources  # type: ignore[no-redef]
 
 
 class SqlHandler(LspHandler):

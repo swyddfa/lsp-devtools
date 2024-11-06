@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import subprocess
 import sys
-from typing import List
 
 from .agent import Agent
 from .agent import RPCMessage
@@ -31,7 +32,7 @@ async def forward_stderr(server: asyncio.subprocess.Process):
         sys.stderr.buffer.write(line)
 
 
-async def main(args, extra: List[str]):
+async def main(args, extra: list[str]):
     if extra is None:
         print("Missing server start command", file=sys.stderr)
         return 1
@@ -54,7 +55,7 @@ async def main(args, extra: List[str]):
     )
 
 
-def run_agent(args, extra: List[str]):
+def run_agent(args, extra: list[str]):
     asyncio.run(main(args, extra))
 
 

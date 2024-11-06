@@ -12,8 +12,6 @@ from lsp_devtools.agent.protocol import AgentProtocol
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import List
-    from typing import Optional
 
 # from websockets.client import WebSocketClientProtocol
 
@@ -45,14 +43,14 @@ class AgentClient(JsonRPCClient):
             protocol_cls=AgentProtocol, converter_factory=default_converter
         )
         self.connected = False
-        self._buffer: List[bytes] = []
+        self._buffer: list[bytes] = []
 
     def _report_server_error(self, error, source):
         # Bail on error
         # TODO: Report the actual error somehow
         self._stop_event.set()
 
-    def feature(self, feature_name: str, options: Optional[Any] = None):
+    def feature(self, feature_name: str, options: Any | None = None):
         return self.protocol.fm.feature(feature_name, options)
 
     # TODO: Upstream this... or at least something equivalent.

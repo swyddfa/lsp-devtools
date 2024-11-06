@@ -1,7 +1,5 @@
 import itertools
 import logging
-from typing import List
-from typing import Tuple
 
 import pytest
 
@@ -91,7 +89,7 @@ def test_filter_message_source(filter_source: str, message_source: str, expected
         ),
     ],
 )
-def test_filter_included_message_types(message: dict, setup: Tuple[List[str], bool]):
+def test_filter_included_message_types(message: dict, setup: tuple[list[str], bool]):
     """Ensure that we can filter messages by listing the types we DO want to see."""
 
     message_types, expected = setup
@@ -164,7 +162,7 @@ def test_filter_included_message_types(message: dict, setup: Tuple[List[str], bo
         ),
     ],
 )
-def test_filter_excluded_message_types(message: dict, setup: Tuple[List[str], bool]):
+def test_filter_excluded_message_types(message: dict, setup: tuple[list[str], bool]):
     """Ensure that we can filter messages by listing the types we DO NOT want to see."""
 
     message_types, expected = setup
@@ -202,7 +200,7 @@ def test_filter_excluded_message_types(message: dict, setup: Tuple[List[str], bo
         ),
     ],
 )
-def test_filter_included_method(message: dict, setup: Tuple[List[str], bool]):
+def test_filter_included_method(message: dict, setup: tuple[list[str], bool]):
     """Ensure that we can filter messages by listing the methods we wish to see."""
 
     methods, expected = setup
@@ -247,7 +245,7 @@ def test_filter_included_method(message: dict, setup: Tuple[List[str], bool]):
     ],
 )
 def test_filter_included_method_response_message(
-    response: dict, setup: Tuple[List[str], str, bool]
+    response: dict, setup: tuple[list[str], str, bool]
 ):
     """Ensure that we can filter response message by listing the methods we wish
     to see."""
@@ -292,7 +290,7 @@ def test_filter_included_method_response_message(
         ),
     ],
 )
-def test_filter_excluded_method(message: dict, setup: Tuple[List[str], bool]):
+def test_filter_excluded_method(message: dict, setup: tuple[list[str], bool]):
     """Ensure that we can filter messages by listing the methods we don't wish to
     see."""
 
@@ -338,7 +336,7 @@ def test_filter_excluded_method(message: dict, setup: Tuple[List[str], bool]):
     ],
 )
 def test_filter_excluded_method_response_message(
-    response: dict, setup: Tuple[List[str], str, bool]
+    response: dict, setup: tuple[list[str], str, bool]
 ):
     """Ensure that we can filter response message by listing the methods we dont' wish
     to see."""

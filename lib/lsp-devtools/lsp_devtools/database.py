@@ -2,24 +2,16 @@ import asyncio
 import json
 import logging
 import pathlib
-import sys
 from contextlib import asynccontextmanager
+from importlib import resources
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Set
 
 import aiosqlite
 from textual.app import App
 from textual.message import Message
 
 from lsp_devtools.handlers import LspMessage
-
-if sys.version_info < (3, 9):
-    import importlib_resources as resources
-else:
-    from importlib import resources  # type: ignore[no-redef]
 
 
 class Database:
@@ -32,7 +24,7 @@ class Database:
         self.dbpath = dbpath or ":memory:"
         self.db: Optional[aiosqlite.Connection] = None
         self.app: Optional[App] = None
-        self._handlers: Dict[str, set] = {}
+        self._handlers: dict[str, set] = {}
 
     async def close(self):
         if self.db:
@@ -106,8 +98,8 @@ class Database:
         """
 
         base_query = "SELECT rowid, * FROM protocol"
-        where: List[str] = []
-        parameters: List[Any] = []
+        where: list[str] = []
+        parameters: list[Any] = []
 
         if session:
             where.append("session = ?")
@@ -151,7 +143,7 @@ class DatabaseLogHandler(logging.Handler):
     def __init__(self, db: Database, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.db = db
-        self._tasks: Set[asyncio.Task] = set()
+        self._tasks: set[asyncio.Task] = set()
 
     def emit(self, record: logging.LogRecord):
         body = json.loads(record.args[0])  # type: ignore

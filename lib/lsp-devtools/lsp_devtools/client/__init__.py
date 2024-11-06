@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import argparse
 import asyncio
 import logging
 import os
 import pathlib
-from typing import List
 from uuid import uuid4
 
 import platformdirs
@@ -54,7 +55,7 @@ class LSPClient(App):
     ]
 
     def __init__(
-        self, db: Database, server_command: List[str], session: str, *args, **kwargs
+        self, db: Database, server_command: list[str], session: str, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
@@ -65,7 +66,7 @@ class LSPClient(App):
         self.server_command = server_command
         self.lsp_client = LanguageClient()
 
-        self._async_tasks: List[asyncio.Task] = []
+        self._async_tasks: list[asyncio.Task] = []
 
     def compose(self) -> ComposeResult:
         message_viewer = MessageViewer("")
@@ -140,7 +141,7 @@ class LSPClient(App):
         await super().action_quit()
 
 
-def client(args, extra: List[str]):
+def client(args, extra: list[str]):
     if len(extra) == 0:
         raise ValueError("Missing server command.")
 
