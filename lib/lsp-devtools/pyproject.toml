@@ -7,7 +7,7 @@ name = "lsp-devtools"
 dynamic = ["version"]
 description = "Developer tooling for language servers"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
@@ -16,7 +16,6 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -24,12 +23,10 @@ classifiers = [
 ]
 dependencies = [
   "aiosqlite",
-  "importlib-resources; python_version<\"3.9\"",
   "platformdirs",
-  "pygls>=1.1.0",
+  "pygls>=1.1.0,<2",
   "stamina",
   "textual>=0.41.0",
-  "typing-extensions; python_version<\"3.8\"",
 ]
 
 [project.urls]
