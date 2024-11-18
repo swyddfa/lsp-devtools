@@ -21,6 +21,8 @@ if typing.TYPE_CHECKING:
     from typing import Callable
     from typing import Union
 
+    from pygls.io_ import AsyncReader
+
     MessageHandler = Callable[[bytes], Union[None, Coroutine[Any, Any, None]]]
 
 UTC = timezone.utc
@@ -74,7 +76,7 @@ def parse_rpc_message(data: bytes) -> RPCMessage:
     return RPCMessage(headers, body)
 
 
-async def aio_readline(reader: asyncio.StreamReader, message_handler: MessageHandler):
+async def aio_readline(reader: AsyncReader, message_handler: MessageHandler):
     CONTENT_LENGTH_PATTERN = re.compile(rb"^Content-Length: (\d+)\r\n$")
 
     # Initialize message buffer
@@ -222,12 +224,10 @@ class Agent:
             except TimeoutError:
                 self.server.kill()
 
-        args = {}
-        args["msg"] = "lsp-devtools agent is stopping."
-
         # Cancel the tasks connecting client to server
         for task in self._tasks:
-            task.cancel(**args)
+            logger.debug("cancelling: %s", task)
+            task.cancel(msg="lsp-devtools agent is stopping.")
 
         if self.writer:
             self.writer.close()

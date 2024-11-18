@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import traceback
 import typing
 
 from pygls.protocol import default_converter
-from pygls.server import Server
+from pygls.server import JsonRPCServer
 
 from lsp_devtools.agent.agent import aio_readline
 from lsp_devtools.agent.protocol import AgentProtocol
@@ -18,7 +19,7 @@ if typing.TYPE_CHECKING:
     from lsp_devtools.agent.agent import MessageHandler
 
 
-class AgentServer(Server):
+class AgentServer(JsonRPCServer):
     """A pygls server that accepts connections from agents allowing them to send their
     collected messages."""
 
@@ -40,25 +41,33 @@ class AgentServer(Server):
         super().__init__(*args, **kwargs)
 
         self.logger = logger or logging.getLogger(__name__)
-        self.handler = handler or self.lsp.data_received
+        self.handler = handler or self._default_handler
         self.db: Database | None = None
 
         self._client_buffer: list[str] = []
         self._server_buffer: list[str] = []
         self._tcp_server: asyncio.Task | None = None
 
-    def _report_server_error(self, exc: Exception, source):
+    def _default_handler(self, data: bytes):
+        message = self.protocol.structure_message(json.loads(data))
+        self.protocol.handle_message(message)
+
+    def _report_server_error(self, error: Exception, source):
         """Report internal server errors."""
-        tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
-        self.logger.error("%s: %s", type(exc).__name__, exc)
+        tb = "".join(
+            traceback.format_exception(type(error), error, error.__traceback__)
+        )
+        self.logger.error("%s: %s", type(error).__name__, error)
         self.logger.debug("%s", tb)
 
     def feature(self, feature_name: str, options: Any | None = None):
         return self.lsp.fm.feature(feature_name, options)
 
     async def start_tcp(self, host: str, port: int) -> None:  # type: ignore[override]
-        async def handle_client(reader, writer):
-            self.lsp.connection_made(writer)
+        async def handle_client(
+            reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+        ):
+            self.protocol.set_writer(writer)
 
             try:
                 await aio_readline(reader, self.handler)
