@@ -23,6 +23,7 @@ from .checks import LspSpecificationWarning
 from .protocol import LanguageClientProtocol
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Sequence
     from typing import Any
 
 
@@ -53,7 +54,7 @@ class LanguageClient(BaseLanguageClient):
         self.log_messages: list[types.LogMessageParams] = []
         """Holds any received ``window/logMessage`` requests."""
 
-        self.diagnostics: dict[str, list[types.Diagnostic]] = {}
+        self.diagnostics: dict[str, Sequence[types.Diagnostic]] = {}
         """Holds any recieved diagnostics."""
 
         self.progress_reports: dict[
@@ -108,7 +109,7 @@ class LanguageClient(BaseLanguageClient):
                 logger.debug("Cancelled pending request '%s': %s", id_, reason)
 
     def report_server_error(
-        self, error: Exception, source: PyglsError | JsonRpcException
+        self, error: Exception, source: type[PyglsError | JsonRpcException]
     ):
         """Called when the server does something unexpected, e.g. sending malformed
         JSON."""
