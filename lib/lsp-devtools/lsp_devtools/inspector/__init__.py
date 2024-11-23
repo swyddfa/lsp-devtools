@@ -147,7 +147,6 @@ class LSPInspector(App):
     BINDINGS = [
         ("ctrl+b", "toggle_sidebar", "Sidebar"),
         ("ctrl+c", "quit", "Quit"),
-        ("ctrl+s", "screenshot", "Take Screenshot"),
     ]
 
     def __init__(self, db: Database, server: AgentServer, *args, **kwargs):
@@ -168,10 +167,6 @@ class LSPInspector(App):
         messages = MessagesTable(self.db, viewer)
         yield Container(ScrollableContainer(messages), Sidebar(viewer))
         yield Footer()
-
-    def action_screenshot(self):
-        self.bell()
-        self.save_screenshot(None, "./")
 
     def action_toggle_sidebar(self) -> None:
         sidebar = self.query_one(Sidebar)
