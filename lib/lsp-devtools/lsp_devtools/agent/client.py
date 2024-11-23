@@ -25,6 +25,7 @@ class AgentClient(JsonRPCClient):
         )
         self.connected = False
         self._buffer: list[bytes] = []
+        self._tasks: set[asyncio.Task[Any]] = set()
 
     def _report_server_error(self, error, source):
         # Bail on error
@@ -61,8 +62,12 @@ class AgentClient(JsonRPCClient):
         while len(self._buffer) > 0:
             res = self.protocol.writer.write(self._buffer.pop(0))
             if inspect.isawaitable(res):
-                asyncio.ensure_future(res)
+                task = asyncio.ensure_future(res)
+                task.add_done_callback(self._tasks.discard)
+                self._tasks.add(task)
 
         res = self.protocol.writer.write(message)
         if inspect.isawaitable(res):
-            asyncio.ensure_future(res)
+            task = asyncio.ensure_future(res)
+            task.add_done_callback(self._tasks.discard)
+            self._tasks.add(task)
