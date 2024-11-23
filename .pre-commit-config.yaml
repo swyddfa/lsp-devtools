@@ -20,7 +20,7 @@ repos:
     files: 'lib/.*\.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.11.2'
+  rev: 'v1.13.0'
   hooks:
   - id: mypy
     name: mypy (pytest-lsp)
@@ -28,7 +28,7 @@ repos:
     additional_dependencies:
     - importlib-resources
     - platformdirs
-    - pygls
+    - 'pygls>=2.0a2'
     - pytest
     - pytest-asyncio
     - websockets
@@ -42,7 +42,7 @@ repos:
     - attrs
     - importlib-resources
     - platformdirs
-    - pygls
+    - 'pygls>=2.0a2'
     - stamina
     - textual
     - websockets
