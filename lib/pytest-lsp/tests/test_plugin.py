@@ -1,13 +1,16 @@
+from __future__ import annotations
+
 import pathlib
 import sys
-from typing import Any
-from typing import Dict
-from typing import List
+import typing
 
 import pygls.uris as uri
 import pytest
 
 from pytest_lsp.plugin import ClientServerConfig
+
+if typing.TYPE_CHECKING:
+    from typing import Any
 
 
 @pytest.mark.parametrize(
@@ -59,7 +62,7 @@ from pytest_lsp.plugin import ClientServerConfig
     ],
 )
 def test_get_server_command(
-    config: ClientServerConfig, kwargs: Dict[str, Any], expected: List[str]
+    config: ClientServerConfig, kwargs: dict[str, Any], expected: list[str]
 ):
     """Ensure that we can build the server start command correctly."""
     actual = config.get_server_command(**kwargs)

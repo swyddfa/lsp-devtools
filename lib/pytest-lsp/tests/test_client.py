@@ -1,16 +1,19 @@
+from __future__ import annotations
+
 import itertools
 import json
 import pathlib
 import sys
-from typing import Any
-from typing import Dict
-from typing import Optional
+import typing
 
 import pygls.uris as uri
 import pytest
 
 import pytest_lsp
 from pytest_lsp import LanguageClient
+
+if typing.TYPE_CHECKING:
+    from typing import Any
 
 
 @pytest.mark.parametrize(
@@ -156,7 +159,7 @@ async def test_capabilities(client):
     ],
 )
 def test_get_configuration(
-    config: Dict[str, Any], section: Optional[str], scope: Optional[str], expected: Any
+    config: dict[str, Any], section: str | None, scope: str | None, expected: Any
 ):
     """Ensure that we can get a client's configuration correctly.
 
@@ -199,7 +202,7 @@ def test_get_configuration(
     ],
 )
 def test_set_configuration(
-    item: Any, section: Optional[str], scope: Optional[str], expected: Dict[str, Any]
+    item: Any, section: str | None, scope: str | None, expected: dict[str, Any]
 ):
     """Ensure that we can set the client's configuration correctly.
 
