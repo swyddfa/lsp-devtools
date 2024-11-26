@@ -24,4 +24,4 @@ The minimum required version for ``pytest-asyncio`` is now ``0.24``, see `this g
 ---------
 
 ``pygls``, the underlying language server protocol implementation used by ``pytest-lsp`` has been upgraded to ``v2``.
-See `this guide <https://pygls.readthedocs.io/en/latest/howto/migrate-to-v2.html>`__ for details on the breaking changes this brings.
+See `this guide <https://pygls.readthedocs.io/en/latest/pygls/howto/migrate-to-v2.html>`__ for details on the breaking changes this brings.
