@@ -28,8 +28,12 @@ if typing.TYPE_CHECKING:
             ["neovim_v0.6.1.json"],
         ),
         *itertools.product(
-            ["neovim", "neovim@latest", "neovim@v0", "neovim@v0.10", "neovim@v0.10.0"],
+            ["neovim@v0.10", "neovim@v0.10.0"],
             ["neovim_v0.10.0.json"],
+        ),
+        *itertools.product(
+            ["neovim", "neovim@latest", "neovim@v0", "neovim@v0.11", "neovim@v0.11.0"],
+            ["neovim_v0.11.0.json"],
         ),
     ],
 )
