@@ -18,7 +18,7 @@ async def client(lsp_client: LanguageClient):
     # Setup
     await lsp_client.initialize_session(
         InitializeParams(
-            capabilities=client_capabilities("neovim"),
+            capabilities=client_capabilities("neovim@0.10"),
         ),
     )
 
