@@ -16,7 +16,7 @@ from lsprotocol.converters import get_converter
 from packaging.version import parse as parse_version
 from pygls.exceptions import JsonRpcException
 from pygls.exceptions import PyglsError
-from pygls.lsp.client import BaseLanguageClient
+from pygls.lsp.client import LanguageClient as BaseLanguageClient
 from pygls.protocol import default_converter
 
 from .checks import LspSpecificationWarning
@@ -29,6 +29,7 @@ if typing.TYPE_CHECKING:
 
 __version__ = "1.0.0b2"
 logger = logging.getLogger(__name__)
+DEFAULT_CLIENT_FEATURES: dict[str, Any] = {}
 
 
 class LanguageClient(BaseLanguageClient):
@@ -287,6 +288,29 @@ def cancel_all_tasks(message: str):
         task.cancel(message)
 
 
+def default_feature(method: str):
+    """Decorator to mark a function as a default implementation of an LSP feature."""
+
+    def register(f):
+        DEFAULT_CLIENT_FEATURES[method] = f
+        return f
+
+    return register
+
+
+def register_lsp_features(
+    client: LanguageClient, features: dict[str, Any] | None = None
+):
+    """Register the given lsp feature implementations with the given client instance.
+
+    If no features are given, then the default map will be used.
+    """
+    features = features or DEFAULT_CLIENT_FEATURES
+
+    for method, func in features.items():
+        client.feature(method)(func)
+
+
 def make_test_lsp_client() -> LanguageClient:
     """Construct a new test client instance with the handlers needed to capture
     additional responses from the server."""
@@ -294,78 +318,83 @@ def make_test_lsp_client() -> LanguageClient:
     client = LanguageClient(
         converter_factory=default_converter,
     )
-
-    @client.feature(types.WORKSPACE_CONFIGURATION)
-    def configuration(client: LanguageClient, params: types.ConfigurationParams):
-        return [
-            client.get_configuration(section=item.section, scope_uri=item.scope_uri)
-            for item in params.items
-        ]
-
-    @client.feature(types.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
-    def publish_diagnostics(
-        client: LanguageClient, params: types.PublishDiagnosticsParams
-    ):
-        client.diagnostics[params.uri] = params.diagnostics
-
-    @client.feature(types.WINDOW_WORK_DONE_PROGRESS_CREATE)
-    def create_work_done_progress(
-        client: LanguageClient, params: types.WorkDoneProgressCreateParams
-    ):
-        if params.token in client.progress_reports:
-            # TODO: Send an error reponse to the client - might require changes
-            #       to pygls...
-            warnings.warn(
-                f"Duplicate progress token: {params.token!r}",
-                LspSpecificationWarning,
-                stacklevel=2,
-            )
-
-        client.progress_reports.setdefault(params.token, [])
-
-    @client.feature(types.PROGRESS)
-    def progress(client: LanguageClient, params: types.ProgressParams):
-        if params.token not in client.progress_reports:
-            warnings.warn(
-                f"Unknown progress token: {params.token!r}",
-                LspSpecificationWarning,
-                stacklevel=2,
-            )
-
-        if not params.value:
-            return
-
-        if (kind := params.value.get("kind", None)) == "begin":
-            type_: type[Any] = types.WorkDoneProgressBegin
-        elif kind == "report":
-            type_ = types.WorkDoneProgressReport
-        elif kind == "end":
-            type_ = types.WorkDoneProgressEnd
-        else:
-            raise TypeError(f"Unknown progress kind: {kind!r}")
-
-        value = client.protocol._converter.structure(params.value, type_)
-        client.progress_reports.setdefault(params.token, []).append(value)
-
-    @client.feature(types.WINDOW_LOG_MESSAGE)
-    def log_message(client: LanguageClient, params: types.LogMessageParams):
-        client.log_messages.append(params)
-
-        levels = [logger.error, logger.warning, logger.info, logger.debug]
-        levels[params.type.value - 1](params.message)
-
-    @client.feature(types.WINDOW_SHOW_MESSAGE)
-    def show_message(client: LanguageClient, params):
-        client.messages.append(params)
-
-    @client.feature(types.WINDOW_SHOW_DOCUMENT)
-    def show_document(
-        client: LanguageClient, params: types.ShowDocumentParams
-    ) -> types.ShowDocumentResult:
-        client.shown_documents.append(params)
-        return types.ShowDocumentResult(success=True)
-
+    register_lsp_features(client)
     return client
+
+
+@default_feature(types.WORKSPACE_CONFIGURATION)
+def configuration(client: LanguageClient, params: types.ConfigurationParams):
+    return [
+        client.get_configuration(section=item.section, scope_uri=item.scope_uri)
+        for item in params.items
+    ]
+
+
+@default_feature(types.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
+def publish_diagnostics(client: LanguageClient, params: types.PublishDiagnosticsParams):
+    client.diagnostics[params.uri] = params.diagnostics
+
+
+@default_feature(types.WINDOW_WORK_DONE_PROGRESS_CREATE)
+def create_work_done_progress(
+    client: LanguageClient, params: types.WorkDoneProgressCreateParams
+):
+    if params.token in client.progress_reports:
+        # TODO: Send an error reponse to the client - might require changes
+        #       to pygls...
+        warnings.warn(
+            f"Duplicate progress token: {params.token!r}",
+            LspSpecificationWarning,
+            stacklevel=2,
+        )
+
+    client.progress_reports.setdefault(params.token, [])
+
+
+@default_feature(types.PROGRESS)
+def progress(client: LanguageClient, params: types.ProgressParams):
+    if params.token not in client.progress_reports:
+        warnings.warn(
+            f"Unknown progress token: {params.token!r}",
+            LspSpecificationWarning,
+            stacklevel=2,
+        )
+
+    if not params.value:
+        return
+
+    if (kind := params.value.get("kind", None)) == "begin":
+        type_: type[Any] = types.WorkDoneProgressBegin
+    elif kind == "report":
+        type_ = types.WorkDoneProgressReport
+    elif kind == "end":
+        type_ = types.WorkDoneProgressEnd
+    else:
+        raise TypeError(f"Unknown progress kind: {kind!r}")
+
+    value = client.protocol._converter.structure(params.value, type_)
+    client.progress_reports.setdefault(params.token, []).append(value)
+
+
+@default_feature(types.WINDOW_LOG_MESSAGE)
+def log_message(client: LanguageClient, params: types.LogMessageParams):
+    client.log_messages.append(params)
+
+    levels = [logger.error, logger.warning, logger.info, logger.debug]
+    levels[params.type.value - 1](params.message)
+
+
+@default_feature(types.WINDOW_SHOW_MESSAGE)
+def show_message(client: LanguageClient, params):
+    client.messages.append(params)
+
+
+@default_feature(types.WINDOW_SHOW_DOCUMENT)
+def show_document(
+    client: LanguageClient, params: types.ShowDocumentParams
+) -> types.ShowDocumentResult:
+    client.shown_documents.append(params)
+    return types.ShowDocumentResult(success=True)
 
 
 def client_capabilities(client_spec: str) -> types.ClientCapabilities:
