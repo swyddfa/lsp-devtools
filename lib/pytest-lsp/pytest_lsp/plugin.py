@@ -12,6 +12,7 @@ import pytest_asyncio
 from pygls.client import JsonRPCClient
 
 from pytest_lsp.client import LanguageClient
+from pytest_lsp.client import captured_exception_key
 from pytest_lsp.client import make_test_lsp_client
 
 if typing.TYPE_CHECKING:
@@ -97,6 +98,29 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_call(item: pytest.Item):
+    """Called to run the test defined by ``item``."""
+
+    client: LanguageClient | None = None
+
+    if not hasattr(item, "funcargs"):
+        return
+
+    for arg in item.funcargs.values():
+        if isinstance(arg, LanguageClient):
+            client = arg
+            break
+
+    if client is not None:
+        client._pytest_item = item
+
+    yield
+
+    if client is not None:
+        client._pytest_item = None
+
+
 def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
     """Add any captured log messages to the report."""
     client: LanguageClient | None = None
@@ -113,6 +137,14 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
         return
 
     levels = ["ERROR: ", " WARN: ", " INFO: ", "  LOG: "]
+
+    # Surface any errors that occurred 'outside' the user's test fn
+    if (
+        call.excinfo is None
+        and (excinfo := item.stash.get(captured_exception_key, None)) is not None
+    ):
+        call.excinfo = excinfo
+        item.stash[captured_exception_key] = None
 
     if call.when == "setup":
         captured_messages = client.log_messages[: client._setup_log_index + 1]
