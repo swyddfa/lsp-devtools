@@ -25,6 +25,9 @@ asyncio_default_fixture_loop_scope = function
 @pytest.mark.parametrize(
     "name, expected",
     [
+        pytest.param(
+            "add-client-method", dict(passed=1, warnings=0), id="add-client-method"
+        ),
         pytest.param("diagnostics", dict(passed=1, warnings=0), id="diagnostics"),
         pytest.param(
             "getting-started", dict(passed=1, warnings=0), id="getting-started"
@@ -172,3 +175,16 @@ def test_window_log_message_fail(pytester: pytest.Pytester):
     results.stdout.fnmatch_lines(" *LOG: Suggesting item 7")
     results.stdout.fnmatch_lines(" *LOG: Suggesting item 8")
     results.stdout.fnmatch_lines(" *LOG: Suggesting item 9")
+
+
+def test_replace_client_method_fail(pytester: pytest.Pytester):
+    """Ensure that the initial replace client method example fails as expected."""
+
+    setup_test(pytester, "replace-client-method")
+
+    results = pytester.runpytest()
+    results.assert_outcomes(failed=1)
+
+    results.stdout.fnmatch_lines(
+        " *RuntimeError: The server should not use `textDocument/publishDiagnostics`"
+    )
