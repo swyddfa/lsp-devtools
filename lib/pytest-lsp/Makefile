@@ -1,20 +1,9 @@
-PY ?= 310
-COMMAND ?=
+.PHONY: clean-env
+clean-env: | $(HATCH)
+	for venv in $$($(HATCH) env show -i --json | jq -r 'keys | join(" ")') ; do $(HATCH) env remove "$${venv}" ; done
 
-ifdef COMMAND
-CMD = --command $(COMMAND)
-endif
+.PHONY: test
+test: | $(HATCH)
+	$(HATCH) test
 
-.PHONY: develop test repl
-
-
-repl: CMD = --command python
-repl: develop
-
-
-test: CMD = --command pytest $(ARGS)
-test: develop
-
-
-develop:
-	nix develop .#py$(PY) $(CMD)
+include ../../.devcontainer/tools.mk
