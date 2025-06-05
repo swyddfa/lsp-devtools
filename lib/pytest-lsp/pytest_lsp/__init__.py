@@ -6,6 +6,7 @@ from .client import make_test_lsp_client
 from .plugin import ClientServerConfig
 from .plugin import fixture
 from .plugin import pytest_addoption
+from .plugin import pytest_runtest_call
 from .plugin import pytest_runtest_makereport
 from .protocol import LanguageClientProtocol
 
@@ -19,5 +20,6 @@ __all__ = [
     "fixture",
     "make_test_lsp_client",
     "pytest_addoption",
+    "pytest_runtest_call",
     "pytest_runtest_makereport",
 ]
