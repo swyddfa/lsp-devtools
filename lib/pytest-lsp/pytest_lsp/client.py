@@ -30,7 +30,9 @@ if typing.TYPE_CHECKING:
 
 __version__ = "1.0.0b2"
 logger = logging.getLogger(__name__)
+
 DEFAULT_CLIENT_FEATURES: dict[str, Any] = {}
+"""The default implementation of LSP methods provided by the client."""
 
 SAFE_ERRORS = {
     error_types.FeatureRequestError,

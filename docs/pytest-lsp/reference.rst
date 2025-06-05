@@ -10,6 +10,9 @@ LanguageClient
    :members:
    :show-inheritance:
 
+.. autofunction:: pytest_lsp.client.register_lsp_features
+
+.. autodata:: pytest_lsp.client.DEFAULT_CLIENT_FEATURES
 
 Test Setup
 ----------

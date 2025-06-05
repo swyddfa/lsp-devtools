@@ -255,7 +255,7 @@ async def test_capabilities(client):
     setup_test(pytester, "invalid_json.py", test_code)
     results = pytester.runpytest("-vv")
 
-    results.assert_outcomes(failed=1)
+    results.assert_outcomes(failed=1, errors=1)
 
     message = "E*json.decoder.JSONDecodeError: *"
     results.stdout.fnmatch_lines(message)
