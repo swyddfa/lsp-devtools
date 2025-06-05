@@ -9,13 +9,14 @@ import sys
 import traceback
 import typing
 import warnings
-from importlib import resources  # type: ignore[no-redef]
+from importlib import resources
+from typing import Optional
 
+import pygls.exceptions as error_types
+import pytest
 from lsprotocol import types
 from lsprotocol.converters import get_converter
 from packaging.version import parse as parse_version
-from pygls.exceptions import JsonRpcException
-from pygls.exceptions import PyglsError
 from pygls.lsp.client import LanguageClient as BaseLanguageClient
 from pygls.protocol import default_converter
 
@@ -30,6 +31,12 @@ if typing.TYPE_CHECKING:
 __version__ = "1.0.0b2"
 logger = logging.getLogger(__name__)
 DEFAULT_CLIENT_FEATURES: dict[str, Any] = {}
+
+SAFE_ERRORS = {
+    error_types.FeatureRequestError,
+    error_types.FeatureNotificationError,
+}
+captured_exception_key = pytest.StashKey[Optional[pytest.ExceptionInfo]]()
 
 
 class LanguageClient(BaseLanguageClient):
@@ -73,6 +80,9 @@ class LanguageClient(BaseLanguageClient):
         self._configuration: dict[str, dict[str, Any]] = config
         """Holds ``workspace/configuration`` values."""
 
+        self._pytest_item: pytest.Item | None = None
+        """Indicates the current pytest item (if any)."""
+
         self._setup_log_index = 0
         """Used to keep track of which log messages occurred during startup."""
 
@@ -110,13 +120,29 @@ class LanguageClient(BaseLanguageClient):
                 logger.debug("Cancelled pending request '%s': %s", id_, reason)
 
     def report_server_error(
-        self, error: Exception, source: type[PyglsError | JsonRpcException]
+        self,
+        error: Exception,
+        source: type[error_types.PyglsError | error_types.JsonRpcException],
     ):
         """Called when the server does something unexpected, e.g. sending malformed
         JSON."""
-        self.error = error
-        tb = "".join(traceback.format_exc())
 
+        excinfo = sys.exc_info()
+        if self._pytest_item is not None and excinfo[0] is not None:
+            # We cannot use `error` as pygls currently loses the traceback information
+            # during its error handling somehow.
+            self._pytest_item.stash[captured_exception_key] = (
+                pytest.ExceptionInfo.from_exc_info(excinfo)
+            )
+
+        # Only need to cancel everything if we have encountered a fatal error.
+        if source in SAFE_ERRORS:
+            return
+
+        # Used by shutdown_session to detect a fatal error - can this be better?
+        self.error = error
+
+        tb = "".join(traceback.format_exc())
         message = f"{source.__name__}: {error}\n{tb}"  # type: ignore
         for id_, fut in self.protocol._request_futures.items():
             if not fut.done():
