@@ -18,7 +18,7 @@ This release removes support for pytest ``v7``, if you have not done so already 
 ``pytest-asyncio``
 ------------------
 
-The minimum required version for ``pytest-asyncio`` is now ``0.24``, see `this guide <https://pytest-asyncio.readthedocs.io/en/latest/how-to-guides/migrate_from_0_23.html>`__ for details on upgrading
+The minimum required version for ``pytest-asyncio`` is now ``v1.0``, see `this guide <https://pytest-asyncio.readthedocs.io/en/stable/how-to-guides/migrate_from_0_23.html>`__ and `the changelog <https://pytest-asyncio.readthedocs.io/en/stable/reference/changelog.html#>`__ for details on upgrading
 
 ``pygls``
 ---------
