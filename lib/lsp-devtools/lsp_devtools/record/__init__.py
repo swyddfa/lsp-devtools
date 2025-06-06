@@ -202,6 +202,26 @@ def start_recording(args, extra: list[str]):
             exporter(str(destination), **kwargs)
 
 
+def demo(args, extra: list[str]):
+    logger = logging.getLogger("lsp_devtools")
+
+    def handler(data: bytes, source):
+        print(f"{source}: {data.decode('utf8')!r}")
+
+    server = AgentServer(logger=logger, handler=handler)
+
+    try:
+        host = args.host
+        port = args.port
+
+        print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
+        asyncio.run(server.start_tcp(host, port))
+    except asyncio.CancelledError:
+        pass
+    except KeyboardInterrupt:
+        server.stop()
+
+
 def setup_filter_args(cmd: argparse.ArgumentParser):
     """Add arguments that can be used to filter messages."""
 
@@ -338,4 +358,4 @@ default) and push messages to it and have them be recorded.
         ),
     )
 
-    cmd.set_defaults(run=start_recording)
+    cmd.set_defaults(run=demo)

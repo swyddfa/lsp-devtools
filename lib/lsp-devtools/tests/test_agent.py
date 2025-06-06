@@ -1,9 +1,13 @@
+from __future__ import annotations
+
 import asyncio
+import io
 import json
 import os
 import pathlib
 import subprocess
 import sys
+from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
@@ -34,9 +38,6 @@ async def test_agent_exits():
     """Ensure that when the client closes down the lsp session and the server process
     exits, the agent does also."""
 
-    (stdin_read, stdin_write) = os.pipe()
-    (stdout_read, stdout_write) = os.pipe()
-
     server = await asyncio.create_subprocess_exec(
         sys.executable,
         str(SERVER_DIR / "simple.py"),
@@ -45,28 +46,19 @@ async def test_agent_exits():
         stderr=subprocess.PIPE,
     )
 
-    agent = Agent(
-        server,
-        os.fdopen(stdin_read, mode="rb"),
-        os.fdopen(stdout_write, mode="wb"),
-        echo_handler,
-    )
-
-    os.write(
-        stdin_write,
+    messages = [
         format_message(
             dict(jsonrpc="2.0", id=1, method="initialize", params=dict(capabilities={}))
         ),
-    )
-
-    os.write(
-        stdin_write,
         format_message(dict(jsonrpc="2.0", id=2, method="shutdown", params=None)),
-    )
-
-    os.write(
-        stdin_write,
         format_message(dict(jsonrpc="2.0", method="exit", params=None)),
+    ]
+
+    agent = Agent(
+        server,
+        io.BytesIO(b"".join(messages)),
+        io.BytesIO(),
+        echo_handler,
     )
 
     try:
