@@ -1,32 +1,53 @@
 from __future__ import annotations
 
 import asyncio
+import enum
 import inspect
 import json
 import logging
-import re
+import struct
 import sys
 import typing
 from datetime import datetime
 from datetime import timezone
-from functools import partial
 from uuid import uuid4
 
 import attrs
 
+from .io_ import AsyncStreamWriter
+from .io_ import StdinAsyncReader
+from .io_ import StdoutAsyncWriter
+
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
+    from concurrent.futures import ThreadPoolExecutor
     from typing import Any
     from typing import BinaryIO
     from typing import Callable
     from typing import Union
 
-    from pygls.io_ import AsyncReader
+    from .io_ import AsyncReader
+    from .io_ import AsyncWriter
 
-    MessageHandler = Callable[[bytes], Union[None, Coroutine[Any, Any, None]]]
+    DataHandler = Callable[[bytes], Union[None, Coroutine[Any, Any, None]]]
+
 
 UTC = timezone.utc
 logger = logging.getLogger("lsp_devtools.agent")
+MessageHeader = struct.Struct("!BI")
+
+
+class MessageSource(enum.IntEnum):
+    """Indicates if a message came from the client or the server."""
+
+    Agent = enum.auto()
+    """Messages coming from the agent itself"""
+
+    Client = enum.auto()
+    """Messages coming from the language client"""
+
+    Server = enum.auto()
+    """Messages coming from the langiage server"""
 
 
 @attrs.define
@@ -73,126 +94,10 @@ def parse_rpc_message(data: bytes) -> RPCMessage:
     if body is None:
         raise ValueError("Missing message body")
 
-    return RPCMessage(headers, body)
-
-
-async def aio_readline(reader: AsyncReader, message_handler: MessageHandler):
-    CONTENT_LENGTH_PATTERN = re.compile(rb"^Content-Length: (\d+)\r\n$")
-
-    # Initialize message buffer
-    message = []
-    content_length = 0
-
-    while True:
-        # Read a header line
-        header = await reader.readline()
-        if not header:
-            break
-        message.append(header)
-
-        # Extract content length if possible
-        if not content_length:
-            match = CONTENT_LENGTH_PATTERN.fullmatch(header)
-            if match:
-                content_length = int(match.group(1))
-
-        # Check if all headers have been read (as indicated by an empty line \r\n)
-        if content_length and not header.strip():
-            # Read body
-            body = await reader.readexactly(content_length)
-            if not body:
-                break
-            message.append(body)
-
-            # Pass message to protocol, optionally async
-            result = message_handler(b"".join(message))
-            if inspect.isawaitable(result):
-                await result
-
-            # Reset the buffer
-            message = []
-            content_length = 0
-
-
-async def get_streams(
-    stdin, stdout
-) -> tuple[asyncio.StreamReader, asyncio.StreamWriter]:
-    """Convert blocking stdin/stdout streams into async streams."""
-    loop = asyncio.get_running_loop()
-
-    reader = asyncio.StreamReader()
-    read_protocol = asyncio.StreamReaderProtocol(reader)
-    await loop.connect_read_pipe(lambda: read_protocol, stdin)
-
-    write_transport, write_protocol = await loop.connect_write_pipe(
-        asyncio.streams.FlowControlMixin, stdout
-    )
-    writer = asyncio.StreamWriter(write_transport, write_protocol, reader, loop)
-    return reader, writer
-
-
-class Agent:
-    """The Agent sits between a language server and its client, listening to messages
-    enabling them to be recorded."""
-
-    def __init__(
-        self,
-        server: asyncio.subprocess.Process,
-        stdin: BinaryIO,
-        stdout: BinaryIO,
-        handler: MessageHandler,
-    ):
-        self.stdin = stdin
-        self.stdout = stdout
-        self.server = server
-        self.handler = handler
-        self.session_id = str(uuid4())
-
-        self._tasks: set[asyncio.Task] = set()
-        self.reader: asyncio.StreamReader | None = None
-        self.writer: asyncio.StreamWriter | None = None
-
-    async def start(self):
-        # Get async versions of stdin/stdout
-        self.reader, self.writer = await get_streams(self.stdin, self.stdout)
-
-        # Keep mypy happy
-        if self.server.stdin is None or self.server.stdout is None:
-            raise RuntimeError("Unable to find server I/O streams")
-
-        # Connect stdin to the subprocess' stdin
-        client_to_server = asyncio.create_task(
-            aio_readline(
-                self.reader,
-                partial(self.forward_message, "client", self.server.stdin),
-            ),
-        )
-        self._tasks.add(client_to_server)
-
-        # Connect the subprocess' stdout to stdout
-        server_to_client = asyncio.create_task(
-            aio_readline(
-                self.server.stdout,
-                partial(self.forward_message, "server", self.writer),
-            ),
-        )
-        self._tasks.add(server_to_client)
-
-        # Run both connections concurrently.
-        await asyncio.gather(
-            client_to_server,
-            server_to_client,
-            self._watch_server_process(),
-        )
-
-    async def forward_message(
-        self, source: str, dest: asyncio.StreamWriter, message: bytes
-    ):
-        """Forward the given message to the destination channel"""
-
+    # TODO: Reuse me
+    if False:
         # Forward the message as-is to the client/server
         dest.write(message)
-        await dest.drain()
 
         # Include some additional metadata before passing it onto the devtool.
         # TODO: How do we make sure we choose the same encoding as `message`?
@@ -208,6 +113,86 @@ class Agent:
             task = asyncio.create_task(res)
             self._tasks.add(task)
             task.add_done_callback(self._tasks.discard)
+
+    return RPCMessage(headers, body)
+
+
+class Agent:
+    """The Agent sits between a language server and its client, listening to messages
+    enabling them to be recorded."""
+
+    def __init__(
+        self,
+        server: asyncio.subprocess.Process,
+        stdin: BinaryIO,
+        stdout: BinaryIO,
+        handler: DataHandler,
+        executor: ThreadPoolExecutor | None = None,
+    ):
+        self.server = server
+        self.handler = handler
+        self.session_id = str(uuid4())
+        self._tasks: set[asyncio.Task[Any]] = set()
+
+        self.reader: AsyncReader = StdinAsyncReader(stdin, executor)
+        self.writer: AsyncWriter = StdoutAsyncWriter(stdout, executor)
+
+    async def start(self):
+        if (server_stdin := self.server.stdin) is None:
+            raise RuntimeError("Missing stdin for server process")
+
+        if (server_stdout := self.server.stdout) is None:
+            raise RuntimeError("Missing stdout for server process")
+
+        # Connect stdin to the subprocess' stdin
+        client_to_server = asyncio.create_task(
+            self.connect_streams(
+                self.reader,
+                AsyncStreamWriter(server_stdin),
+                MessageSource.Client,
+            ),
+        )
+        self._tasks.add(client_to_server)
+
+        # Connect the subprocess' stdout to stdout
+        server_to_client = asyncio.create_task(
+            self.connect_streams(
+                server_stdout,
+                self.writer,
+                MessageSource.Server,
+            ),
+        )
+        self._tasks.add(server_to_client)
+
+        # Run both connections concurrently.
+        await asyncio.gather(
+            client_to_server,
+            server_to_client,
+            self._watch_server_process(),
+        )
+
+    async def connect_streams(
+        self, source: AsyncReader, dest: AsyncWriter, origin: MessageSource
+    ):
+        """Forward bytes from the source to the destination, while simultaneously
+        passing them to the handler function"""
+
+        logger.debug('%r: loop start', origin)
+        while (data := await source.read(1024)) != b"":
+            # Send the data onto the server/client as-is
+            logger.debug("%r: read: %r bytes", origin, len(data))
+            await dest.write(data)
+
+            # Forward the captured data onto the handler
+            header = MessageHeader.pack(origin.value, len(data))
+            payload = b"".join([header, data])
+
+            if inspect.isawaitable(res := self.handler(payload)):
+                task = asyncio.create_task(res)
+                self._tasks.add(task)
+                task.add_done_callback(self._tasks.discard)
+
+        logger.debug("%r: loop broken", origin)
 
     async def _watch_server_process(self):
         """Once the server process exits, ensure that the agent is also shutdown."""

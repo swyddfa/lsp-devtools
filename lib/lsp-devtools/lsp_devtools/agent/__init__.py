@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import logging
 import subprocess
 import sys
 
@@ -36,6 +37,15 @@ async def main(args, extra: list[str]):
     if extra is None:
         print("Missing server start command", file=sys.stderr)
         return 1
+
+    logger = logging.getLogger("lsp_devtools")
+    logger.setLevel(logging.DEBUG)
+
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("[%(name)s]: %(message)s"))
+    handler.setLevel(logging.DEBUG)
+
+    logger.addHandler(handler)
 
     command, *arguments = extra
     server = await asyncio.create_subprocess_exec(
@@ -89,7 +99,7 @@ majority of the lsp-devtools suite of tools.
        │              │     │                      │    │              │
        └──────────────┘     └──────────────────────┘    └──────────────┘
                                        │
-                                       │ tcp/websocket
+                                       │ tcp
                                        │
                                 ┌──────────────┐
                                 │              │
