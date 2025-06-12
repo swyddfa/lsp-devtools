@@ -40,6 +40,13 @@ def main():
         prog="lsp-devtools", description="Developer tooling for language servers"
     )
     cli.add_argument("--version", action="version", version=f"%(prog)s v{__version__}")
+    cli.add_argument(
+        "-v",
+        "--verbose",
+        default=0,
+        action="count",
+        help="increase the verbosity of the logging output",
+    )
     commands = cli.add_subparsers(title="commands")
 
     for mod in BUILTIN_COMMANDS:
