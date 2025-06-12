@@ -25,9 +25,9 @@ classifiers = [
 dependencies = [
   "aiosqlite",
   "platformdirs",
-  "pygls>=2.0a6",
+  "pygls>=2.0",
   "stamina",
-  "textual>=0.41.0",
+  "textual>=6.3.0",
 ]
 
 [project.urls]

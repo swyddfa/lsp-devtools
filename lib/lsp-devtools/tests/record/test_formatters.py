@@ -34,7 +34,7 @@ from lsp_devtools.record.formatters import ValueFormatter
             '{\n  "line": 1,\n  "character": 2\n}',
         ),
         (
-            "{message.position:json-compact}",
+            "{message.position:jsonl}",
             {
                 "position": {"line": 1, "character": 2},
             },

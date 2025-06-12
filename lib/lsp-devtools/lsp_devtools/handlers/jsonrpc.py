@@ -10,6 +10,9 @@ from datetime import timezone
 
 import attrs
 
+from lsp_devtools.agent import MessageHeader
+from lsp_devtools.agent import MessageSource
+
 if typing.TYPE_CHECKING:
     from typing import Any
     from typing import Literal
@@ -39,6 +42,28 @@ class JsonRPCMessage:
     def __getitem__(self, key: str):
         return self.headers[key]
 
+    @classmethod
+    def client(cls, body: dict[str, Any]):
+        """Helper for constructing a message sent by the client"""
+        headers = {
+            "Content-Length": str(len(json.dumps(body))),
+        }
+
+        return cls(
+            headers=headers, body=body, metadata={"source": MessageSource.CLIENT}
+        )
+
+    @classmethod
+    def server(cls, body: dict[str, Any]):
+        """Helper for constructing a message sent by the server"""
+        headers = {
+            "Content-Length": str(len(json.dumps(body))),
+        }
+
+        return cls(
+            headers=headers, body=body, metadata={"source": MessageSource.SERVER}
+        )
+
     @property
     def method(self) -> str | None:
         """Return the JSON-RPC method name, if present"""
@@ -61,6 +86,24 @@ class JsonRPCMessage:
                 return "result"
         else:
             return "notification"
+
+    def to_bytes(self) -> bytes:
+        """Convert the message to bytes"""
+        body = json.dumps(self.body)
+        lines: list[str] = []
+
+        for key, value in self.headers.items():
+            lines.append(f"{key}: {value}")
+
+        lines.append("")
+        lines.append(body)
+
+        return "\r\n".join(lines).encode()
+
+    def to_wire_format(self) -> bytes:
+        """Encode the message according to how we send bytes over the wire."""
+        msg = self.to_bytes()
+        return b"".join([MessageHeader.pack(self.metadata["source"], len(msg)), msg])
 
 
 @attrs.define
