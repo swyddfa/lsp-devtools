@@ -1,58 +1,48 @@
 from __future__ import annotations
 
-import argparse
-import logging
+import asyncio
+import sys
 import typing
 
 import pytest
+import stamina
 
-from lsp_devtools.record import cli
-from lsp_devtools.record import setup_file_output
+from lsp_devtools.agent import MessageSource
+from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
 
 if typing.TYPE_CHECKING:
     import pathlib
     from typing import Any
 
 
-@pytest.fixture(scope="module")
-def record():
-    """Return a cli parser for the record command."""
-    parser = argparse.ArgumentParser(description="for testing purposes")
-    commands = parser.add_subparsers()
-    cli(commands)
-
-    return parser
-
-
-@pytest.fixture
-def logger():
-    """Return the logger instance to use."""
-
-    log = logging.getLogger(__name__)
-    log.setLevel(logging.INFO)
-
-    for handler in log.handlers:
-        log.removeHandler(handler)
-
-    return log
-
-
 @pytest.mark.parametrize(
     "args, messages, expected",
     [
         (
-            [],
-            [dict(jsonrpc="2.0", id=1, method="initialize", params=dict())],
+            None,
+            [
+                JsonRPCMessage.client(
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+                )
+            ],
             '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}\n',
         ),
         (
-            ["-f", "{.|json-compact}"],
-            [dict(jsonrpc="2.0", id=1, method="initialize", params=dict())],
+            ["-f", "{message:jsonl}"],
+            [
+                JsonRPCMessage.client(
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+                )
+            ],
             '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}\n',
         ),
         (
-            ["-f", "{.|json}"],
-            [dict(jsonrpc="2.0", id=1, method="initialize", params=dict())],
+            ["-f", "{message:json}"],
+            [
+                JsonRPCMessage.client(
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+                )
+            ],
             "\n".join(
                 [
                     "{",
@@ -66,29 +56,32 @@ def logger():
             ),
         ),
         (
-            ["-f", "{.method|json}"],
+            ["-f", "{message.method}"],
             [
-                dict(jsonrpc="2.0", id=1, method="initialize", params=dict()),
-                dict(jsonrpc="2.0", id=1, result=dict()),
+                JsonRPCMessage.client(
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+                ),
+                JsonRPCMessage.server({"jsonrpc": "2.0", "id": 1, "result": {}}),
             ],
             "initialize\n",
         ),
         (
-            ["-f", "{.id}"],
+            ["-f", "{message.id}"],
             [
-                dict(jsonrpc="2.0", id=1, method="initialize", params=dict()),
-                dict(jsonrpc="2.0", id=1, result=dict()),
+                JsonRPCMessage.client(
+                    {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}}
+                ),
+                JsonRPCMessage.server({"jsonrpc": "2.0", "id": 1, "result": {}}),
             ],
             "1\n1\n",
         ),
     ],
 )
-def test_file_output(
+@pytest.mark.asyncio
+async def test_file_output(
     tmp_path: pathlib.Path,
-    record: argparse.ArgumentParser,
-    logger: logging.Logger,
-    args: list[str],
-    messages: list[dict[str, Any]],
+    args: list[str] | None,
+    messages: list[JsonRPCMessage],
     expected: str,
 ):
     """Ensure that we can log to files correctly.
@@ -110,12 +103,37 @@ def test_file_output(
     expected
        The expected file output.
     """
+
+    host = "localhost"
+    port = 8765
+
     log = tmp_path / "log.json"
-    parsed_args = record.parse_args(["record", "--to-file", str(log), *args])
+    # fmt: off
+    cli_args = [
+        "-m", "lsp_devtools", "record",
+        "--bind", str(host),
+        "--port", str(port),
+        "--on-disconnect", "exit",
+        "--to-file", str(log),
+        *(args or []),
+    ]
+    # fmt: on
+    print(f"Running command: python {' '.join(cli_args)}")
+    process = await asyncio.create_subprocess_exec(sys.executable, *cli_args)
 
-    setup_file_output(parsed_args, logger)
+    async for attempt in stamina.retry_context(on=OSError, attempts=5, timeout=5):
+        with attempt:
+            print("Trying to connect")
+            reader, writer = await asyncio.open_connection(host, port)
 
+    print("Connected. Sending messages...")
     for message in messages:
-        logger.info("%s", message, extra={"Message-Source": "client"})
+        writer.write(message.to_wire_format())
+        await writer.drain()
 
+    print("Closing connection")
+    writer.close()
+    await asyncio.wait_for(process.wait(), timeout=5.0)
+
+    print(log.read_text())
     assert log.read_text() == expected
