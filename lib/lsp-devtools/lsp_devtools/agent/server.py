@@ -4,7 +4,7 @@ import asyncio
 import logging
 import typing
 
-from lsp_devtools.agent.agent import Header
+from lsp_devtools.agent.agent import MessageHeader
 from lsp_devtools.database import Database
 
 if typing.TYPE_CHECKING:
@@ -22,14 +22,9 @@ async def raw_parser(reader: asyncio.StreamReader, handler):
 
     while True:
         try:
-            logger.debug("Reading %r header bytes...", Header.size)
-            bs = await reader.readexactly(Header.size)
-            logger.debug("got: %r", bs)
-            source, length = Header.unpack(bs)
-
-            logger.debug("Reading %r payload bytes...", length)
+            bs = await reader.readexactly(MessageHeader.size)
+            source, length = MessageHeader.unpack(bs)
             data = await reader.readexactly(length)
-            logger.debug("got: %r", data)
         except asyncio.IncompleteReadError:
             break
 
@@ -38,7 +33,6 @@ async def raw_parser(reader: asyncio.StreamReader, handler):
             continue
 
         try:
-            logger.debug("calling handler")
             handler(data, source)
         except Exception:
             logger.exception("Unable to handle message")

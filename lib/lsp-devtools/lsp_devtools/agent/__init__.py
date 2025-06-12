@@ -6,7 +6,11 @@ import logging
 import subprocess
 import sys
 
+from lsp_devtools.cli.utils import get_log_level
+
 from .agent import Agent
+from .agent import MessageHeader
+from .agent import MessageSource
 from .agent import RPCMessage
 from .agent import logger
 from .agent import parse_rpc_message
@@ -33,21 +37,37 @@ async def forward_stderr(server: asyncio.subprocess.Process):
         sys.stderr.buffer.write(line)
 
 
-async def main(args, extra: list[str]):
-    if extra is None:
-        print("Missing server start command", file=sys.stderr)
-        return 1
+class AgentClientHandler(logging.Handler):
+    """Forwards log messages through the client - server connection."""
 
+    def __init__(self, client: AgentClient, level: int = 0) -> None:
+        super().__init__(level)
+        self.client = client
+
+    def emit(self, record: logging.LogRecord) -> None:
+        msg = (self.format(record) + "\n").encode()
+
+        source = MessageSource.Agent
+        length = len(msg)
+        data = b"".join([MessageHeader.pack(source, length), msg])
+
+        self.client.forward_message(data)
+
+
+async def main(args, cmd: list[str]):
+    client = AgentClient()
+
+    log_level = get_log_level(args.verbose)
     logger = logging.getLogger("lsp_devtools")
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(log_level)
 
-    handler = logging.StreamHandler()
+    handler = AgentClientHandler(client)
     handler.setFormatter(logging.Formatter("[%(name)s]: %(message)s"))
-    handler.setLevel(logging.DEBUG)
+    handler.setLevel(log_level)
 
     logger.addHandler(handler)
 
-    command, *arguments = extra
+    command, *arguments = cmd
     server = await asyncio.create_subprocess_exec(
         command,
         *arguments,
@@ -55,7 +75,7 @@ async def main(args, extra: list[str]):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    client = AgentClient()
+
     agent = Agent(server, sys.stdin.buffer, sys.stdout.buffer, client.forward_message)
 
     await asyncio.gather(
@@ -65,7 +85,11 @@ async def main(args, extra: list[str]):
     )
 
 
-def run_agent(args, extra: list[str]):
+def run_agent(args, extra: list[str] | None):
+    if extra is None:
+        print("Missing server start command", file=sys.stderr)
+        return 1
+
     try:
         asyncio.run(main(args, extra))
     except asyncio.CancelledError:
