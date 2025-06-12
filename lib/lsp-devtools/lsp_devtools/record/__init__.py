@@ -1,225 +1,17 @@
 from __future__ import annotations
 
 import argparse
-import asyncio
-import json
-import logging
 import pathlib
-from functools import partial
-from logging import LogRecord
 
-from rich.console import Console
-from rich.console import ConsoleRenderable
-from rich.logging import RichHandler
-from rich.traceback import Traceback
-
-from lsp_devtools.agent import AgentServer
-from lsp_devtools.agent import parse_rpc_message
-from lsp_devtools.handlers.sql import SqlHandler
-
-from .filters import LSPFilter
-from .visualize import SpinnerHandler
-
-EXPORTERS = {
-    ".html": ("save_html", {}),
-    ".svg": ("save_svg", {"title": ""}),
-    ".txt": ("save_text", {}),
-}
+from .raw import record_raw
+from .rpc import record_rpc
 
 
-class RichLSPHandler(RichHandler):
-    def __init__(self, level: int, log_time_format="%X", **kwargs):
-        super().__init__(
-            level=level,
-            show_path=False,
-            log_time_format=log_time_format,
-            omit_repeated_times=False,
-            **kwargs,
-        )
-
-    def render(
-        self,
-        *,
-        record: logging.LogRecord,
-        traceback: Traceback | None,
-        message_renderable: ConsoleRenderable,
-    ) -> ConsoleRenderable:
-        # Delegate most of the rendering to the base RichHandler class.
-        res = super().render(
-            record=record, traceback=traceback, message_renderable=message_renderable
-        )
-
-        # Abuse the log level column to display the source of the message,
-        source = record.__dict__["Message-Source"]
-        color = "red" if source == "client" else "blue"
-        message_source = f"[bold][{color}]{source.upper()}[/{color}][/bold]"
-        res.columns[1]._cells[0] = message_source  # type: ignore
-
-        return res
-
-    def format(self, record: LogRecord) -> str:
-        # Pretty print json messages
-        if isinstance(record.args, dict):
-            record.args = (json.dumps(record.args, indent=2),)
-        return super().format(record)
-
-
-def setup_logging(logger: logging.Logger, console: Console):
-    """Setup logging of messages from other loggers."""
-
-    # Suppress pygls logging
-    pygls_logger = logging.getLogger("pygls")
-    pygls_logger.setLevel(logging.CRITICAL)
-
-    handler = RichHandler(console=console)
-    handler.setLevel(logging.ERROR)
-
-    logger.setLevel(logging.ERROR)
-    logger.addHandler(handler)
-
-
-def setup_stdout_output(args, logger: logging.Logger, console: Console):
-    """Log messages to stdout."""
-
-    handler = RichLSPHandler(level=logging.INFO, console=console)
-    handler.addFilter(
-        LSPFilter(
-            message_source=args.message_source,
-            include_message_types=args.include_message_types,
-            exclude_message_types=args.exclude_message_types,
-            include_methods=args.include_methods,
-            exclude_methods=args.exclude_methods,
-            formatter=args.format_message or "{.|json}",
-        )
-    )
-
-    logger.addHandler(handler)
-    logger.propagate = False
-
-
-def setup_file_output(args, logger: logging.Logger, console: Console | None = None):
-    """Log messages to a file."""
-    handler = logging.FileHandler(filename=str(args.to_file))
-    handler.setLevel(logging.INFO)
-    handler.addFilter(
-        LSPFilter(
-            message_source=args.message_source,
-            include_message_types=args.include_message_types,
-            exclude_message_types=args.exclude_message_types,
-            include_methods=args.include_methods,
-            exclude_methods=args.exclude_methods,
-            formatter=args.format_message or "{.|json-compact}",
-        )
-    )
-
-    if console:
-        spinner = SpinnerHandler(console)
-        spinner.setLevel(logging.INFO)
-        logger.addHandler(spinner)
-
-    # This must come last!
-    logger.addHandler(handler)
-    logger.propagate = False
-
-
-def setup_sqlite_output(args, logger: logging.Logger, console: Console | None = None):
-    """Log messages to SQLite."""
-    handler = SqlHandler(args.to_sqlite)
-    handler.setLevel(logging.INFO)
-    handler.addFilter(
-        LSPFilter(
-            message_source=args.message_source,
-            include_message_types=args.include_message_types,
-            exclude_message_types=args.exclude_message_types,
-            include_methods=args.include_methods,
-            exclude_methods=args.exclude_methods,
-        )
-    )
-
-    if console:
-        spinner = SpinnerHandler(console)
-        spinner.setLevel(logging.INFO)
-        logger.addHandler(spinner)
-
-    # This must come last!
-    logger.addHandler(handler)
-    logger.propagate = False
-
-
-def log_message(logger: logging.Logger, message: bytes):
-    try:
-        rpc = parse_rpc_message(message)
-    except ValueError:
-        # TODO: report the error.
-        return
-
-    logger.info("%s", rpc.body, extra=rpc.headers)
-
-
-def start_recording(args, extra: list[str]):
-    logger = logging.getLogger("lsp_devtools")
-
-    rpc_logger = logging.getLogger(__name__)
-    rpc_logger.setLevel(logging.INFO)
-
-    handler = partial(log_message, rpc_logger)
-    server = AgentServer(logger=logger, handler=handler)
-
-    console = Console(record=args.save_output is not None)
-    setup_logging(logger, console)
-
-    if args.to_file:
-        setup_file_output(args, rpc_logger, console)
-
-    elif args.to_sqlite:
-        setup_sqlite_output(args, rpc_logger, console)
-
+def start_recording(args, extra: list[str] | None):
+    if args.capture_raw:
+        return record_raw(args)
     else:
-        setup_stdout_output(args, rpc_logger, console)
-
-    try:
-        host = args.host
-        port = args.port
-
-        print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
-        asyncio.run(server.start_tcp(host, port))
-    except asyncio.CancelledError:
-        pass
-    except KeyboardInterrupt:
-        server.stop()
-
-    if console is not None:
-        console.show_cursor(True)
-
-        if args.save_output is not None:
-            destination = args.save_output
-            exporter_name, kwargs = EXPORTERS.get(destination.suffix, (None, None))
-            if exporter_name is None:
-                console.print(f"Unable to save output to '{destination.suffix}' files")
-                return
-
-            exporter = getattr(console, exporter_name)
-            exporter(str(destination), **kwargs)
-
-
-def demo(args, extra: list[str]):
-    logger = logging.getLogger("lsp_devtools")
-
-    def handler(data: bytes, source):
-        print(f"{source}: {data.decode('utf8')!r}")
-
-    server = AgentServer(logger=logger, handler=handler)
-
-    try:
-        host = args.host
-        port = args.port
-
-        print(f"Waiting for connection on {host}:{port}...", end="\r", flush=True)
-        asyncio.run(server.start_tcp(host, port))
-    except asyncio.CancelledError:
-        pass
-    except KeyboardInterrupt:
-        server.stop()
+        return record_rpc(args)
 
 
 def setup_filter_args(cmd: argparse.ArgumentParser):
@@ -277,35 +69,41 @@ def cli(commands: argparse._SubParsersAction):
         "record",
         help="record a JSON-RPC session.",
         description="""\
-This command starts a JSON-RPC server allowing for a client to connect (over TCP by
-default) and push messages to it and have them be recorded.
-""",
+Listen for a connection from the lsp-devtools agent and record the traffic it captures""",
     )
 
     connect = cmd.add_argument_group(
-        title="connection options", description="how to connect to the LSP agent"
+        title="server options",
+        description="how and where the server should listen for connections",
     )
     connect.add_argument(
-        "--host",
+        "--bind",
+        dest="host",
         type=str,
         default="localhost",
-        help="the host that is hosting the agent.",
+        help="where to listen for connections from",
     )
     connect.add_argument(
-        "-p", "--port", type=int, default=8765, help="the port to connect to."
+        "-p", "--port", type=int, default=8765, help="the port to listen on"
+    )
+    connect.add_argument(
+        "--on-disconnect",
+        default="continue",
+        choices=["continue", "exit"],
+        help="how should the server react to a client disconnect (default: continue)",
     )
 
     capture = cmd.add_mutually_exclusive_group()
     capture.add_argument(
-        "--capture-raw-output",
+        "--capture-raw",
         action="store_true",
-        help="capture the raw output from client and server.",
+        help="capture the raw data send between LSP client and server.",
     )
     capture.add_argument(
-        "--capture-rpc-output",
+        "--capture-rpc",
         default=True,
         action="store_true",
-        help="capture the rpc messages sent between client and server.",
+        help="capture and parse the rpc messages sent between LSP client and server.",
     )
 
     setup_filter_args(cmd)
@@ -319,11 +117,22 @@ default) and push messages to it and have them be recorded.
     format_.add_argument(
         "-f",
         "--format-message",
-        default=None,
+        action="append",
         help=(
             "format messages according to given format string, "
-            "see example commands above for syntax. "
-            "Messages which fail to format will be excluded"
+            "can be given multiple times, in which case the first valid string will be "
+            "applied. "
+            "By default, messages which fail to format will be excluded, "
+            "see --keep-unformatted"
+        ),
+    )
+
+    format_.add_argument(
+        "--keep-unformatted",
+        action="store_true",
+        help=(
+            "preserve messages that fail to format using any supplied format string. "
+            "These will be rendered with the default format string"
         ),
     )
 
@@ -358,4 +167,4 @@ default) and push messages to it and have them be recorded.
         ),
     )
 
-    cmd.set_defaults(run=demo)
+    cmd.set_defaults(run=start_recording)
