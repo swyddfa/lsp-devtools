@@ -3,16 +3,12 @@ from __future__ import annotations
 import asyncio
 import enum
 import inspect
-import json
 import logging
 import struct
 import sys
 import typing
-from datetime import datetime
 from datetime import timezone
 from uuid import uuid4
-
-import attrs
 
 from .io_ import AsyncStreamWriter
 from .io_ import StdinAsyncReader
@@ -47,73 +43,6 @@ class MessageSource(enum.IntEnum):
 
     Server = enum.auto()
     """Messages coming from the langiage server"""
-
-
-@attrs.define
-class RPCMessage:
-    """A Json-RPC message."""
-
-    headers: dict[str, str]
-
-    body: dict[str, Any]
-
-    def __getitem__(self, key: str):
-        return self.headers[key]
-
-
-def parse_rpc_message(data: bytes) -> RPCMessage:
-    """Parse a JSON-RPC message from the given set of bytes."""
-
-    headers: dict[str, str] = {}
-    body: dict[str, Any] | None = None
-    headers_complete = False
-
-    for line in data.split(b"\r\n"):
-        if line == b"":
-            if "Content-Length" not in headers:
-                raise ValueError("Missing 'Content-Length' header")
-
-            headers_complete = True
-            continue
-
-        if headers_complete:
-            length = int(headers["Content-Length"])
-            if len(line) != length:
-                raise ValueError("Incorrect 'Content-Length'")
-
-            body = json.loads(line)
-            continue
-
-        if (idx := line.find(b":")) < 0:
-            raise ValueError(f"Invalid header: {line!r}")
-
-        name, value = line[:idx], line[idx + 1 :]
-        headers[name.decode("utf8").strip()] = value.decode("utf8").strip()
-
-    if body is None:
-        raise ValueError("Missing message body")
-
-    # TODO: Reuse me
-    if False:
-        # Forward the message as-is to the client/server
-        dest.write(message)
-
-        # Include some additional metadata before passing it onto the devtool.
-        # TODO: How do we make sure we choose the same encoding as `message`?
-        now = datetime.now(tz=UTC).isoformat()
-        fields = [
-            f"Message-Source: {source}\r\n".encode(),
-            f"Message-Session: {self.session_id}\r\n".encode(),
-            f"Message-Timestamp: {now}\r\n".encode(),
-            message,
-        ]
-
-        if inspect.iscoroutine(res := self.handler(b"".join(fields))):
-            task = asyncio.create_task(res)
-            self._tasks.add(task)
-            task.add_done_callback(self._tasks.discard)
-
-    return RPCMessage(headers, body)
 
 
 class Agent:
