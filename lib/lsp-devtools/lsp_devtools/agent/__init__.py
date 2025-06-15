@@ -11,19 +11,18 @@ from lsp_devtools.cli.utils import get_log_level
 from .agent import Agent
 from .agent import MessageHeader
 from .agent import MessageSource
-from .agent import RPCMessage
-from .agent import logger
-from .agent import parse_rpc_message
 from .client import AgentClient
 from .server import AgentServer
+from .server import JsonRPCHandler
+from .server import JsonRPCMessage
 
 __all__ = [
     "Agent",
     "AgentClient",
     "AgentServer",
-    "RPCMessage",
-    "logger",
-    "parse_rpc_message",
+    "MessageSource",
+    "JsonRPCHandler",
+    "JsonRPCMessage",
 ]
 
 
