@@ -6,4 +6,9 @@ clean-env: | $(HATCH)
 test: | $(HATCH)
 	$(HATCH) test
 
+.PHONY: lint
+lint: | $(UVX)
+	$(UVX) pre-commit run --all-files $(HOOK)
+
+
 include ../../.devcontainer/tools.mk

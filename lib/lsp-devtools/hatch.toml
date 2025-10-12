@@ -13,7 +13,3 @@ extra-dependencies = ["pytest-asyncio"]
 
 [envs.hatch-test.env-vars]
 UV_PRERELEASE="allow"
-
-[envs.hatch-static-analysis]
-config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.8.0"]
