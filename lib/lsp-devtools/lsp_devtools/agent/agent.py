@@ -19,17 +19,16 @@ from .io_ import StdinAsyncReader
 from .io_ import StdoutAsyncWriter
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Coroutine
     from concurrent.futures import ThreadPoolExecutor
     from typing import Any
     from typing import BinaryIO
-    from typing import Callable
-    from typing import Union
 
     from .io_ import AsyncReader
     from .io_ import AsyncWriter
 
-    DataHandler = Callable[[bytes], Union[None, Coroutine[Any, Any, None]]]
+    DataHandler = Callable[[bytes], None | Coroutine[Any, Any, None]]
 
 
 UTC = timezone.utc
@@ -177,7 +176,7 @@ class Agent:
         """Forward bytes from the source to the destination, while simultaneously
         passing them to the handler function"""
 
-        logger.debug('%r: loop start', origin)
+        logger.debug("%r: loop start", origin)
         while (data := await source.read(1024)) != b"":
             # Send the data onto the server/client as-is
             logger.debug("%r: read: %r bytes", origin, len(data))

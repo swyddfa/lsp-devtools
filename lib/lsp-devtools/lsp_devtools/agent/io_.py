@@ -69,7 +69,7 @@ class StdinAsyncReader:
 
     async def read(self, n: int = -1) -> bytes:
         # If the future is done, then the stream must be closed.
-        if (fut:= self._start_read_loop()).done():
+        if (fut := self._start_read_loop()).done():
             return b""
 
         await self.loop.run_in_executor(self._executor, self._bytes_available.wait)
