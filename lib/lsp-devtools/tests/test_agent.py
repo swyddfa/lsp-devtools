@@ -3,11 +3,9 @@ from __future__ import annotations
 import asyncio
 import io
 import json
-import os
 import pathlib
 import subprocess
 import sys
-from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 

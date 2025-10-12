@@ -5,7 +5,6 @@ import pathlib
 from contextlib import asynccontextmanager
 from importlib import resources
 from typing import Any
-from typing import Optional
 
 import aiosqlite
 from textual.app import App
@@ -20,10 +19,10 @@ class Database:
     class Update(Message):
         """Sent when there are updates to the database"""
 
-    def __init__(self, dbpath: Optional[pathlib.Path] = None):
+    def __init__(self, dbpath: pathlib.Path | None = None):
         self.dbpath = dbpath or ":memory:"
-        self.db: Optional[aiosqlite.Connection] = None
-        self.app: Optional[App] = None
+        self.db: aiosqlite.Connection | None = None
+        self.app: App | None = None
         self._handlers: dict[str, set] = {}
 
     async def close(self):
@@ -84,7 +83,7 @@ class Database:
         self,
         *,
         session: str = "",
-        max_row: Optional[int] = None,
+        max_row: int | None = None,
     ):
         """Get messages from the database
 
