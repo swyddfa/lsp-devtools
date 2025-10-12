@@ -2,7 +2,6 @@ import importlib.metadata
 import json
 from datetime import datetime
 from datetime import timezone
-from typing import Optional
 from uuid import uuid4
 
 from lsprotocol import types
@@ -55,7 +54,7 @@ class LanguageClient(BaseLanguageClient):
 
         self.session_id = str(uuid4())
         self.protocol.session_id = self.session_id  # type: ignore[attr-defined]
-        self._server_capabilities: Optional[types.ServerCapabilities] = None
+        self._server_capabilities: types.ServerCapabilities | None = None
 
     @property
     def server_capabilities(self) -> types.ServerCapabilities:

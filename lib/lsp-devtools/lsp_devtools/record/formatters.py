@@ -9,8 +9,8 @@ from functools import partial
 import lsprotocol.types
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
 
 
 def format_json(obj: dict, *, indent: str | int | None = 2) -> str:

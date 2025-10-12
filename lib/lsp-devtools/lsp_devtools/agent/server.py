@@ -9,8 +9,8 @@ from lsp_devtools.database import Database
 
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
 
     MessageParser = Callable[[asyncio.StreamReader, MessageHandler], Awaitable[Any]]
 
