@@ -1,39 +1,47 @@
+from __future__ import annotations
+
+import json
+
 import pytest
 
-from lsp_devtools.record.formatters import FormatString
+from lsp_devtools.record.formatters import ValueFormatter
 
 
 @pytest.mark.parametrize(
-    "pattern,message,expected",
+    "fmt,message,expected",
     [
         ("I am a literal string", {}, "I am a literal string"),
-        ("{.method}", {"method": "textDocument/completion"}, "textDocument/completion"),
         (
-            "The method is: {.method}",
+            "{message.method}",
+            {"method": "textDocument/completion"},
+            "textDocument/completion",
+        ),
+        (
+            "The method is: {message.method}",
             {"method": "textDocument/completion"},
             "The method is: textDocument/completion",
         ),
         (
-            "The method '{.method}' was called",
+            "The method {message.method!r} was called",
             {"method": "textDocument/completion"},
             "The method 'textDocument/completion' was called",
         ),
         (
-            "{.position|json}",
+            "{message.position:json}",
             {
                 "position": {"line": 1, "character": 2},
             },
             '{\n  "line": 1,\n  "character": 2\n}',
         ),
         (
-            "{.position|json-compact}",
+            "{message.position:json-compact}",
             {
                 "position": {"line": 1, "character": 2},
             },
             '{"line": 1, "character": 2}',
         ),
         (
-            "{.method} {.params.textDocument.uri}:{.params.position}",
+            "{message.method} {message.params.textDocument.uri}:{message.params.position}",
             {
                 "method": "textDocument/completion",
                 "params": {
@@ -44,7 +52,7 @@ from lsp_devtools.record.formatters import FormatString
             'textDocument/completion file:///path/to/file.txt:{\n  "line": 1,\n  "character": 2\n}',
         ),
         (
-            "{.method} {.params.textDocument.uri}:{.params.position|Position}",
+            "{message.method} {message.params.textDocument.uri}:{message.params.position:Position}",
             {
                 "method": "textDocument/completion",
                 "params": {
@@ -55,7 +63,7 @@ from lsp_devtools.record.formatters import FormatString
             "textDocument/completion file:///path/to/file.txt:1:2",
         ),
         (
-            "{.params.range|Range}",
+            "{message.params.range:Range}",
             {
                 "params": {
                     "range": {
@@ -66,37 +74,43 @@ from lsp_devtools.record.formatters import FormatString
             },
             "1:2-3:4",
         ),
-        ("{.params.type|MessageType}", {"params": {"type": 4}}, "Log"),
-        ("{.params.type|CompletionItemKind}", {"params": {"type": 4}}, "Constructor"),
+        ("{message.params.type:MessageType}", {"params": {"type": 4}}, "Log"),
         (
-            "{.result.items[]}",
+            "{message.params.type:CompletionItemKind}",
+            {"params": {"type": 4}},
+            "Constructor",
+        ),
+        (
+            "{message.result.items}",
             {
                 "result": {
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
                 }
             },
-            '{\n  "label": "one"\n}\n{\n  "label": "two"\n}\n{\n  "label": "three"\n}',
+            json.dumps(
+                [{"label": "one"}, {"label": "two"}, {"label": "three"}], indent=2
+            ),
         ),
         (
-            "{.result.items[].label}",
+            "{message.result.items[:].label}",
             {
                 "result": {
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
                 }
             },
-            "one\ntwo\nthree",
+            '[\n  "one",\n  "two",\n  "three"\n]',
         ),
         (
-            "- {.result.items[\\n- ].label}",
+            "{message.result.items.label}",
             {
                 "result": {
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
                 }
             },
-            "- one\n- two\n- three",
+            '[\n  "one",\n  "two",\n  "three"\n]',
         ),
         (
-            "{.result.items[0]}",
+            "{message.result.items[0]}",
             {
                 "result": {
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
@@ -105,7 +119,7 @@ from lsp_devtools.record.formatters import FormatString
             '{\n  "label": "one"\n}',
         ),
         (
-            "{.result.items[-1]}",
+            "{message.result.items[-1]}",
             {
                 "result": {
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
@@ -114,7 +128,7 @@ from lsp_devtools.record.formatters import FormatString
             '{\n  "label": "three"\n}',
         ),
         (
-            "- {.result.items[0].label}",
+            "- {message.result.items[0].label}",
             {
                 "result": {
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
@@ -123,26 +137,17 @@ from lsp_devtools.record.formatters import FormatString
             "- one",
         ),
         (
-            "{.result.items[0:2].label}",
+            "{message.result.items[0:2].label}",
             {
                 "result": {
                     "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
                 }
             },
-            "one\ntwo",
+            '[\n  "one",\n  "two"\n]',
         ),
         (
-            "- {.result.items[0:2#\\n- ].label}",
-            {
-                "result": {
-                    "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
-                }
-            },
-            "- one\n- two",
-        ),
-        (
-            '{{"clientInfo": {.params.clientInfo}, '
-            '"capabilities": {.params.capabilities}}}',
+            '{{"clientInfo": {message.params.clientInfo}, '
+            '"capabilities": {message.params.capabilities}}}',
             {
                 "params": {
                     "clientInfo": {"name": "Client", "version": "1.0"},
@@ -160,8 +165,6 @@ from lsp_devtools.record.formatters import FormatString
         ),
     ],
 )
-def test_format_string(pattern: str, message: dict, expected: str):
+def test_format_string(fmt: str, message: dict[str, Any], expected: str):
     """Ensure that we can format strings correctly."""
-
-    fmt = FormatString(pattern)
-    assert expected == fmt.format(message)
+    assert expected == fmt.format(message=ValueFormatter(message))
