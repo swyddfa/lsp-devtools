@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import logging
 import typing
 
 from rich import progress
 from rich.measure import Measurement
 from rich.segment import Segment
 from rich.style import Style
+
+from lsp_devtools.agent import MessageSource
 
 if typing.TYPE_CHECKING:
     from rich.console import Console
@@ -119,12 +120,11 @@ class PacketPipeColumn(progress.ProgressColumn):
         return PacketPipe(server_packets=server_packets, client_packets=client_packets)
 
 
-class SpinnerHandler(logging.Handler):
-    """A logging handler that shows a customised progress bar, used to show feedback for
-    an active connection."""
+class TrafficVisualiser:
+    """A "progress bar" that visualises the traffic sent between client and server.
+    Used when operating in a "headless" mode."""
 
-    def __init__(self, console: Console, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(self, console: Console) -> None:
         self.server_count = 0
         self.client_count = 0
         self.progress = progress.Progress(
@@ -144,23 +144,15 @@ class SpinnerHandler(logging.Handler):
             client_count=self.client_count,
         )
 
-    def emit(self, record: logging.LogRecord):
-        message = record.args
-
-        if not isinstance(message, dict):
-            return
-
+    def emit(self, source: MessageSource):
         self.progress.start()
 
-        method = message.get("method", None)
-        source = record.__dict__["Message-Source"]
-        args = {}
+        if source == MessageSource.Client:
+            self.client_count += 1
 
-        if method:
-            args[f"{source}_method"] = method
-            count = getattr(self, f"{source}_count") + 1
+        if source == MessageSource.Server:
+            self.server_count += 1
 
-            setattr(self, f"{source}_count", count)
-            args[f"{source}_count"] = count
-
-        self.progress.update(self.task, **args)
+        self.progress.update(
+            self.task, client_count=self.client_count, server_count=self.server_count
+        )
