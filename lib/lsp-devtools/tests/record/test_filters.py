@@ -1,36 +1,55 @@
+from __future__ import annotations
+
 import itertools
 import logging
+import typing
 
 import pytest
 
-from lsp_devtools.record.filters import LSPFilter
+from lsp_devtools.agent import JsonRPCMessage
+from lsp_devtools.agent import MessageSource
+from lsp_devtools.record.filters import JsonRPCFilter
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+
+    from lsp_devtools.record.filters import MessageSourceString
 
 
 @pytest.mark.parametrize(
     "filter_source,message_source,expected",
     [
-        ("both", "client", True),
-        ("both", "server", True),
-        ("client", "client", True),
-        ("client", "server", False),
-        ("server", "client", False),
-        ("server", "server", True),
+        ("both", MessageSource.Client, True),
+        ("both", MessageSource.Server, True),
+        ("both", MessageSource.Agent, False),
+        ("client", MessageSource.Client, True),
+        ("client", MessageSource.Server, False),
+        ("client", MessageSource.Agent, False),
+        ("server", MessageSource.Client, False),
+        ("server", MessageSource.Server, True),
+        ("server", MessageSource.Agent, False),
     ],
 )
-def test_filter_message_source(filter_source: str, message_source: str, expected: bool):
+def test_filter_message_source(
+    filter_source: MessageSourceString, message_source: MessageSource, expected: bool
+):
     """Ensure that we can filter messages by their source correctly."""
 
-    lsp = LSPFilter(message_source=filter_source)
-    message = dict(id="1", method="initialize", params={})
+    rpc_filter = JsonRPCFilter(message_source=filter_source)
+    message = JsonRPCMessage(
+        headers={"Content-Type": "application/json"},
+        body={"id": "1", "method": "initialize", "params": {}},
+        metadata={"source": message_source},
+    )
 
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["Message-Source"] = message_source
-
-    assert lsp.filter(record) is expected
+    if expected:
+        assert rpc_filter.match(message) == message
+    else:
+        assert rpc_filter.match(message) is None
 
 
 @pytest.mark.parametrize(
-    "message,setup",
+    "body,setup",
     [
         # Request messages
         *itertools.product(
@@ -89,21 +108,30 @@ def test_filter_message_source(filter_source: str, message_source: str, expected
         ),
     ],
 )
-def test_filter_included_message_types(message: dict, setup: tuple[list[str], bool]):
+def test_filter_included_message_types(
+    body: dict[str, Any], setup: tuple[list[str], bool]
+):
     """Ensure that we can filter messages by listing the types we DO want to see."""
 
     message_types, expected = setup
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["Message-Source"] = "client"
+    message = JsonRPCMessage(
+        headers={},
+        body=body,
+        metadata={"source": MessageSource.Client},
+    )
 
-    lsp = LSPFilter(include_message_types=message_types)
-    lsp._response_method_map["1"] = ""
+    rpc_filter = JsonRPCFilter(include_message_types=message_types)
+    rpc_filter._response_method_map["1"] = ""
 
-    assert lsp.filter(record) is expected
+    if expected:
+        assert rpc_filter.match(message) == message
+
+    else:
+        assert rpc_filter.match(message) is None
 
 
 @pytest.mark.parametrize(
-    "message,setup",
+    "body,setup",
     [
         # Request messages
         *itertools.product(
@@ -162,21 +190,27 @@ def test_filter_included_message_types(message: dict, setup: tuple[list[str], bo
         ),
     ],
 )
-def test_filter_excluded_message_types(message: dict, setup: tuple[list[str], bool]):
+def test_filter_excluded_message_types(
+    body: dict[str, Any], setup: tuple[list[str], bool]
+):
     """Ensure that we can filter messages by listing the types we DO NOT want to see."""
 
     message_types, expected = setup
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["Message-Source"] = "client"
+    message = JsonRPCMessage(
+        headers={}, body=body, metadata={"source": MessageSource.Client}
+    )
 
-    lsp = LSPFilter(exclude_message_types=message_types)
-    lsp._response_method_map["1"] = ""
+    rpc_filter = JsonRPCFilter(exclude_message_types=message_types)
+    rpc_filter._response_method_map["1"] = ""
 
-    assert lsp.filter(record) is expected
+    if expected:
+        assert rpc_filter.match(message) == message
+    else:
+        assert rpc_filter.match(message) is None
 
 
 @pytest.mark.parametrize(
-    "message,setup",
+    "body,setup",
     [
         # Request messages
         *itertools.product(
@@ -200,15 +234,19 @@ def test_filter_excluded_message_types(message: dict, setup: tuple[list[str], bo
         ),
     ],
 )
-def test_filter_included_method(message: dict, setup: tuple[list[str], bool]):
+def test_filter_included_method(body: dict[str, Any], setup: tuple[list[str], bool]):
     """Ensure that we can filter messages by listing the methods we wish to see."""
 
     methods, expected = setup
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["Message-Source"] = "client"
+    message = JsonRPCMessage(
+        headers={}, body=body, metadata={"source": MessageSource.Client}
+    )
 
-    lsp = LSPFilter(include_methods=methods)
-    assert lsp.filter(record) is expected
+    rpc_filter = JsonRPCFilter(include_methods=methods)
+    if expected:
+        assert rpc_filter.match(message) == message
+    else:
+        assert rpc_filter.match(message) is None
 
 
 @pytest.mark.parametrize(
@@ -245,28 +283,37 @@ def test_filter_included_method(message: dict, setup: tuple[list[str], bool]):
     ],
 )
 def test_filter_included_method_response_message(
-    response: dict, setup: tuple[list[str], str, bool]
+    response: dict[str, Any], setup: tuple[list[str], str, bool]
 ):
     """Ensure that we can filter response message by listing the methods we wish
     to see."""
 
     methods, method, expected = setup
-    lsp = LSPFilter(include_methods=methods)
+    rpc_filter = JsonRPCFilter(include_methods=methods)
 
-    request = dict(id="1", method=method, params={})
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["Message-Source"] = "client"
+    request = JsonRPCMessage(
+        headers={},
+        body={"id": "1", "method": method, "params": {}},
+        metadata={"source": MessageSource.Client},
+    )
 
-    lsp.filter(record)
+    # Needed to set the method map internally
+    rpc_filter.match(request)
 
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", response, None)
-    record.__dict__["Message-Source"] = "server"
+    message = JsonRPCMessage(
+        headers={},
+        body=response,
+        metadata={"source": MessageSource.Server},
+    )
 
-    assert lsp.filter(record) is expected
+    if expected:
+        assert rpc_filter.match(message) == message
+    else:
+        assert rpc_filter.match(message) is None
 
 
 @pytest.mark.parametrize(
-    "message,setup",
+    "body,setup",
     [
         # Request messages
         *itertools.product(
@@ -290,16 +337,20 @@ def test_filter_included_method_response_message(
         ),
     ],
 )
-def test_filter_excluded_method(message: dict, setup: tuple[list[str], bool]):
+def test_filter_excluded_method(body: dict[str, Any], setup: tuple[list[str], bool]):
     """Ensure that we can filter messages by listing the methods we don't wish to
     see."""
 
     methods, expected = setup
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", message, None)
-    record.__dict__["Message-Source"] = "client"
+    message = JsonRPCMessage(
+        headers={}, body=body, metadata={"source": MessageSource.Client}
+    )
 
-    lsp = LSPFilter(exclude_methods=methods)
-    assert lsp.filter(record) is expected
+    rpc_filter = JsonRPCFilter(exclude_methods=methods)
+    if expected:
+        assert rpc_filter.match(message) == message
+    else:
+        assert rpc_filter.match(message) is None
 
 
 @pytest.mark.parametrize(
@@ -336,51 +387,28 @@ def test_filter_excluded_method(message: dict, setup: tuple[list[str], bool]):
     ],
 )
 def test_filter_excluded_method_response_message(
-    response: dict, setup: tuple[list[str], str, bool]
+    response: dict[str, Any], setup: tuple[list[str], str, bool]
 ):
     """Ensure that we can filter response message by listing the methods we dont' wish
     to see."""
 
     methods, method, expected = setup
-    lsp = LSPFilter(exclude_methods=methods)
+    rpc_filter = JsonRPCFilter(exclude_methods=methods)
 
-    request = dict(id="1", method=method, params={})
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["Message-Source"] = "client"
-
-    lsp.filter(record)
-
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", response, None)
-    record.__dict__["Message-Source"] = "server"
-
-    assert lsp.filter(record) is expected
-
-
-def test_filter_skip_unformattable_message():
-    """Ensure that if a message cannot be formatted it is skipped."""
-
-    lsp = LSPFilter(formatter="{.xxx}")
-
-    request = dict(id="1", method="textDocument/completion", params={})
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["Message-Source"] = "client"
-
-    lsp.filter(record)
-    assert lsp.filter(record) is False
-
-
-def test_filter_format_message():
-    """Ensure that we can format a message according to some string."""
-
-    lsp = LSPFilter(formatter="{.params.textDocument.uri}")
-
-    request = dict(
-        id="1",
-        method="textDocument/completion",
-        params=dict(textDocument=dict(uri="file:///path/to/file.txt")),
+    request = JsonRPCMessage(
+        headers={},
+        body={"id": "1", "method": method, "params": {}},
+        metadata={"source": MessageSource.Client},
     )
-    record = logging.LogRecord("example", logging.INFO, "", 0, "%s", request, None)
-    record.__dict__["Message-Source"] = "client"
 
-    assert lsp.filter(record) is True
-    assert record.msg == "file:///path/to/file.txt"
+    # Needed to set the method map internally
+    rpc_filter.match(request)
+
+    message = JsonRPCMessage(
+        headers={}, body=response, metadata={"source": MessageSource.Server}
+    )
+
+    if expected:
+        assert rpc_filter.match(message) == message
+    else:
+        assert rpc_filter.match(message) is None
