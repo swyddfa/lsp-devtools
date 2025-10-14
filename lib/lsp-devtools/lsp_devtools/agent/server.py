@@ -19,7 +19,12 @@ if typing.TYPE_CHECKING:
     from collections.abc import Awaitable
     from collections.abc import Callable
     from typing import Any
+    from typing import Literal
     from typing import Protocol
+
+    JsonRPCMessageType = Literal[
+        "request", "response", "result", "error", "notification"
+    ]
 
     class MessageHandler(Protocol):
         """Describes the shape of a message handler."""
@@ -137,6 +142,29 @@ class JsonRPCMessage:
 
     def __getitem__(self, key: str):
         return self.headers[key]
+
+    @property
+    def method(self) -> str | None:
+        """Return the JSON-RPC method name, if present"""
+        return self.body.get("method")
+
+    @property
+    def msg_id(self) -> str | int | None:
+        """Return the id of the JSON-RPC message, if present"""
+        return self.body.get("id")
+
+    @property
+    def msg_type(self) -> JsonRPCMessageType:
+        """Return the type of JSON-RPC message this represents"""
+        if "id" in self.body:
+            if "error" in self.body:
+                return "error"
+            elif "method" in self.body:
+                return "request"
+            else:
+                return "result"
+        else:
+            return "notification"
 
 
 @attrs.define
