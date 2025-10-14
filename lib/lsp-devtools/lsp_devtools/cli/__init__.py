@@ -11,8 +11,8 @@ logger = logging.getLogger(__name__)
 
 BUILTIN_COMMANDS = [
     "lsp_devtools.agent",
-    "lsp_devtools.client",
-    "lsp_devtools.inspector",
+    # "lsp_devtools.client",
+    # "lsp_devtools.inspector",
     "lsp_devtools.record",
 ]
 
