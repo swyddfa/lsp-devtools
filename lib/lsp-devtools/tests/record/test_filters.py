@@ -19,15 +19,15 @@ if typing.TYPE_CHECKING:
 @pytest.mark.parametrize(
     "filter_source,message_source,expected",
     [
-        ("both", MessageSource.Client, True),
-        ("both", MessageSource.Server, True),
-        ("both", MessageSource.Agent, False),
-        ("client", MessageSource.Client, True),
-        ("client", MessageSource.Server, False),
-        ("client", MessageSource.Agent, False),
-        ("server", MessageSource.Client, False),
-        ("server", MessageSource.Server, True),
-        ("server", MessageSource.Agent, False),
+        ("both", MessageSource.CLIENT, True),
+        ("both", MessageSource.SERVER, True),
+        ("both", MessageSource.AGENT, False),
+        ("client", MessageSource.CLIENT, True),
+        ("client", MessageSource.SERVER, False),
+        ("client", MessageSource.AGENT, False),
+        ("server", MessageSource.CLIENT, False),
+        ("server", MessageSource.SERVER, True),
+        ("server", MessageSource.AGENT, False),
     ],
 )
 def test_filter_message_source(
@@ -117,7 +117,7 @@ def test_filter_included_message_types(
     message = JsonRPCMessage(
         headers={},
         body=body,
-        metadata={"source": MessageSource.Client},
+        metadata={"source": MessageSource.CLIENT},
     )
 
     rpc_filter = JsonRPCFilter(include_message_types=message_types)
@@ -197,7 +197,7 @@ def test_filter_excluded_message_types(
 
     message_types, expected = setup
     message = JsonRPCMessage(
-        headers={}, body=body, metadata={"source": MessageSource.Client}
+        headers={}, body=body, metadata={"source": MessageSource.CLIENT}
     )
 
     rpc_filter = JsonRPCFilter(exclude_message_types=message_types)
@@ -239,7 +239,7 @@ def test_filter_included_method(body: dict[str, Any], setup: tuple[list[str], bo
 
     methods, expected = setup
     message = JsonRPCMessage(
-        headers={}, body=body, metadata={"source": MessageSource.Client}
+        headers={}, body=body, metadata={"source": MessageSource.CLIENT}
     )
 
     rpc_filter = JsonRPCFilter(include_methods=methods)
@@ -294,7 +294,7 @@ def test_filter_included_method_response_message(
     request = JsonRPCMessage(
         headers={},
         body={"id": "1", "method": method, "params": {}},
-        metadata={"source": MessageSource.Client},
+        metadata={"source": MessageSource.CLIENT},
     )
 
     # Needed to set the method map internally
@@ -303,7 +303,7 @@ def test_filter_included_method_response_message(
     message = JsonRPCMessage(
         headers={},
         body=response,
-        metadata={"source": MessageSource.Server},
+        metadata={"source": MessageSource.SERVER},
     )
 
     if expected:
@@ -343,7 +343,7 @@ def test_filter_excluded_method(body: dict[str, Any], setup: tuple[list[str], bo
 
     methods, expected = setup
     message = JsonRPCMessage(
-        headers={}, body=body, metadata={"source": MessageSource.Client}
+        headers={}, body=body, metadata={"source": MessageSource.CLIENT}
     )
 
     rpc_filter = JsonRPCFilter(exclude_methods=methods)
@@ -398,14 +398,14 @@ def test_filter_excluded_method_response_message(
     request = JsonRPCMessage(
         headers={},
         body={"id": "1", "method": method, "params": {}},
-        metadata={"source": MessageSource.Client},
+        metadata={"source": MessageSource.CLIENT},
     )
 
     # Needed to set the method map internally
     rpc_filter.match(request)
 
     message = JsonRPCMessage(
-        headers={}, body=response, metadata={"source": MessageSource.Server}
+        headers={}, body=response, metadata={"source": MessageSource.SERVER}
     )
 
     if expected:
