@@ -32,6 +32,9 @@ if typing.TYPE_CHECKING:
         def feed(self, data: bytes, source: MessageSource) -> Awaitable[None] | None:
             """Pass bytes into the handler."""
 
+        def stop(self) -> Awaitable[None] | None:
+            """Called when the application stops"""
+
     MessageParser = Callable[[asyncio.StreamReader, MessageHandler], Awaitable[Any]]
 
 logger = logging.getLogger(__name__)
@@ -126,6 +129,15 @@ class AgentServer:
             await self._tcp_server
 
     def stop(self):
+        for handler in self.handlers.values():
+            try:
+                if inspect.isawaitable(res := handler.stop()):
+                    task = asyncio.ensure_future(res)
+                    task.add_done_callback(self._tasks.discard)
+                    self._tasks.add(task)
+            except Exception:
+                self.logger.exception("Error stopping handler")
+
         if self._tcp_server is not None:
             self._tcp_server.cancel()
 
@@ -260,3 +272,6 @@ class JsonRPCHandler:
                 task = asyncio.create_task(res)
                 self._tasks.add(task)
                 task.add_done_callback(self._tasks.discard)
+
+    def stop(self):
+        pass
