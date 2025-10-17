@@ -46,7 +46,7 @@ class AgentClientHandler(logging.Handler):
     def emit(self, record: logging.LogRecord) -> None:
         msg = (self.format(record) + "\n").encode()
 
-        source = MessageSource.Agent
+        source = MessageSource.AGENT
         length = len(msg)
         data = b"".join([MessageHeader.pack(source, length), msg])
 
