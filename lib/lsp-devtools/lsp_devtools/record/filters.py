@@ -26,10 +26,10 @@ def string_to_message_source(
         return "both"
 
     if value == "client":
-        return MessageSource.Client
+        return MessageSource.CLIENT
 
     if value == "server":
-        return MessageSource.Server
+        return MessageSource.SERVER
 
     raise ValueError(f"Unknown message source: {value!r}")
 
@@ -90,7 +90,7 @@ class JsonRPCFilter:
         return message
 
     def source_matches(self, source: MessageSource):
-        if source == MessageSource.Agent:
+        if source == MessageSource.AGENT:
             return False
 
         return self.message_source in {"both", source}

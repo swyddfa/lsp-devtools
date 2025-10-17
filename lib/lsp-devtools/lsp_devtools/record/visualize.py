@@ -147,10 +147,10 @@ class TrafficVisualiser:
     def emit(self, source: MessageSource):
         self.progress.start()
 
-        if source == MessageSource.Client:
+        if source == MessageSource.CLIENT:
             self.client_count += 1
 
-        if source == MessageSource.Server:
+        if source == MessageSource.SERVER:
             self.server_count += 1
 
         self.progress.update(

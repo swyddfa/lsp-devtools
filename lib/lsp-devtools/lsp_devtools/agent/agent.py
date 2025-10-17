@@ -35,13 +35,13 @@ MessageHeader = struct.Struct("!BI")
 class MessageSource(enum.IntEnum):
     """Indicates if a message came from the client or the server."""
 
-    Agent = enum.auto()
+    AGENT = enum.auto()
     """Messages coming from the agent itself"""
 
-    Client = enum.auto()
+    CLIENT = enum.auto()
     """Messages coming from the language client"""
 
-    Server = enum.auto()
+    SERVER = enum.auto()
     """Messages coming from the langiage server"""
 
 
@@ -77,7 +77,7 @@ class Agent:
             self.connect_streams(
                 self.reader,
                 AsyncStreamWriter(server_stdin),
-                MessageSource.Client,
+                MessageSource.CLIENT,
             ),
         )
         self._tasks.add(client_to_server)
@@ -87,7 +87,7 @@ class Agent:
             self.connect_streams(
                 server_stdout,
                 self.writer,
-                MessageSource.Server,
+                MessageSource.SERVER,
             ),
         )
         self._tasks.add(server_to_client)
