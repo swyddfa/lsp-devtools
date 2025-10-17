@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from lsp_devtools.agent import JsonRPCHandler
-from lsp_devtools.agent import JsonRPCMessage
 from lsp_devtools.agent import MessageSource
-from lsp_devtools.agent.server import ParserState
+from lsp_devtools.handlers.jsonrpc import JsonRPCHandler
+from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
+from lsp_devtools.handlers.jsonrpc import ParserState
 
 
 @pytest.mark.parametrize(
@@ -129,15 +129,15 @@ def test_jsonrpc_handler_feed(
         def __init__(self, start_state: ParserState):
             super().__init__()
             self.messages = []
-            self._parsers[MessageSource.Client] = start_state
+            self._parsers[MessageSource.CLIENT] = start_state
 
         def handle(self, message: JsonRPCMessage):
             self.messages.append(message)
 
     handler = TestHandler(start_state)
-    handler.feed(data, MessageSource.Client)
+    handler.feed(data, MessageSource.CLIENT)
 
-    assert handler._parsers[MessageSource.Client] == end_state
+    assert handler._parsers[MessageSource.CLIENT] == end_state
     assert len(handler.messages) == len(messages)
 
     for expected, actual in zip(messages, handler.messages):

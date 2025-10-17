@@ -6,8 +6,8 @@ import typing
 
 import pytest
 
-from lsp_devtools.agent import JsonRPCMessage
 from lsp_devtools.agent import MessageSource
+from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
 from lsp_devtools.record.filters import JsonRPCFilter
 
 if typing.TYPE_CHECKING:
