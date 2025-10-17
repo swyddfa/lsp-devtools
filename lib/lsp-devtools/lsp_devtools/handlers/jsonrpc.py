@@ -1,0 +1,168 @@
+from __future__ import annotations
+
+import asyncio
+import inspect
+import json
+import typing
+from collections import defaultdict
+from datetime import datetime
+from datetime import timezone
+
+import attrs
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Literal
+    from typing import Protocol
+
+    from lsp_devtools.agent import MessageSource
+
+    JsonRPCMessageType = Literal[
+        "request", "response", "result", "error", "notification"
+    ]
+
+    class JsonRPCFilter(Protocol):
+        def match(self, message: JsonRPCMessage) -> JsonRPCMessage | None:
+            """Returns the given message if it matches the filter."""
+
+
+@attrs.define
+class JsonRPCMessage:
+    """A Json-RPC message."""
+
+    metadata: dict[str, Any]
+
+    headers: dict[str, str]
+
+    body: dict[str, Any]
+
+    def __getitem__(self, key: str):
+        return self.headers[key]
+
+    @property
+    def method(self) -> str | None:
+        """Return the JSON-RPC method name, if present"""
+        return self.body.get("method")
+
+    @property
+    def msg_id(self) -> str | int | None:
+        """Return the id of the JSON-RPC message, if present"""
+        return self.body.get("id")
+
+    @property
+    def msg_type(self) -> JsonRPCMessageType:
+        """Return the type of JSON-RPC message this represents"""
+        if "id" in self.body:
+            if "error" in self.body:
+                return "error"
+            elif "method" in self.body:
+                return "request"
+            else:
+                return "result"
+        else:
+            return "notification"
+
+
+@attrs.define
+class ParserState:
+    buffer: bytearray = attrs.field(factory=bytearray)
+    """Bytes that have not yet been parsed"""
+
+    headers: dict[str, str] = attrs.field(factory=dict)
+    """Parsed headers"""
+
+    headers_complete: bool = attrs.field(default=False)
+    """Flag indicating if all the headers for this message have been parsed."""
+
+    @property
+    def content_length(self) -> int:
+        """Return the value of the content length header or ``-1`` if it's not defined."""
+
+        if (value := self.headers.get("Content-Length")) is None:
+            return -1
+
+        return int(value)
+
+
+class JsonRPCHandler:
+    """A message handler for Json-RPC messages"""
+
+    def __init__(self, filter: JsonRPCFilter | None = None):
+        self._filter: JsonRPCFilter | None = filter
+        self._parsers: dict[MessageSource, ParserState] = defaultdict(ParserState)
+        self._tasks: set[asyncio.Task[Any]] = set()
+
+    def _handle_message(self, message: JsonRPCMessage):
+        if self._filter and self._filter.match(message) is None:
+            return
+
+        self.handle(message)
+
+    def handle(self, message: JsonRPCMessage):
+        """Handle the messages."""
+        raise NotImplementedError()
+
+    def feed(self, data: bytes, source: MessageSource):
+        """Parse a JSON-RPC message from the given set of bytes."""
+
+        SEP = b"\r\n"
+
+        state = self._parsers[source]
+        state.buffer += data
+
+        # We want to make sure that we consume as many bytes as possible - we never
+        # know how long it will be before we receive more and we don't want complete
+        # messages to be stuck in the buffer...
+        #
+        # So we will keep running that parser as long as the buffer continues to shrink
+        previous_length = len(state.buffer) + 1
+        while len(state.buffer) < previous_length:
+            previous_length = len(state.buffer)
+
+            if not state.headers_complete:
+                if (idx := state.buffer.find(SEP)) == -1:
+                    return
+
+                line, state.buffer = state.buffer[:idx], state.buffer[idx + len(SEP) :]
+                if line == b"":
+                    state.headers_complete = True
+                    continue
+
+                elif (idx := line.find(b":")) == -1:
+                    raise ValueError(f"Invalid message header: {line!r}")
+
+                else:
+                    bname, bvalue = line[:idx], line[idx + 1 :]
+                    name = bname.decode("utf8").strip()
+                    value = bvalue.decode("utf8").strip()
+
+                    state.headers[name] = value
+                    continue
+
+            if (length := state.content_length) == -1:
+                return
+
+            if len(state.buffer) < length:
+                return
+
+            content, state.buffer = state.buffer[:length], state.buffer[length:]
+            message = JsonRPCMessage(
+                headers=state.headers,
+                body=json.loads(content),
+                metadata={
+                    "timestamp": datetime.now(tz=timezone.utc),
+                    "source": source,
+                    "session": "todo",
+                },
+            )
+
+            state.headers = {}
+            state.headers_complete = False
+
+            if inspect.iscoroutine(res := self.handle(message)):
+                task = asyncio.create_task(res)
+                self._tasks.add(task)
+                task.add_done_callback(self._tasks.discard)
+
+    def stop(self):
+        pass
