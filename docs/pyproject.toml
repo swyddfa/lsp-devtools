@@ -1,0 +1,13 @@
+[tool.esbonio.sphinx]
+pythonCommand = [
+    "uv", "run", "--no-project",
+    "--with", "sphinx",
+    "--with", "sphinx-copybutton",
+    "--with", "sphinx-design",
+    "--with", "furo",
+    "--with", "myst-parser",
+    "--with", "pygls>=2.0",
+    "--with-editable", "../lib/pytest-lsp",
+    "--with-editable", "../lib/lsp-devtools",
+    "python",
+]
