@@ -14,10 +14,9 @@ from __future__ import annotations
 # ruff: noqa: S101
 import logging
 import warnings
+from collections.abc import Callable
 from typing import Any
-from typing import Callable
 from typing import Optional
-from typing import Union
 
 from lsprotocol import types
 from pygls.capabilities import get_capability
@@ -154,7 +153,7 @@ def check_completion_item(
 @check_result_for(method=types.TEXT_DOCUMENT_COMPLETION)
 def completion_items(
     capabilities: types.ClientCapabilities,
-    result: Union[types.CompletionList, list[types.CompletionItem], None],
+    result: types.CompletionList | list[types.CompletionItem] | None,
 ):
     """Ensure that the completion items returned from the server are compliant with the
     spec and the client's declared capabilities."""
