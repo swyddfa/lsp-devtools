@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import asyncio
-import typing
 from datetime import datetime
+from datetime import timezone
 
 from rich.console import Console
 from rich.highlighter import ReprHighlighter
@@ -119,7 +119,7 @@ class RichHandler(JsonRPCHandler):
         else:
             source = ""
 
-        dt = message.metadata.get("timestamp", datetime.now())
+        dt = message.metadata.get("timestamp", datetime.now(tz=timezone.utc))
         table.add_row(f"{dt:%H:%M:%S}", source, self.highlighter(content))
         self.console.print(table)
 

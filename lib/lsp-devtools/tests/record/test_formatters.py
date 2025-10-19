@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import typing
 
 import pytest
 
 from lsp_devtools.record.formatters import ValueFormatter
+
+if typing.TYPE_CHECKING:
+    from typing import Any
 
 
 @pytest.mark.parametrize(
