@@ -2,7 +2,7 @@ exclude: '.bumpversion.cfg$'
 repos:
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-yaml
   - id: end-of-file-fixer
@@ -10,17 +10,28 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.13.1
+  rev: v0.14.0
   hooks:
   - id: ruff
+    name: ruff (lsp-devtools)
     args: [--fix]
-    files: 'lib/.*\.py'
+    files: 'lib/lsp-devtools/.*\.py'
+
+  - id: ruff
+    name: ruff (pytest-lsp)
+    args: [--fix]
+    files: 'lib/pytest-lsp/.*\.py'
 
   - id: ruff-format
-    files: 'lib/.*\.py'
+    name: ruff-format (lsp-devtools)
+    files: 'lib/lsp-devtools/.*\.py'
+
+  - id: ruff-format
+    name: ruff-format (pytest-lsp)
+    files: 'lib/pytest-lsp/.*\.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.16.0'
+  rev: 'v1.18.2'
   hooks:
   - id: mypy
     name: mypy (pytest-lsp)
@@ -28,7 +39,7 @@ repos:
     additional_dependencies:
     - importlib-resources
     - platformdirs
-    - 'pygls>=2.0a2'
+    - 'pygls>=2.0'
     - pytest
     - pytest-asyncio
     - websockets
@@ -40,12 +51,10 @@ repos:
     additional_dependencies:
     - aiosqlite
     - attrs
-    - importlib-resources
     - platformdirs
-    - 'pygls>=2.0a2'
+    - 'pygls>=2.0'
     - stamina
     - textual
-    - websockets
     files: 'lib/lsp-devtools/lsp_devtools/.*\.py'
 
 - repo: local
