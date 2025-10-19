@@ -2,8 +2,9 @@ import asyncio
 import sys
 
 import pytest
-import pytest_lsp
 from lsprotocol import types
+
+import pytest_lsp
 from pytest_lsp import ClientServerConfig, LanguageClient
 
 
@@ -16,6 +17,7 @@ def disallow_publish_diagnostics(
 
 # Putting this here so the code example in the docs includes the imports
 from pygls.protocol import default_converter
+
 from pytest_lsp.client import DEFAULT_CLIENT_FEATURES, register_lsp_features
 
 

@@ -134,7 +134,7 @@ def check_params_against_client_capabilities(
 def check_completion_item(
     item: types.CompletionItem,
     commit_characters_support: bool,
-    documentation_formats: set[str],
+    documentation_formats: set[types.MarkupKind],
     snippet_support: bool,
 ):
     """Ensure that the given ``CompletionItem`` complies with the given capabilities."""

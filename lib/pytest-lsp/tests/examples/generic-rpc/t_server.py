@@ -2,8 +2,9 @@ import logging
 import sys
 
 import pytest
-import pytest_lsp
 from pygls.client import JsonRPCClient
+
+import pytest_lsp
 from pytest_lsp import ClientServerConfig
 
 
