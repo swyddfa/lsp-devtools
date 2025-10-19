@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import pathlib
 import sqlite3
-import typing
 from contextlib import closing
 from datetime import datetime
 from importlib import resources

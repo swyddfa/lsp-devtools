@@ -18,8 +18,6 @@ if typing.TYPE_CHECKING:
     from typing import Literal
     from typing import Protocol
 
-    from lsp_devtools.agent import MessageSource
-
     JsonRPCMessageType = Literal[
         "request", "response", "result", "error", "notification"
     ]
@@ -143,7 +141,7 @@ class JsonRPCHandler:
 
     def handle(self, message: JsonRPCMessage):
         """Handle the messages."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def feed(self, data: bytes, source: MessageSource):
         """Parse a JSON-RPC message from the given set of bytes."""
@@ -171,16 +169,15 @@ class JsonRPCHandler:
                     state.headers_complete = True
                     continue
 
-                elif (idx := line.find(b":")) == -1:
+                if (idx := line.find(b":")) == -1:
                     raise ValueError(f"Invalid message header: {line!r}")
 
-                else:
-                    bname, bvalue = line[:idx], line[idx + 1 :]
-                    name = bname.decode("utf8").strip()
-                    value = bvalue.decode("utf8").strip()
+                bname, bvalue = line[:idx], line[idx + 1 :]
+                name = bname.decode("utf8").strip()
+                value = bvalue.decode("utf8").strip()
 
-                    state.headers[name] = value
-                    continue
+                state.headers[name] = value
+                continue
 
             if (length := state.content_length) == -1:
                 return
