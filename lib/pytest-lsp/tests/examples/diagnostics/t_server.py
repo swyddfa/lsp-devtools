@@ -1,7 +1,6 @@
 import sys
 
 import pytest
-import pytest_lsp
 from lsprotocol.types import (
     TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS,
     ClientCapabilities,
@@ -9,6 +8,8 @@ from lsprotocol.types import (
     InitializeParams,
     TextDocumentItem,
 )
+
+import pytest_lsp
 from pytest_lsp import ClientServerConfig, LanguageClient
 
 

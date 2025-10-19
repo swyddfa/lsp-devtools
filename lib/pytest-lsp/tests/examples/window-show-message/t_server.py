@@ -1,7 +1,6 @@
 import sys
 
 import pytest
-import pytest_lsp
 from lsprotocol.types import (
     ClientCapabilities,
     CompletionList,
@@ -10,6 +9,8 @@ from lsprotocol.types import (
     Position,
     TextDocumentIdentifier,
 )
+
+import pytest_lsp
 from pytest_lsp import ClientServerConfig, LanguageClient
 
 
