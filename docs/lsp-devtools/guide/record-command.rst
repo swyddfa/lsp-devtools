@@ -32,7 +32,7 @@ The following command will save to a JSON file only the client's info and :class
 
 ::
 
-   lsp-devtools record -f '{{"clientInfo": {.params.clientInfo}, "capabilities": {.params.capabilities}}}' --to-file <client_name>_v<version>.json
+   lsp-devtools record -f '{{"clientInfo": {message.params.clientInfo:json}, "capabilities": {message.params.capabilities:json}}}' --to-file nvim_v0.11.json
 
 **Format and show any window/logMessages**
 
@@ -40,7 +40,7 @@ This can be used to replicate the ``Output`` log panel in VSCode in editors that
 
 ::
 
-   lsp-devtools record -f "{.params.type|MessageType}: {.params.message}"
+   lsp-devtools record -f "{message.params.type:MessageType}: {message.params.message}"
 
 .. figure:: /images/record-log-messages.svg
    :figclass: scrollable-svg
@@ -53,7 +53,7 @@ Connection Options
 By default, the LSP agent and other commands will attempt to connect to each other on ``localhost:8765``.
 The following options can be used to change this behavior
 
-.. option:: --host <host>
+.. option:: --bind <host>
 
    The host to bind to.
 
@@ -177,17 +177,12 @@ Formatting messages
 
    .. tip::
 
-      Format strings are also a powerful filtering mechanism! - any messages that do not fit with the supplied format will not be shown
+      Format strings are also a powerful filtering mechanism! -
+      By default, any messages that do not fit with the supplied format will not be shown, use the :option:`--keep-unformatted` option to change this
 
    Format strings use the following syntax
 
-   .. admonition:: Feedback Wanted!
-
-      We're looking for feedback on this syntax, especially when it comes to formatting lists of items.
-      Let us know by `opening an issue <https://github.com/swyddfa/lsp-devtools/issues/new>`_ if you have any thoughts or suggested improvements
-
-
-   Similar to Python's :ref:`python:formatstrings` a pair of braces (``{}``) denote a placeholder where a value can be inserted.
+   Similar to Python's :external+python:std:ref:`formatstrings` a pair of braces (``{}``) denote a placeholder where a value can be inserted.
    Inside the braces you can then select and the message field you want to be inserted using a dot-separated syntax that should feel familiar if you've ever used `jq <https://jqlang.github.io/jq/>`_::
 
      Message:
@@ -200,12 +195,12 @@ Formatting messages
      }
 
      Format String:
-     "{.params.position.line}:{.params.position.character}"
+     "{message.params.position.line}:{message.params.position.character}"
 
      Result:
      1:2
 
-   The pipe symbol (``|``) can be used to pass the selected field to a formatter e.g. ``Position``::
+   The colon symbol (``:``) can be used to pass the selected field to a formatter e.g. ``Position``::
 
      Message:
      {
@@ -217,7 +212,7 @@ Formatting messages
      }
 
      Format String:
-     "{.params.position|Position}"
+     "{message.params.position:Position}"
 
      Result:
      1:2
@@ -233,29 +228,12 @@ Formatting messages
      }
 
      Format String:
-     "{.result.items[].label}"
+     "{message.result.items[:].label}"
 
      Result:
      one
      two
      three
-
-   However, you can specify a custom separator inside the brackets::
-
-     Message:
-     {
-       "result": {
-         "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
-       }
-     }
-
-     Format String:
-     "{.result.items[\n- ].label}"
-
-     Result:
-     - one
-     - two
-     - three
 
    The brackets also support Python's standard list indexing rules::
 
@@ -266,26 +244,17 @@ Formatting messages
        }
      }
 
-     Format String:                  Result:
-     "{.result.items[0].label}"      one
-     "{.result.items[-1].label}"     three
-     "{.result.items[0:2].label}"    "one\ntwo"
+     Format String:                         Result:
+     "{message.result.items[0].label}"      one
+     "{message.result.items[-1].label}"     three
+     "{message.result.items[0:2].label}"    "one\ntwo"
 
-   Finally, if you want to supply an index *and* adjust the separator you can separate them with the ``#`` symbol::
 
-     Message:
-     {
-       "result": {
-         "items": [{"label": "one"}, {"label": "two"}, {"label": "three"}]
-       }
-     }
+.. option:: --keep-unformatted
 
-     Format String:
-     "{.result.items[0:2#\n- ].label}"
+   By default, the ``lsp-devtools record`` command will omit any messages which fail to format using any of the given format strings.
+   When given, this option ensures that any unformatted messages are still included in the output.
 
-     Result:
-     - one
-     - two
 
 .. _lsp-devtools-record-formatters:
 
@@ -297,8 +266,8 @@ Formatters
 ``json`` (default)
   Renders objects as "pretty" JSON, equivalent to ``json.dumps(obj, indent=2)``
 
-``json-compact``
-  Renders objects as JSON with no additional formatting, equivalent to ``json.dumps(obj)``
+``jsonl``
+  Renders objects as JSON with no additional formatting on a single line, equivalent to ``json.dumps(obj)``
 
 ``position``
    ``{"line": 1, "character": 2}`` will be rendered as ``1:2``
@@ -307,7 +276,7 @@ Formatters
    ``{"start": {"line": 1, "character": 2}, "end": {"line": 3, "character": 4}}`` will be rendered as ``1:2-3:4``
 
 
-Additionally, any enum type can be used as a formatter, where numbers will be replaced with their corresponding name, for example::
+Additionally, any enum type provided by the ``lsprotocol`` package can be used as a formatter, where numbers will be replaced with their corresponding name, for example::
 
   Format String:
   "{.type|MessageType}"
