@@ -1,8 +1,9 @@
 import sys
 
 import pytest
-import pytest_lsp
 from lsprotocol import types
+
+import pytest_lsp
 from pytest_lsp import ClientServerConfig, LanguageClient, LspSpecificationWarning
 
 
