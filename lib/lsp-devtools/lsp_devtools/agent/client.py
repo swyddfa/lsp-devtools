@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import logging
 import typing
 
@@ -52,15 +51,7 @@ class AgentClient:
 
         # Send any buffered messages
         while len(self._buffer) > 0:
-            res = self.writer.write(self._buffer.pop(0))
-            if inspect.isawaitable(res):
-                task = asyncio.ensure_future(res)
-                task.add_done_callback(self._tasks.discard)
-                self._tasks.add(task)
+            self.writer.write(self._buffer.pop(0))
 
         logger.debug("sending message: %r", message)
-        res = self.writer.write(message)
-        if inspect.isawaitable(res):
-            task = asyncio.ensure_future(res)
-            task.add_done_callback(self._tasks.discard)
-            self._tasks.add(task)
+        self.writer.write(message)

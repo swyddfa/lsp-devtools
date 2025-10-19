@@ -10,8 +10,8 @@ from lsp_devtools.agent import MessageSource
 if typing.TYPE_CHECKING:
     from typing import Literal
 
-    from lsp_devtools.agent import JsonRPCMessage
-    from lsp_devtools.agent.server import JsonRPCMessageType
+    from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
+    from lsp_devtools.handlers.jsonrpc import JsonRPCMessageType
 
     MessageSourceString = Literal["client", "server", "both"]
 
@@ -107,6 +107,8 @@ class JsonRPCFilter:
 
         if msg_id is not None:
             return self._response_method_map.get(msg_id)
+
+        return None
 
 
 def message_matches_type(message_type: str, types: set[JsonRPCMessageType]) -> bool:
