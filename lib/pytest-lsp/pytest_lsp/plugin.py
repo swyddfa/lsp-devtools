@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import inspect
 import logging
-import sys
 import textwrap
 import typing
 
@@ -16,8 +15,8 @@ from pytest_lsp.client import captured_exception_key
 from pytest_lsp.client import make_test_lsp_client
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
 
 
 logger = logging.getLogger("client")
@@ -159,13 +158,6 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
 
     if len(messages) > 0:
         item.add_report_section(call.when, "window/logMessages", "\n".join(messages))
-
-
-# anext() was added in 3.10
-if sys.version_info < (3, 10):
-
-    async def anext(it):
-        return await it.__anext__()
 
 
 def get_fixture_arguments(
