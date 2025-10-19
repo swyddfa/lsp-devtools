@@ -140,7 +140,7 @@ def test_jsonrpc_handler_feed(
     assert handler._parsers[MessageSource.CLIENT] == end_state
     assert len(handler.messages) == len(messages)
 
-    for expected, actual in zip(messages, handler.messages):
+    for expected, actual in zip(messages, handler.messages, strict=False):
         assert expected.headers == actual.headers
         assert expected.body == actual.body
         # We'll ignore the metadata for now

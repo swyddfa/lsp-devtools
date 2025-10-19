@@ -7,12 +7,10 @@ import typing
 import pytest
 import stamina
 
-from lsp_devtools.agent import MessageSource
 from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
 
 if typing.TYPE_CHECKING:
     import pathlib
-    from typing import Any
 
 
 @pytest.mark.parametrize(
