@@ -11,6 +11,8 @@ def setup_test(pytester: pytest.Pytester, example_name: str):
 [pytest]
 asyncio_mode = auto
 asyncio_default_fixture_loop_scope = function
+filterwarnings =
+    ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning
 """
     )
 
