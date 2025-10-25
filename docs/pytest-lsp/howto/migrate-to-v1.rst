@@ -7,7 +7,15 @@ This guide summarises the changes and provides references on where to get more d
 Python Support
 --------------
 
-This release removes support for Python 3.8 and adds support for Python 3.13 and Python 3.14.
+This release removes support for
+
+- Python 3.8
+- Python 3.9
+
+and adds support for
+
+- Python 3.13
+- Python 3.14
 
 ``pytest``
 ----------
