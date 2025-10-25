@@ -1,3 +1,23 @@
+## v1.0.0 - 2025-10-25
+
+### Enhancements
+
+- Introduced `register_lsp_features` which should make it easier to modify and extend the behaviour of the default language client. ([#195](https://github.com/swyddfa/lsp-devtools/issues/195))
+
+### Client Capabilities
+
+- Add client capabilities for neovim ``v0.11.0`` ([#198](https://github.com/swyddfa/lsp-devtools/issues/198))
+
+### Misc
+
+- Updated minimum version of ``pytest-asyncio`` to ``v1``
+
+  Add support for Python 3.14 ([#201](https://github.com/swyddfa/lsp-devtools/issues/201))
+- Bump pygls to v2.0
+
+  Drop Python 3.9 support ([#213](https://github.com/swyddfa/lsp-devtools/issues/213))
+
+
 ## v1.0.0b2 - 2024-11-23
 
 ### Fixes
