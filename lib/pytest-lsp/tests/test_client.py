@@ -69,6 +69,8 @@ def test_client_capabilities(
         [pytest]
         asyncio_mode = auto
         asyncio_default_fixture_loop_scope = function
+        filterwarnings =
+            ignore:'asyncio.iscoroutinefunction' is deprecated:DeprecationWarning
         """
     )
 
