@@ -63,6 +63,18 @@ class JsonRPCMessage:
         )
 
     @property
+    def timestamp(self) -> datetime | None:
+        if (dt := self.metadata.get("timestamp")) is None:
+            return None
+
+        if isinstance(dt, str):
+            return datetime.fromisoformat(dt)
+
+    @property
+    def source(self) -> MessageSource | None:
+        return self.metadata.get("source")
+
+    @property
     def method(self) -> str | None:
         """Return the JSON-RPC method name, if present"""
         return self.body.get("method")
