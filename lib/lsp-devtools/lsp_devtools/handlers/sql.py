@@ -3,18 +3,23 @@ from __future__ import annotations
 import json
 import pathlib
 import sqlite3
+import typing
 from contextlib import closing
+from contextlib import contextmanager
 from datetime import datetime
 from importlib import resources
 
 from .jsonrpc import JsonRPCHandler
 from .jsonrpc import JsonRPCMessage
 
+if typing.TYPE_CHECKING:
+    from typing import Literal
+
 
 class SqlHandler(JsonRPCHandler):
     """A handler that sends messages to a SQL database"""
 
-    def __init__(self, dbpath: pathlib.Path, *args, **kwargs):
+    def __init__(self, dbpath: pathlib.Path | Literal[":memory:"], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dbpath = dbpath
 
@@ -37,6 +42,29 @@ class SqlHandler(JsonRPCHandler):
             )
 
             conn.commit()
+
+    @contextmanager
+    def cursor(self, commit: bool = True):
+        """Get a connection to the database"""
+
+        db = sqlite3.connect(self.dbpath)
+        cursor = db.cursor()
+
+        yield cursor
+
+        if commit:
+            db.commit()
+
+    def find_messages(self):
+        with self.cursor() as db:
+            rows = db.execute("select * from messages")
+            for row in rows:
+                message = JsonRPCMessage(
+                    metadata=json.loads(row[0]),
+                    headers=json.loads(row[1]),
+                    body=json.loads(row[2]),
+                )
+                yield message
 
 
 def to_json(o):
