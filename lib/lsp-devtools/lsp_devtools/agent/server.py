@@ -60,7 +60,13 @@ class AgentServer:
 
     logger
        Logger instance to use, if not given a default logger derived from the moddule
-       name will be used insteaa.
+       name will be used instead.
+
+    host
+       The default hostname to use
+
+    port
+       The default port number to use
 
     persistent
        If ``True``, (the default) the server will keep running after the connection
@@ -71,10 +77,14 @@ class AgentServer:
         self,
         handlers: dict[MessageSource, MessageHandler] | None = None,
         logger: logging.Logger | None = None,
+        host: str = "localhost",
+        port: int = 8765,
         persistent: bool = True,
     ):
         self.logger: logging.Logger = logger or logging.getLogger(__name__)
         self.handlers: dict[MessageSource, MessageHandler] = handlers or {}
+        self.host = host
+        self.port = port
         self.persistent = persistent
 
         self._client_buffer: list[str] = []
@@ -123,8 +133,12 @@ class AgentServer:
         if not self.persistent:
             self.stop()
 
-    async def start_tcp(self, host: str, port: int) -> None:  # type: ignore[override]
+    async def start_tcp(self, host: str | None = None, port: int | None = None) -> None:
         """Start a TCP server to listen for connections."""
+
+        host = host or self.host
+        port = port or self.port
+
         server = await asyncio.start_server(self.run_connection, host, port)
         async with server:
             self._tcp_server = asyncio.create_task(server.serve_forever())
