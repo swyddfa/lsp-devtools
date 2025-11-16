@@ -4,7 +4,6 @@ import argparse
 import pathlib
 import typing
 
-import platformdirs
 from textual import log
 from textual import on
 from textual.app import App
@@ -20,7 +19,7 @@ from lsp_devtools.agent import MessageSource
 from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
 from lsp_devtools.handlers.sql import SqlHandler
 
-from .message_table import MessageTable
+from .message_browser import MessageBrowser
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -41,16 +40,21 @@ class LSPInspector(App):
         ("ctrl+c", "quit", "Quit"),
     ]
 
+    DEFAULT_CSS = """
+      MessageBrowser {
+        height: 1fr;
+      }
+    """
+
     def __init__(
         self,
-        db: AppSqlHandler,
+        db: SqlHandler,
         server: AgentServer | None = None,
         *args,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
-        db.app = self
         self.db = db
         """Holds recorded messages"""
 
@@ -59,7 +63,7 @@ class LSPInspector(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        yield MessageTable()
+        yield MessageBrowser()
 
         yield Footer()
 
@@ -72,7 +76,7 @@ class LSPInspector(App):
     #     table.add_row(message.msg_id, message.method)
 
     async def on_ready(self, event: Ready):
-        table = self.query_one(MessageTable)
+        table = self.query_one(MessageBrowser)
         table.reload()
 
         if self.server is not None:
@@ -84,27 +88,15 @@ class LSPInspector(App):
         await super().action_quit()
 
 
-class AppSqlHandler(SqlHandler):
-    def __init__(self, app: App | None = None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.app = app
-
-    def handle(self, message: JsonRPCMessage):
-        super().handle(message)
-        log("message")
-        if self.app is not None:
-            self.app.post_message(MessageReceived(message))
-
-
 def inspector(args, extra: list[str]):
     server = None
 
     if args.session is not None:
-        sql_handler = AppSqlHandler(dbpath=args.session)
+        sql_handler = SqlHandler(dbpath=args.session)
 
     # Assume a live connection
     else:
-        sql_handler = AppSqlHandler(dbpath=":memory:")
+        sql_handler = SqlHandler(dbpath=":memory:")
         server = AgentServer(
             handlers={
                 MessageSource.CLIENT: sql_handler,
