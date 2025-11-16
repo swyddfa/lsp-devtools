@@ -23,15 +23,29 @@ class SqlHandler(JsonRPCHandler):
         super().__init__(*args, **kwargs)
         self.dbpath = dbpath
 
+        self._mem_db: sqlite3.Connection | None = self._init_db()
+
+    def _init_db(self):
         resource = resources.files("lsp_devtools.handlers").joinpath("dbinit.sql")
         sql_script = resource.read_text(encoding="utf8")
 
-        with closing(sqlite3.connect(self.dbpath)) as conn:
-            conn.executescript(sql_script)
+        conn = None
+        if self.dbpath == ":memory:":
+            # Create a persistent connection to keep the data alive.
+            conn = sqlite3.connect(self.connection_string, uri=True)
+
+        with self.cursor() as cursor:
+            cursor.executescript(sql_script)
+
+        return conn
+
+    def __del__(self):
+        # Clean up data when this is destroyed
+        if self._mem_db is not None:
+            self._mem_db.close()
 
     def handle(self, message: JsonRPCMessage):
-        with closing(sqlite3.connect(self.dbpath)) as conn:
-            cursor = conn.cursor()
+        with self.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO messages VALUES (?, ?, ?)",
                 (
@@ -41,19 +55,28 @@ class SqlHandler(JsonRPCHandler):
                 ),
             )
 
-            conn.commit()
+    @property
+    def connection_string(self) -> str:
+        """Return the string to use when connecting to the db"""
+        # See "In-memory Databases and Shared Cache"
+        # https://www.sqlite.org/inmemorydb.html
+        if self.dbpath == ":memory:":
+            uri = f"file:{id(self)}?mode=memory&cache=shared"
+            return uri
+
+        return self.dbpath.resolve().as_uri()
 
     @contextmanager
     def cursor(self, commit: bool = True):
         """Get a connection to the database"""
 
-        db = sqlite3.connect(self.dbpath)
-        cursor = db.cursor()
+        with closing(sqlite3.connect(self.connection_string, uri=True)) as db:
+            cursor = db.cursor()
 
-        yield cursor
+            yield cursor
 
-        if commit:
-            db.commit()
+            if commit:
+                db.commit()
 
     def find_messages(self):
         with self.cursor() as db:
