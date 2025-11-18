@@ -10,8 +10,11 @@ from textual.widgets import DataTable
 from textual.widgets import TabbedContent
 from textual.widgets import TabPane
 
+from lsp_devtools.record.filters import JsonRPCFilter
 from lsp_devtools.record.formatters import format_message_source
 from lsp_devtools.viewers import RawViewer
+
+from .message_filters import MessageFilters
 
 if typing.TYPE_CHECKING:
     from textual.widgets.data_table import RowKey
@@ -74,11 +77,12 @@ class MessageBrowser(Container):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._messages: dict[RowKey, JsonRPCMessage] = {}
+        self._filter = JsonRPCFilter()
 
     def compose(self):
         with Horizontal(id="button-row"):
             yield Button(label="X", flat=True, variant="error", compact=True)
-            yield Button(label="Filters", flat=True)
+            yield Button(label="Filters", flat=True, id="set-filters")
 
         table = DataTable(cursor_type="row")
         table.add_column("Time")
@@ -90,6 +94,20 @@ class MessageBrowser(Container):
         details = MessageDetails()
         yield details
 
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "set-filters":
+
+            def maybe_set_filter(new_filter: JsonRPCFilter | None):
+                if new_filter is not None:
+                    self._filter = new_filter
+                    self.reload()
+
+            method_names = self.app.db.get_method_names()
+            filter_dialog = MessageFilters(
+                msg_filter=self._filter, method_names=method_names
+            )
+            self.app.push_screen(filter_dialog, maybe_set_filter)
+
     def on_data_table_row_highlighted(self, event: DataTable.RowHighlighted):
         if (message := self._messages.get(event.row_key)) is None:
             return
@@ -100,9 +118,15 @@ class MessageBrowser(Container):
     def reload(self):
         """Reload messages."""
         table = self.query_one(DataTable)
+        table.clear()
         self._messages.clear()
 
         for message in self.app.db.find_messages():
+            # TODO: Convert the filter into a SQL query so we can take advantage of
+            # the fact we're using SQLite!
+            if not self._filter.match(message):
+                continue
+
             source = ""
             if (msg_source := message.source) is not None:
                 source = format_message_source(msg_source)
