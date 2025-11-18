@@ -23,8 +23,8 @@ from textual.widgets import Header
 from lsp_devtools.agent import logger
 from lsp_devtools.database import Database
 from lsp_devtools.database import DatabaseLogHandler
+from lsp_devtools.inspector import MessageBrowser
 from lsp_devtools.inspector import MessagesTable
-from lsp_devtools.inspector import MessageViewer
 
 from .editor import EditorView
 from .lsp import LanguageClient
@@ -69,7 +69,7 @@ class LSPClient(App):
         self._async_tasks: list[asyncio.Task] = []
 
     def compose(self) -> ComposeResult:
-        message_viewer = MessageViewer("")
+        message_viewer = MessageBrowser("")
         messages_table = MessagesTable(
             self.db, message_viewer, session=self.lsp_client.session_id
         )

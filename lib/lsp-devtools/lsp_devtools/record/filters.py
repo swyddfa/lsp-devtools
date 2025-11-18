@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def string_to_message_source(
-    value: MessageSourceString,
+    value: MessageSourceString | MessageSource,
 ) -> Literal["both"] | MessageSource:
     if value == "both":
         return "both"
@@ -31,7 +31,7 @@ def string_to_message_source(
     if value == "server":
         return MessageSource.SERVER
 
-    raise ValueError(f"Unknown message source: {value!r}")
+    return value
 
 
 @attrs.define

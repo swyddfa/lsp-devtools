@@ -78,9 +78,21 @@ class SqlHandler(JsonRPCHandler):
             if commit:
                 db.commit()
 
+    def get_method_names(self) -> list[str]:
+        """Return all the available method names in the DB."""
+        with self.cursor(commit=False) as db:
+            rows = db.execute("""
+            SELECT DISTINCT
+              json_extract(body, "$.method") as method
+            FROM messages
+            WHERE method IS NOT NULL
+            ORDER BY method
+            """)
+            return [row[0] for row in rows]
+
     def find_messages(self):
-        with self.cursor() as db:
-            rows = db.execute("select * from messages")
+        with self.cursor(commit=False) as db:
+            rows = db.execute("SELECT * FROM messages")
             for row in rows:
                 message = JsonRPCMessage(
                     metadata=json.loads(row[0]),
