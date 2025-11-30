@@ -13,6 +13,8 @@ from .jsonrpc import JsonRPCHandler
 from .jsonrpc import JsonRPCMessage
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+    from typing import Any
     from typing import Literal
 
 
@@ -90,16 +92,42 @@ class SqlHandler(JsonRPCHandler):
             """)
             return [row[0] for row in rows]
 
-    def find_messages(self):
+    def find_messages(
+        self, after: int = -1
+    ) -> Generator[tuple[int, JsonRPCMessage], Any, Any]:
+        """Find messages recorded in the database.
+
+        Parameters
+        ----------
+        after
+           If ``>= 0`` return messages with a SQLite ``rowid`` greater than ``after``
+
+        Returns
+        -------
+        Generator[tuple[int, JsonRPCMessage], Any, Any]
+           A generator that yields ``(rowid, message)`` tuples
+        """
+        query = "SELECT rowid, * FROM messages"
+
+        clauses = []
+        parameters = []
+
+        if after >= 0:
+            clauses.append("rowid > ?")
+            parameters.append(after)
+
+        if len(clauses) > 0:
+            query = f"{query} WHERE {' AND '.join(clauses)}"
+
         with self.cursor(commit=False) as db:
-            rows = db.execute("SELECT * FROM messages")
+            rows = db.execute(query, parameters)
             for row in rows:
                 message = JsonRPCMessage(
-                    metadata=json.loads(row[0]),
-                    headers=json.loads(row[1]),
-                    body=json.loads(row[2]),
+                    metadata=json.loads(row[1]),
+                    headers=json.loads(row[2]),
+                    body=json.loads(row[3]),
                 )
-                yield message
+                yield row[0], message
 
 
 def to_json(o):
