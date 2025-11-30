@@ -78,6 +78,7 @@ class MessageBrowser(Container):
         super().__init__(*args, **kwargs)
         self._messages: dict[RowKey, JsonRPCMessage] = {}
         self._filter = JsonRPCFilter()
+        self._last_rowid = -1
 
     def compose(self):
         with Horizontal(id="button-row"):
@@ -115,13 +116,26 @@ class MessageBrowser(Container):
         details = self.query_one(MessageDetails)
         details.set_message(message)
 
-    def reload(self):
-        """Reload messages."""
+    def clear(self):
+        """Clear all messages from the table"""
+
         table = self.query_one(DataTable)
         table.clear()
         self._messages.clear()
+        self._last_rowid = -1
 
-        for message in self.app.db.find_messages():
+    def reload(self, follow: bool = False):
+        """Reload messages.
+
+        Parameters
+        ----------
+        follow
+           If ``True``, move the cursor so that the most recent message is selected
+
+        """
+        table = self.query_one(DataTable)
+
+        for rowid, message in self.app.db.find_messages(after=self._last_rowid):
             # TODO: Convert the filter into a SQL query so we can take advantage of
             # the fact we're using SQLite!
             if not self._filter.match(message):
@@ -133,6 +147,14 @@ class MessageBrowser(Container):
 
             timestamp = message.timestamp or datetime.now()
             key = table.add_row(
-                f"{timestamp:%H:%M:%S.%f}", source, message.msg_id, message.method
+                f"{timestamp:%H:%M:%S.%f}",
+                source,
+                message.msg_id,
+                message.method,
+                key=str(rowid),
             )
             self._messages[key] = message
+            self._last_rowid = rowid
+
+        if follow:
+            table.action_scroll_bottom()

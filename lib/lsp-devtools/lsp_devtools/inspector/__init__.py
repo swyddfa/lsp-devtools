@@ -2,17 +2,17 @@ from __future__ import annotations
 
 import argparse
 import pathlib
+import tempfile
 import typing
 
-from textual import log
 from textual import on
 from textual.app import App
 from textual.app import ComposeResult
 from textual.events import Ready
 from textual.message import Message
+from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Header
-from textual.widgets.tree import TreeNode
 
 from lsp_devtools.agent import AgentServer
 from lsp_devtools.agent import MessageSource
@@ -20,9 +20,6 @@ from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
 from lsp_devtools.handlers.sql import SqlHandler
 
 from .message_browser import MessageBrowser
-
-if typing.TYPE_CHECKING:
-    from typing import Any
 
 
 class MessageReceived(Message):
@@ -67,17 +64,17 @@ class LSPInspector(App):
 
         yield Footer()
 
-    # @on(MessageReceived)
-    # def on_message_received(self, event: MessageReceived):
-    #     log("handled")
-    #     table = self.query_one(DataTable)
-
-    #     message = event.message
-    #     table.add_row(message.msg_id, message.method)
+    @on(MessageReceived)
+    def on_message_received(self, event: MessageReceived):
+        browser = self.query_one(MessageBrowser)
+        browser.reload(follow=True)
 
     async def on_ready(self, event: Ready):
-        table = self.query_one(MessageBrowser)
-        table.reload()
+        browser = self.query_one(MessageBrowser)
+        browser.reload()
+
+        table = browser.query_one(DataTable)
+        table.focus()
 
         if self.server is not None:
             self.run_worker(self.server.start_tcp(), name="lsp-connection", thread=True)
@@ -88,23 +85,50 @@ class LSPInspector(App):
         await super().action_quit()
 
 
+class LiveSqlHandler(SqlHandler):
+    """A SqlHandler with a textual app reference so it can trigger a refresh when
+    messages are received."""
+
+    def __init__(self, dbpath: None | pathlib.Path = None, *args, **kwargs):
+        if dbpath is None:
+            # In order to have concurrent access to a SQLite db, it must be backed by a file
+            # https://sqlite.org/pragma.html#pragma_locking_mode
+            self._dbdir = tempfile.TemporaryDirectory()
+            dbpath = pathlib.Path(self._dbdir.name, "session.db")
+
+        super().__init__(*args, dbpath=dbpath, **kwargs)
+        self.app: App | None = None
+
+    def __del__(self):
+        super().__del__()
+        self._dbdir.cleanup()
+
+    def handle(self, message: JsonRPCMessage):
+        super().handle(message)
+
+        if self.app is not None:
+            self.app.post_message(MessageReceived(message))
+
+
 def inspector(args, extra: list[str]):
     server = None
 
     if args.session is not None:
         sql_handler = SqlHandler(dbpath=args.session)
+        app = LSPInspector(db=sql_handler)
 
     # Assume a live connection
     else:
-        sql_handler = SqlHandler(dbpath=":memory:")
+        sql_handler = LiveSqlHandler()
         server = AgentServer(
             handlers={
                 MessageSource.CLIENT: sql_handler,
                 MessageSource.SERVER: sql_handler,
             }
         )
+        app = LSPInspector(server=server, db=sql_handler)
+        sql_handler.app = app
 
-    app = LSPInspector(server=server, db=sql_handler)
     app.run()
 
 
@@ -120,9 +144,11 @@ interactively.
 
     cmd.add_argument(
         "session",
+        nargs="?",
+        default=None,
         type=pathlib.Path,
-        metavar="",
-        help="inspect the pre-recorded session at the given path",
+        metavar="DB",
+        help="inspect the pre-recorded session in the given SQLite DB",
     )
 
     connect = cmd.add_argument_group(
