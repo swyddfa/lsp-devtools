@@ -3,6 +3,7 @@
 .env
 .tox
 uv.lock
+*.db
 *.pyc
 
 dist
