@@ -82,7 +82,9 @@ class MessageBrowser(Container):
 
     def compose(self):
         with Horizontal(id="button-row"):
-            yield Button(label="X", flat=True, variant="error", compact=True)
+            yield Button(
+                label="Clear", flat=True, variant="error", compact=True, id="clear-view"
+            )
             yield Button(label="Filters", flat=True, id="set-filters")
 
         table = DataTable(cursor_type="row")
@@ -96,11 +98,15 @@ class MessageBrowser(Container):
         yield details
 
     def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "clear-view":
+            self.clear()
+
         if event.button.id == "set-filters":
 
             def maybe_set_filter(new_filter: JsonRPCFilter | None):
                 if new_filter is not None:
                     self._filter = new_filter
+                    self.reset()
                     self.reload()
 
             method_names = self.app.db.get_method_names()
@@ -117,11 +123,22 @@ class MessageBrowser(Container):
         details.set_message(message)
 
     def clear(self):
-        """Clear all messages from the table"""
+        """Clear the messages from the table.
 
+        However, this does *not* reset the current row marker making it appear as if the
+        messages have been deleted.
+        """
         table = self.query_one(DataTable)
         table.clear()
         self._messages.clear()
+
+    def reset(self):
+        """Reset the state of the view.
+
+        Like ``clear()``, this clears the contents of the table, but it also resets the
+        current row marker, ensuring that the view reloads all messages.
+        """
+        self.clear()
         self._last_rowid = -1
 
     def reload(self, follow: bool = False):
