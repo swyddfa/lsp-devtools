@@ -10,10 +10,10 @@ logger = logging.getLogger(__name__)
 
 
 BUILTIN_COMMANDS = [
-    "lsp_devtools.agent",
+    "lsp_devtools.cli.agent",
     # "lsp_devtools.client",
-    "lsp_devtools.inspector",
-    "lsp_devtools.record",
+    "lsp_devtools.cli.inspector",
+    "lsp_devtools.cli.record",
 ]
 
 
