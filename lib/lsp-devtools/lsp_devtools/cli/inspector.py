@@ -2,33 +2,25 @@ from __future__ import annotations
 
 import argparse
 import pathlib
-import tempfile
 import typing
 
 from textual import on
 from textual.app import App
 from textual.app import ComposeResult
 from textual.events import Ready
-from textual.message import Message
 from textual.widgets import DataTable
 from textual.widgets import Footer
 from textual.widgets import Header
 
 from lsp_devtools.agent import AgentServer
 from lsp_devtools.agent import MessageSource
-from lsp_devtools.handlers.jsonrpc import JsonRPCMessage
+from lsp_devtools.cli.utils import LiveSqlHandler
 from lsp_devtools.handlers.sql import SqlHandler
 from lsp_devtools.inspector.message_browser import MessageBrowser
 
 
-class MessageReceived(Message):
-    def __init__(self, message: JsonRPCMessage):
-        self.message = message
-        super().__init__()
-
-
 @typing.final
-class LSPInspector(App):
+class LSPInspector(App[None]):
     """A textual app for inspecting an LSP session, either a live one or one that has
     been pre-recorded."""
 
@@ -63,8 +55,8 @@ class LSPInspector(App):
 
         yield Footer()
 
-    @on(MessageReceived)
-    def on_message_received(self, event: MessageReceived):
+    @on(LiveSqlHandler.MessageReceived)
+    def on_message_received(self, event: LiveSqlHandler.MessageReceived):
         browser = self.query_one(MessageBrowser)
         browser.reload(follow=True)
 
@@ -82,31 +74,6 @@ class LSPInspector(App):
         if self.server is not None:
             self.server.stop()
         await super().action_quit()
-
-
-class LiveSqlHandler(SqlHandler):
-    """A SqlHandler with a textual app reference so it can trigger a refresh when
-    messages are received."""
-
-    def __init__(self, dbpath: None | pathlib.Path = None, *args, **kwargs):
-        if dbpath is None:
-            # In order to have concurrent access to a SQLite db, it must be backed by a file
-            # https://sqlite.org/pragma.html#pragma_locking_mode
-            self._dbdir = tempfile.TemporaryDirectory()
-            dbpath = pathlib.Path(self._dbdir.name, "session.db")
-
-        super().__init__(*args, dbpath=dbpath, **kwargs)
-        self.app: App | None = None
-
-    def __del__(self):
-        super().__del__()
-        self._dbdir.cleanup()
-
-    def handle(self, message: JsonRPCMessage):
-        super().handle(message)
-
-        if self.app is not None:
-            self.app.post_message(MessageReceived(message))
 
 
 def inspector(args, extra: list[str]):
