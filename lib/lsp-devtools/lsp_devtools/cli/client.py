@@ -10,15 +10,24 @@ from pygls import uris as uri
 from textual import events
 from textual import on
 from textual.app import App
+from textual.message import Message
 from textual.widgets import Footer
 
 from lsp_devtools.cli.utils import LiveSqlHandler
 from lsp_devtools.client import LanguageClient
+from lsp_devtools.editor import Panel
 from lsp_devtools.editor import TextEditorView
+from lsp_devtools.editor.panel import OutputWindow
 from lsp_devtools.inspector.message_browser import MessageBrowser
 
 if typing.TYPE_CHECKING:
     from textual.app import ComposeResult
+
+
+class StderrReceived(Message):
+    def __init__(self, data: bytes):
+        super().__init__()
+        self.data = data
 
 
 @typing.final
@@ -34,23 +43,34 @@ class LSPClient(App[None]):
         dock: right;
         width: 30%;
       }
+
+      Panel {
+        dock: bottom;
+        padding-top: 1;
+        height: 30%;
+      }
     """
 
     BINDINGS = [
         ("ctrl+c", "quit"),
+        ("f8", "toggle_panel", "Panel"),
         ("f12", "toggle_devtools", "Devtools"),
     ]
 
     def __init__(self, *args, server_command: list[str], **kwargs):
         super().__init__(*args, **kwargs)
+
         self.server_command = server_command
+        self.client: LanguageClient | None = None
+
+        self.db = LiveSqlHandler()
+        self.db.app = self
 
     def compose(self) -> ComposeResult:
         yield TextEditorView()
 
-        browser = MessageBrowser()
-        browser.add_class("hidden")
-        yield browser
+        yield Panel()
+        yield MessageBrowser()
 
         yield Footer()
 
@@ -65,39 +85,58 @@ class LSPClient(App[None]):
             devtools.remove_class("hidden")
             self.screen.set_focus(devtools)
 
+    def action_toggle_panel(self) -> None:
+        panel = self.query_one(Panel)
+        is_visible = not panel.has_class("hidden")
+
+        if is_visible:
+            panel.add_class("hidden")
+
+        else:
+            panel.remove_class("hidden")
+            self.screen.set_focus(panel)
+
     def on_ready(self, event: events.Ready):
-        self.run_worker(self.start_server(), name="lsp-connection", thread=True)
+        self.run_worker(self.start_server(), name="lsp-connection")
 
     @on(LiveSqlHandler.MessageReceived)
     def on_message_received(self, event: LiveSqlHandler.MessageReceived):
         browser = self.query_one(MessageBrowser)
         browser.reload(follow=True)
 
-    async def start_server(self):
-        self.db = LiveSqlHandler()
-        self.db.app = self
+    @on(StderrReceived)
+    def on_stderr_received(self, event: StderrReceived):
+        panel = self.query_one(Panel)
+        log = panel.query_one("#stderr-window", OutputWindow)
+        log.write(event.data)
 
-        client = LanguageClient(
+    async def start_server(self):
+        """Start the server and connect to it."""
+
+        def stderr_handler(data: bytes):
+            self.app.post_message(StderrReceived(data))
+
+        self.client = LanguageClient(
             self.db,
+            stderr_handler=stderr_handler,
             name="lsp-devtools",
             version=importlib.metadata.version("lsp-devtools"),
         )
-        await client.start_io(*self.server_command)
+        await self.client.start_io(*self.server_command)
 
-        result = await client.initialize_async(
+        result = await self.client.initialize_async(
             types.InitializeParams(
                 capabilities=types.ClientCapabilities(),
                 process_id=os.getpid(),
                 root_uri=uri.from_fs_path(os.getcwd()),
+                workspace_folders=[
+                    types.WorkspaceFolder(
+                        uri=uri.from_fs_path(os.getcwd()), name="root"
+                    )
+                ],
             )
         )
-
-        if info := result.server_info:
-            name = info.name
-            version = info.version or ""
-            self.log(f"Connected to server: {name} {version}")
-
-        client.initialized(types.InitializedParams())
+        self.client.initialized(types.InitializedParams())
 
 
 def client(args, extra: list[str]):
