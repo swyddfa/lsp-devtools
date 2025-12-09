@@ -21,6 +21,7 @@ if typing.TYPE_CHECKING:
     from textual.app import ComposeResult
 
 
+@typing.final
 class LSPClient(App[None]):
     """A simple LSP client."""
 
@@ -40,8 +41,9 @@ class LSPClient(App[None]):
         ("f12", "toggle_devtools", "Devtools"),
     ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, server_command: list[str], **kwargs):
         super().__init__(*args, **kwargs)
+        self.server_command = server_command
 
     def compose(self) -> ComposeResult:
         yield TextEditorView()
@@ -80,7 +82,7 @@ class LSPClient(App[None]):
             name="lsp-devtools",
             version=importlib.metadata.version("lsp-devtools"),
         )
-        await client.start_io("esbonio")
+        await client.start_io(*self.server_command)
 
         result = await client.initialize_async(
             types.InitializeParams(
@@ -99,10 +101,12 @@ class LSPClient(App[None]):
 
 
 def client(args, extra: list[str]):
-    # if len(extra) == 0:
-    #     raise ValueError("Missing server command.")
+    if len(extra) == 0:
+        raise ValueError(
+            "Missing server command. (e.g. lsp-devtools client -- server-cmd --stdio)"
+        )
 
-    app = LSPClient()
+    app = LSPClient(server_command=extra)
     app.run()
 
 
