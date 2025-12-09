@@ -56,12 +56,16 @@ def main():
         idx = sys.argv.index("--")
         args, extra = sys.argv[1:idx], sys.argv[idx + 1 :]
     except ValueError:
-        args, extra = sys.argv[1:], None
+        args, extra = sys.argv[1:], []
 
     parsed_args = cli.parse_args(args)
 
     if hasattr(parsed_args, "run"):
-        return parsed_args.run(parsed_args, extra)
+        try:
+            return parsed_args.run(parsed_args, extra)
+        except Exception as exc:
+            print(f"Error: {exc}")
+            return -1
 
     cli.print_help()
     return 0
