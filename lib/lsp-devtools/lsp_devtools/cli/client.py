@@ -15,13 +15,15 @@ from textual.widgets import Footer
 
 from lsp_devtools.cli.utils import LiveSqlHandler
 from lsp_devtools.client import LanguageClient
+from lsp_devtools.editor import Explorer
+from lsp_devtools.editor import OutputWindow
 from lsp_devtools.editor import Panel
 from lsp_devtools.editor import TextEditorView
-from lsp_devtools.editor.panel import OutputWindow
 from lsp_devtools.inspector.message_browser import MessageBrowser
 
 if typing.TYPE_CHECKING:
     from textual.app import ComposeResult
+    from textual.widgets import DirectoryTree
 
 
 class StderrReceived(Message):
@@ -39,20 +41,29 @@ class LSPClient(App[None]):
         display: none;
       }
 
+      Explorer {
+        dock: left;
+        width: 15%;
+      }
+
       MessageBrowser {
         dock: right;
         width: 30%;
       }
 
       Panel {
-        dock: bottom;
         padding-top: 1;
         height: 30%;
+      }
+
+      Footer {
+        dock: bottom;
       }
     """
 
     BINDINGS = [
         ("ctrl+c", "quit"),
+        ("f2", "toggle_explorer", "Explorer"),
         ("f8", "toggle_panel", "Panel"),
         ("f12", "toggle_devtools", "Devtools"),
     ]
@@ -67,12 +78,27 @@ class LSPClient(App[None]):
         self.db.app = self
 
     def compose(self) -> ComposeResult:
+        # Main area
         yield TextEditorView()
-
         yield Panel()
-        yield MessageBrowser()
 
+        # Sidebars
+        yield MessageBrowser()
+        yield Explorer()
+
+        # Footer
         yield Footer()
+
+    def action_toggle_explorer(self) -> None:
+        explorer = self.query_one(Explorer)
+        is_visible = not explorer.has_class("hidden")
+
+        if is_visible:
+            explorer.add_class("hidden")
+
+        else:
+            explorer.remove_class("hidden")
+            self.screen.set_focus(explorer)
 
     def action_toggle_devtools(self) -> None:
         devtools = self.query_one(MessageBrowser)
@@ -109,6 +135,11 @@ class LSPClient(App[None]):
         panel = self.query_one(Panel)
         log = panel.query_one("#stderr-window", OutputWindow)
         log.write(event.data)
+
+    def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected):
+        """Handle file-open."""
+        editor = self.query_one(TextEditorView)
+        editor.open_text_document(event.path)
 
     async def start_server(self):
         """Start the server and connect to it."""
