@@ -30,6 +30,9 @@ dependencies = [
   "textual>=8.1.0",
 ]
 
+[dependency-groups]
+dev = ["textual-dev"]
+
 [project.urls]
 "Bug Tracker" = "https://github.com/swyddfa/lsp-devtools/issues"
 "Documentation" = "https://lsp-devtools.readthedocs.io/en/latest/"
