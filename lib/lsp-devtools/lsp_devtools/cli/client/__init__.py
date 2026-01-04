@@ -10,7 +10,9 @@ from pygls import uris as uri
 from textual import events
 from textual import on
 from textual.app import App
+from textual.containers import Vertical
 from textual.message import Message
+from textual.widgets import Button
 from textual.widgets import Footer
 
 from lsp_devtools.cli.utils import LiveSqlHandler
@@ -21,6 +23,7 @@ from lsp_devtools.editor import TextEditorView
 from lsp_devtools.inspector import MessageBrowser
 
 from .client import LanguageClient
+from .config import AppConfig
 from .config import ConfigurationScreen
 
 if typing.TYPE_CHECKING:
@@ -44,9 +47,14 @@ class LSPClient(App[None]):
         display: none;
       }
 
-      Explorer {
+      #left-sidebar {
         dock: left;
         width: 15%;
+      }
+
+      #open-settings-btn {
+        margin: 1;
+        width: 100%;
       }
 
       MessageBrowser {
@@ -72,10 +80,10 @@ class LSPClient(App[None]):
         ("f12", "toggle_devtools", "Devtools"),
     ]
 
-    def __init__(self, *args, server_command: list[str], **kwargs):
+    def __init__(self, *args, config: AppConfig, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.server_command = server_command
+        self.config: AppConfig = config
         self.client: LanguageClient | None = None
         self.server: Worker[None] | None = None
 
@@ -89,16 +97,26 @@ class LSPClient(App[None]):
 
         # Sidebars
         yield MessageBrowser()
-        yield Explorer()
+
+        with Vertical(id="left-sidebar"):
+            yield Explorer()
+            yield Button("Settings", id="open-settings-btn")
 
         # Footer
         yield Footer()
 
     def action_open_settings(self):
-        _ = self.push_screen(ConfigurationScreen())
+        def maybe_update_config(new_config: AppConfig | None):
+            if new_config is not None:
+                # TODO: Restart server as required.
+                self.config = new_config
+
+        _ = self.push_screen(
+            ConfigurationScreen(config=self.config), maybe_update_config
+        )
 
     def action_toggle_explorer(self) -> None:
-        explorer = self.query_one(Explorer)
+        explorer = self.query_one("#left-sidebar")
         is_visible = not explorer.has_class("hidden")
 
         if is_visible:
@@ -133,6 +151,19 @@ class LSPClient(App[None]):
     def action_run_server(self):
         if self.server is None:
             self.server = self.run_worker(self.start_server(), name="server-connection")
+            return
+
+        # Did the process exit?
+        if self.server.is_finished:
+            self.server = self.run_worker(self.start_server(), name="server-connection")
+            return
+
+        # TODO: Add logic for restarting the server process.
+
+    def on_ready(self, event: events.Ready):
+        # Auto start server if possible.
+        if len(self.config.server.command) > 0:
+            self.action_run_server()
 
     @on(LiveSqlHandler.MessageReceived)
     def on_message_received(self, event: LiveSqlHandler.MessageReceived):
@@ -145,6 +176,10 @@ class LSPClient(App[None]):
         log = panel.query_one("#stderr-window", OutputWindow)
         log.write(event.data)
 
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "open-settings-btn":
+            self.action_open_settings()
+
     def on_directory_tree_file_selected(self, event: DirectoryTree.FileSelected):
         """Handle file-open."""
         editor = self.query_one(TextEditorView)
@@ -152,6 +187,11 @@ class LSPClient(App[None]):
 
     async def start_server(self):
         """Start the server and connect to it."""
+
+        server_config = self.config.server
+        if len(server_config.command) == 0:
+            # TODO: Prompt user to set a command.
+            return
 
         def stderr_handler(data: bytes):
             self.app.post_message(StderrReceived(data))
@@ -162,7 +202,7 @@ class LSPClient(App[None]):
             name="lsp-devtools",
             version=importlib.metadata.version("lsp-devtools"),
         )
-        await self.client.start_io(*self.server_command)
+        await self.client.start_io(*server_config.command)
 
         result = await self.client.initialize_async(
             types.InitializeParams(
@@ -180,12 +220,14 @@ class LSPClient(App[None]):
 
 
 def client(args, extra: list[str]):
-    if len(extra) == 0:
-        raise ValueError(
-            "Missing server command. (e.g. lsp-devtools client -- server-cmd --stdio)"
-        )
+    # TODO: Read configs from file.
+    config = AppConfig()
 
-    app = LSPClient(server_command=extra)
+    # Allow for a server command to be passed on the cli.
+    if len(extra) > 0:
+        config.server.command = extra
+
+    app = LSPClient(config=config)
     app.run()
 
 
