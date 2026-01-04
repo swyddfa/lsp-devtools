@@ -14,16 +14,19 @@ from textual.message import Message
 from textual.widgets import Footer
 
 from lsp_devtools.cli.utils import LiveSqlHandler
-from lsp_devtools.client import LanguageClient
 from lsp_devtools.editor import Explorer
 from lsp_devtools.editor import OutputWindow
 from lsp_devtools.editor import Panel
 from lsp_devtools.editor import TextEditorView
-from lsp_devtools.inspector.message_browser import MessageBrowser
+from lsp_devtools.inspector import MessageBrowser
+
+from .client import LanguageClient
+from .config import ConfigurationScreen
 
 if typing.TYPE_CHECKING:
     from textual.app import ComposeResult
     from textual.widgets import DirectoryTree
+    from textual.worker import Worker
 
 
 class StderrReceived(Message):
@@ -64,6 +67,7 @@ class LSPClient(App[None]):
     BINDINGS = [
         ("ctrl+c", "quit"),
         ("f2", "toggle_explorer", "Explorer"),
+        ("f5", "run_server", "Run Server"),
         ("f8", "toggle_panel", "Panel"),
         ("f12", "toggle_devtools", "Devtools"),
     ]
@@ -73,6 +77,7 @@ class LSPClient(App[None]):
 
         self.server_command = server_command
         self.client: LanguageClient | None = None
+        self.server: Worker[None] | None = None
 
         self.db = LiveSqlHandler()
         self.db.app = self
@@ -88,6 +93,9 @@ class LSPClient(App[None]):
 
         # Footer
         yield Footer()
+
+    def action_open_settings(self):
+        _ = self.push_screen(ConfigurationScreen())
 
     def action_toggle_explorer(self) -> None:
         explorer = self.query_one(Explorer)
@@ -122,8 +130,9 @@ class LSPClient(App[None]):
             panel.remove_class("hidden")
             self.screen.set_focus(panel)
 
-    def on_ready(self, event: events.Ready):
-        self.run_worker(self.start_server(), name="lsp-connection")
+    def action_run_server(self):
+        if self.server is None:
+            self.server = self.run_worker(self.start_server(), name="server-connection")
 
     @on(LiveSqlHandler.MessageReceived)
     def on_message_received(self, event: LiveSqlHandler.MessageReceived):
