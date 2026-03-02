@@ -68,7 +68,7 @@ class LSPInspector(App[None]):
         table.focus()
 
         if self.server is not None:
-            self.run_worker(self.server.start_tcp(), name="lsp-connection", thread=True)
+            self.run_worker(self.server.start_tcp(), name="lsp-connection")
 
     async def action_quit(self):
         if self.server is not None:
