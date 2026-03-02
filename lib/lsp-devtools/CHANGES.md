@@ -1,3 +1,30 @@
+## v0.3.0 - 2026-03-02
+
+### Features
+
+- Add Windows support ([#125](https://github.com/swyddfa/lsp-devtools/issues/125))
+
+### Enhancements
+
+- The `lsp-devtools record` command now accepts multiple format strings (e.g. `-f {message.method} -f {message.result}`). They will be tried in the order given, with messages using the format first string that applies cleanly. ([#122](https://github.com/swyddfa/lsp-devtools/issues/122))
+- The `lsp-devtools record` command now accepts an `--keep-unformatted` option, which will preserve messages in the log that could not be formatted using one of the provided format strings. They will instead be formatted using the default format string for the command. ([#123](https://github.com/swyddfa/lsp-devtools/issues/123))
+- The format string syntax has been changed to be more inline with how regular Python format strings work e.g.
+
+  - *before* `{.params|json}` *now* `{message.params:json}`
+
+  There is now an option that controls if the `lsp-devtools record` command should exit (`--on-disconnect exit`) when it loses the connection to the agent, or if it should continue running (`--on-disconnect continue`), which is still the default behaviour
+
+  ([#211](https://github.com/swyddfa/lsp-devtools/issues/211))
+
+### Misc
+
+- Update pygls to v2
+  Update textual to v6.x
+
+  Add support for Python 3.13 & 3.14.
+  Drop support for Python 3.9 ([#203](https://github.com/swyddfa/lsp-devtools/issues/203))
+
+
 ## v0.2.4 - 2024-11-23
 
 ### Fixes
