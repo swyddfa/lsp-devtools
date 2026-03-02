@@ -1,7 +1,7 @@
 [tool.esbonio.sphinx]
 pythonCommand = [
     "uv", "run", "--no-project",
-    "--with", "sphinx",
+    "--with", "sphinx<9",
     "--with", "sphinx-copybutton",
     "--with", "sphinx-design",
     "--with", "furo",
