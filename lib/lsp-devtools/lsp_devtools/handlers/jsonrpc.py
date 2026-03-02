@@ -211,7 +211,7 @@ class JsonRPCHandler:
             state.headers = {}
             state.headers_complete = False
 
-            if inspect.iscoroutine(res := self.handle(message)):
+            if inspect.iscoroutine(res := self._handle_message(message)):
                 task = asyncio.create_task(res)
                 self._tasks.add(task)
                 task.add_done_callback(self._tasks.discard)
