@@ -15,7 +15,7 @@ Running the ``lsp-devtools record`` command you should see a message like the fo
   $ lsp-devtools record
   Waiting for connection on localhost:8765...
 
-once the agent connects, the record command will by default, start printing all LSP messages to the console, with the JSON contents pretty printed.
+once the agent connects, the record command will, by default, start printing all LSP messages to the console, with the JSON contents pretty printed.
 
 .. figure:: /images/record-example.svg
 
@@ -86,7 +86,10 @@ As well as printing to console, the record command supports a number of other ou
    .. dropdown:: DB Schema
 
       Here is the schema currently used by ``lsp-devtools``.
-      **Note:** Except perhaps the base ``protocol`` table, this schema is not stable and may change between ``lsp-devtools`` releases.
+
+      .. warning::
+
+         This schema is not stable and may change between ``lsp-devtools`` releases.
 
       .. literalinclude:: ../../../lib/lsp-devtools/lsp_devtools/handlers/dbinit.sql
          :language: sql
