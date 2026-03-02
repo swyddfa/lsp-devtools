@@ -1,7 +1,7 @@
 LSP Inspector
 =============
 
-.. figure:: /images/tui-screenshot.svg
+.. figure:: /images/inspector-screenshot.svg
    :align: center
 
    The ``lsp-devtools inspect`` command

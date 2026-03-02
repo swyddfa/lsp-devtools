@@ -63,6 +63,18 @@ class JsonRPCMessage:
         )
 
     @property
+    def timestamp(self) -> datetime | None:
+        if (dt := self.metadata.get("timestamp")) is None:
+            return None
+
+        if isinstance(dt, str):
+            return datetime.fromisoformat(dt)
+
+    @property
+    def source(self) -> MessageSource | None:
+        return self.metadata.get("source")
+
+    @property
     def method(self) -> str | None:
         """Return the JSON-RPC method name, if present"""
         return self.body.get("method")
@@ -199,7 +211,7 @@ class JsonRPCHandler:
             state.headers = {}
             state.headers_complete = False
 
-            if inspect.iscoroutine(res := self.handle(message)):
+            if inspect.iscoroutine(res := self._handle_message(message)):
                 task = asyncio.create_task(res)
                 self._tasks.add(task)
                 task.add_done_callback(self._tasks.discard)

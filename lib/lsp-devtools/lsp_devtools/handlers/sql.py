@@ -3,30 +3,51 @@ from __future__ import annotations
 import json
 import pathlib
 import sqlite3
+import typing
 from contextlib import closing
+from contextlib import contextmanager
 from datetime import datetime
 from importlib import resources
 
 from .jsonrpc import JsonRPCHandler
 from .jsonrpc import JsonRPCMessage
 
+if typing.TYPE_CHECKING:
+    from collections.abc import Generator
+    from typing import Any
+    from typing import Literal
+
 
 class SqlHandler(JsonRPCHandler):
     """A handler that sends messages to a SQL database"""
 
-    def __init__(self, dbpath: pathlib.Path, *args, **kwargs):
+    def __init__(self, dbpath: pathlib.Path | Literal[":memory:"], *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dbpath = dbpath
 
+        self._mem_db: sqlite3.Connection | None = self._init_db()
+
+    def _init_db(self):
         resource = resources.files("lsp_devtools.handlers").joinpath("dbinit.sql")
         sql_script = resource.read_text(encoding="utf8")
 
-        with closing(sqlite3.connect(self.dbpath)) as conn:
-            conn.executescript(sql_script)
+        conn = None
+        if self.dbpath == ":memory:":
+            # Create a persistent connection to keep the data alive.
+            conn = sqlite3.connect(self.connection_string, uri=True)
+
+        with self.cursor() as cursor:
+            cursor.executescript(sql_script)
+
+        return conn
+
+    def __del__(self):
+        # Clean up data when this is destroyed
+        if self._mem_db is not None:
+            self._mem_db.close()
 
     def handle(self, message: JsonRPCMessage):
-        with closing(sqlite3.connect(self.dbpath)) as conn:
-            cursor = conn.cursor()
+        with self.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO messages VALUES (?, ?, ?)",
                 (
@@ -36,7 +57,77 @@ class SqlHandler(JsonRPCHandler):
                 ),
             )
 
-            conn.commit()
+    @property
+    def connection_string(self) -> str:
+        """Return the string to use when connecting to the db"""
+        # See "In-memory Databases and Shared Cache"
+        # https://www.sqlite.org/inmemorydb.html
+        if self.dbpath == ":memory:":
+            uri = f"file:{id(self)}?mode=memory&cache=shared"
+            return uri
+
+        return self.dbpath.resolve().as_uri()
+
+    @contextmanager
+    def cursor(self, commit: bool = True):
+        """Get a connection to the database"""
+
+        with closing(sqlite3.connect(self.connection_string, uri=True)) as db:
+            cursor = db.cursor()
+
+            yield cursor
+
+            if commit:
+                db.commit()
+
+    def get_method_names(self) -> list[str]:
+        """Return all the available method names in the DB."""
+        with self.cursor(commit=False) as db:
+            rows = db.execute("""
+            SELECT DISTINCT
+              json_extract(body, "$.method") as method
+            FROM messages
+            WHERE method IS NOT NULL
+            ORDER BY method
+            """)
+            return [row[0] for row in rows]
+
+    def find_messages(
+        self, after: int = -1
+    ) -> Generator[tuple[int, JsonRPCMessage], Any, Any]:
+        """Find messages recorded in the database.
+
+        Parameters
+        ----------
+        after
+           If ``>= 0`` return messages with a SQLite ``rowid`` greater than ``after``
+
+        Returns
+        -------
+        Generator[tuple[int, JsonRPCMessage], Any, Any]
+           A generator that yields ``(rowid, message)`` tuples
+        """
+        query = "SELECT rowid, * FROM messages"
+
+        clauses = []
+        parameters = []
+
+        if after >= 0:
+            clauses.append("rowid > ?")
+            parameters.append(after)
+
+        if len(clauses) > 0:
+            query = f"{query} WHERE {' AND '.join(clauses)}"
+
+        with self.cursor(commit=False) as db:
+            rows = db.execute(query, parameters)
+            for row in rows:
+                message = JsonRPCMessage(
+                    metadata=json.loads(row[1]),
+                    headers=json.loads(row[2]),
+                    body=json.loads(row[3]),
+                )
+                yield row[0], message
 
 
 def to_json(o):

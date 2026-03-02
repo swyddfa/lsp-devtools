@@ -1,3 +1,6 @@
+-- Enable WAL Mode
+PRAGMA journal_mode=WAL;
+
 -- Tables
 
 -- We use a single table 'protocol' to store all messages sent between client and server.

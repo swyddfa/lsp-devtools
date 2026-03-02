@@ -3,14 +3,24 @@ Getting Started
 
 .. highlight:: none
 
-This guide will introduce you to the tools available in the ``lsp-devtools`` package.
-If you have not done so already, you can install it using ``pipx`` ::
+This guide will introduce you to the tools available in the ``lsp-devtools`` suite of tools.
+It's recommended that you install ``lsp-devtools`` into a standalone environment managed through tools like `pipx <https://pypi.org/project/pipx/>`__ or `uv <https://docs.astral.sh/uv/>`__
 
-  pipx install lsp-devtools
+.. tab-set::
 
-.. admonition:: Did you say pipx?
+  .. tab-item:: pipx
 
-   `pipx <https://pypi.org/project/pipx/>`_ is a tool that automates the process of installing Python packages into their own isolated Python environments - useful for standalone applications like ``lsp-devtools``
+     To install using ``pipx`` ::
+
+        pipx install lsp-devtools
+
+  .. tab-item:: uv
+
+     To install using ``uv`` ::
+
+        uv tool install lsp-devtools
+
+
 
 The LSP Agent
 -------------
@@ -22,14 +32,14 @@ The agent is a simple program that sits inbetween a language client and the serv
 
    ``lsp-devtools`` architecture
 
-The agent acts as a messenger, forwarding messages from the client to the server and vice versa.
-However, it sends an additional copy of each message over a local TCP connection to some "Server" application - typically another ``lsp-devtools`` command like ``record`` or ``tui``.
+The agent acts as a messenger, forwarding messages from the LSP client to the LSP server and vice versa.
+It also sends a copy of each message over a local TCP connection to some "Server" application, typically another ``lsp-devtools`` command like ``lsp-devtool record`` or ``lsp-devtools inspect``.
 
-In general, using ``lsp-devtools`` can be broken down into a 3 step process.
+In general, using ``lsp-devtools`` can be broken down into a 3 steps:
 
 #. Configure your language client to launch your language server via the agent, rather than launching it directly.
 
-#. Start the server application e.g. ``lsp-devtools record`` or ``lsp-devtools tui``
+#. Start the server application e.g. ``lsp-devtools record`` or ``lsp-devtools inspect``
 
 #. Start your language client.
 
@@ -49,35 +59,36 @@ By default, the agent will attempt to connect to a server application on ``local
 
 .. tip::
 
-   Since the agent only requires your server's start command, you can use ``lsp-devtools`` with a server written in any language.
+   Since the agent only requires your server's start command, you can use ``lsp-devtools`` with language servers written in any language.
 
 
-As an example, let's configure Neovim to launch the ``esbonio`` language server via the agent.
-Using `nvim-lspconfig <https://github.com/neovim/nvim-lspconfig/>`_ a standard configuration might look something like the following
+As an example, let's configure
+`neovim <https://github.com/neovim/neovim/>`__
+to launch the
+`esbonio <https://github.com/swyddfa/esbonio/>`__
+language server directly, using the built-in language client and configuration syntax available in ``nvim v0.11`` onwards.
 
 .. code-block:: lua
 
-   lspconfig.esbonio.setup{
-     capabilities = capabilities,
-     cmd = { "esbonio" },
-     filetypes = {"rst"},
-     init_options = {
-       server = {
-         logLevel = "debug"
+   vim.lsp.config.esbonio = {
+     cmd = { 'esbonio' },
+     root_markers = { 'conf.py' },
+     filetypes = { 'rst' },
+     settings = {
+       esbonio = {
+         logging = {
+           level = 'debug'
+         },
        },
-       sphinx = {
-         buildDir = "${confDir}/_build"
-       }
      },
-     on_attach = on_attach,
    }
+   vim.lsp.enable({ 'esbonio' })
 
-To update this to launch the server via the agent, we need only modify the ``cmd`` field (or add one if it does not exist) to include ``lsp-devtools agent --``
+To update this to launch the ``esbonio`` via the ``lsp-devtools agent``, we need only modify the ``cmd`` field
 
 .. code-block:: diff
 
-     lspconfig.esbonio.setup{
-       capabilities = capabilities,
+     vim.lsp.config.esbonio = {
    -   cmd = { "esbonio" },
    +   cmd = { "lsp-devtools", "agent", "--", "esbonio" },
        ...
@@ -89,17 +100,15 @@ Server Applications
 Once you have your client configured, you need to start the application the agent is going to try to connect to.
 Currently ``lsp-devtools`` provides the following applications
 
-``lsp-devtools record``
+``lsp-devtools record`` - see :doc:`recording sessions </lsp-devtools/guide/record-command>` for details
    As the name suggests, this command supports recording all (or a subset of) messages in a LSP session to a text file or SQLite database.
-   However, it can also print these messages direct to the console with support for filtering and custom formatting of message contents.
+   It also supports printing these messages direct to the console.
 
    .. figure:: /images/record-example.svg
 
-   See :doc:`/lsp-devtools/guide/record-command` for details
+``lsp-devtools inspect`` -  see :doc:`inspecting sessions </lsp-devtools/guide/inspect-command>` for details
+   An terminal application with the goal of making it easy to interactively visualise and explore the traffic sent between an LSP client ans server, inspired by the dev tools found in a web browser.
 
-``lsp-devtools inspect``
-   An interactive terminal application, powered by `textual <https://pypi.org/project/textual>`_.
+   Powered by `textual <https://pypi.org/project/textual>`__.
 
-   .. figure:: /images/tui-screenshot.svg
-
-   See :doc:`/lsp-devtools/guide/inspect-command` for details
+   .. figure:: /images/inspector-screenshot.svg
