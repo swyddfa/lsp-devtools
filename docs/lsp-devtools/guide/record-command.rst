@@ -1,3 +1,5 @@
+.. _lsp-devtools-record:
+
 Recording Sessions
 ==================
 
@@ -62,6 +64,22 @@ The following options can be used to change this behavior
    The port number to open the connection on.
 
 
+Capture Mode
+------------
+
+By default, the ``lsp-devtools`` command will parse the messages sent between client and server, enabling the :ref:`lsp-devtools-record-filters` functionality documented below.
+However there are sitations where capturing the raw data is useful (e.g. when a server is producing invalid messages), the following options are used to select which mode is used
+
+.. option:: --capture-rpc
+
+   Capture and parse the JSON-RPC messages sent between the client and server (the default).
+
+.. option:: --capture-raw
+
+   Capture the raw data sent between client and server.
+
+   When printing to the console, a simple TUI is used with client and server streams written into separate panes within the application.
+
 Alternate Destinations
 ----------------------
 
@@ -69,17 +87,31 @@ As well as printing to console, the record command supports a number of other ou
 
 .. option:: --to-file <filename>
 
-   Saves all collected messages to a plain text file with each line representing a complete JSON-RPC message::
+   Saves all collected messages to a plain text file.
+
+   When used with :option:`--capture-rpc` each line in the output file represents a complete JSON-RPC message::
 
       lsp-devtools record --to-file example.json
 
    See :download:`here <./example-to-file-output.json>` for example of the output produced by this command.
+
+   When used with :option:`--capture-raw`, two files are produced one containing the data sent from the client, the other containing data sent from the server.
+   For example::
+
+      lsp-devtools record --to-file example.txt
+
+   will produce the files ``example-CLIENT.txt`` and ``example-SERVER.txt``.
+
 
 .. option:: --to-sqlite <filename>
 
    Save messages to a SQLite database::
 
       lsp-devtools record --to-sqlite example.db
+
+   .. note::
+
+      This option is not available when using :option:`--capture-raw`
 
    This database can then be opened in other tools like `datasette <https://datasette.io/>`_, `SQLite Browser <https://sqlitebrowser.org/>`_ or even ``lsp-devtools`` own :doc:`/lsp-devtools/guide/inspect-command`.
 
@@ -104,8 +136,14 @@ As well as printing to console, the record command supports a number of other ou
 
    Depending on the file extension used, this will save the output as plain text or rendered as an SVG image or HTML webpage - useful for generating screenshots for your documentation!
 
+.. _lsp-devtools-record-filters:
+
 Filtering Messages
 ------------------
+
+.. note::
+
+   These options are not availble when using :option:`--capture-raw`
 
 Once it gets going, the LSP protocol can generate *a lot* of messages!
 To help you focus on the messages you are interested in the ``record`` command provides the following options for selecting a subset of messages to show.
@@ -170,7 +208,7 @@ Formatting messages
 
 .. note::
 
-   These options do not apply when using the :option:`--to-sqlite` option.
+   These options are not available when using :option:`--to-sqlite` or :option:`--capture-raw`.
 
 
 .. option:: -f <format>, --format-message <format>
