@@ -136,5 +136,6 @@ class MessageFilters(ModalScreen[JsonRPCFilter | None]):
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "save":
             self.dismiss(self.msg_filter)
+            return
 
         self.dismiss(None)
