@@ -27,7 +27,7 @@ dependencies = [
   "platformdirs",
   "pygls>=2.0",
   "stamina",
-  "textual>=6.5.0",
+  "textual>=8.1.0",
 ]
 
 [project.urls]
