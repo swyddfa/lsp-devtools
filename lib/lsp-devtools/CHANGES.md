@@ -1,3 +1,21 @@
+## v0.4.0 - 2026-03-23
+
+### Features
+
+- The server command used with the `lsp-devtools client` command can now be configured at runtime.
+
+  Server process lifecycle information and errors are now also logged to the `Server` panel. ([#234](https://github.com/swyddfa/lsp-devtools/issues/234))
+
+### Fixes
+
+- Fix issue where `lsp-devtools inspect` would not exit cleanly ([#229](https://github.com/swyddfa/lsp-devtools/issues/229))
+- Fix crash caused by trying to dismiss the message filter dialog twice. ([#231](https://github.com/swyddfa/lsp-devtools/issues/231))
+
+### Misc
+
+- Bump textual to `>=8.1.0` ([#233](https://github.com/swyddfa/lsp-devtools/issues/233))
+
+
 ## v0.3.0 - 2026-03-02
 
 ### Features
