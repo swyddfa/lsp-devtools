@@ -16,9 +16,10 @@ UV_PRERELEASE="allow"
 
 [[envs.hatch-test.matrix]]
 python = ["3.10", "3.11", "3.12", "3.13", "3.14"]
-pytest = ["8"]
+pytest = ["8", "9"]
 
 [envs.hatch-test.overrides]
 matrix.pytest.dependencies = [
     { value = "pytest>=8,<9", if = ["8"] },
+    { value = "pytest>=9,<10", if = ["9"] },
 ]
