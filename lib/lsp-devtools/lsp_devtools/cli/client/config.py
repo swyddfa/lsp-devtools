@@ -81,6 +81,8 @@ class ConfigurationScreen(ModalScreen[AppConfig | None]):
             config = AppConfig(server=server_form.get_config())
             _ = self.dismiss(config)
 
+            return
+
         _ = self.dismiss(None)
 
 
