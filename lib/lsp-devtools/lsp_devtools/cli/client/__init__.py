@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import importlib.metadata
+import logging
 import os
 import typing
 
@@ -22,6 +23,7 @@ from lsp_devtools.editor import Panel
 from lsp_devtools.editor import TextEditorView
 from lsp_devtools.inspector import MessageBrowser
 
+from .client import ClientState
 from .client import LanguageClient
 from .config import AppConfig
 from .config import ConfigurationScreen
@@ -29,13 +31,6 @@ from .config import ConfigurationScreen
 if typing.TYPE_CHECKING:
     from textual.app import ComposeResult
     from textual.widgets import DirectoryTree
-    from textual.worker import Worker
-
-
-class StderrReceived(Message):
-    def __init__(self, data: bytes):
-        super().__init__()
-        self.data = data
 
 
 @typing.final
@@ -85,7 +80,6 @@ class LSPClient(App[None]):
 
         self.config: AppConfig = config
         self.client: LanguageClient | None = None
-        self.server: Worker[None] | None = None
 
         self.db = LiveSqlHandler()
         self.db.app = self
@@ -120,10 +114,10 @@ class LSPClient(App[None]):
         is_visible = not explorer.has_class("hidden")
 
         if is_visible:
-            explorer.add_class("hidden")
+            _ = explorer.add_class("hidden")
 
         else:
-            explorer.remove_class("hidden")
+            _ = explorer.remove_class("hidden")
             self.screen.set_focus(explorer)
 
     def action_toggle_devtools(self) -> None:
@@ -131,10 +125,10 @@ class LSPClient(App[None]):
         is_visible = not devtools.has_class("hidden")
 
         if is_visible:
-            devtools.add_class("hidden")
+            _ = devtools.add_class("hidden")
 
         else:
-            devtools.remove_class("hidden")
+            _ = devtools.remove_class("hidden")
             self.screen.set_focus(devtools)
 
     def action_toggle_panel(self) -> None:
@@ -142,39 +136,24 @@ class LSPClient(App[None]):
         is_visible = not panel.has_class("hidden")
 
         if is_visible:
-            panel.add_class("hidden")
+            _ = panel.add_class("hidden")
 
         else:
-            panel.remove_class("hidden")
+            _ = panel.remove_class("hidden")
             self.screen.set_focus(panel)
 
-    def action_run_server(self):
-        if self.server is None:
-            self.server = self.run_worker(self.start_server(), name="server-connection")
-            return
+    async def action_run_server(self):
+        _ = self.run_worker(self.run_server())
 
-        # Did the process exit?
-        if self.server.is_finished:
-            self.server = self.run_worker(self.start_server(), name="server-connection")
-            return
-
-        # TODO: Add logic for restarting the server process.
-
-    def on_ready(self, event: events.Ready):
+    async def on_ready(self, event: events.Ready):
         # Auto start server if possible.
         if len(self.config.server.command) > 0:
-            self.action_run_server()
+            await self.action_run_server()
 
     @on(LiveSqlHandler.MessageReceived)
     def on_message_received(self, event: LiveSqlHandler.MessageReceived):
         browser = self.query_one(MessageBrowser)
         browser.reload(follow=True)
-
-    @on(StderrReceived)
-    def on_stderr_received(self, event: StderrReceived):
-        panel = self.query_one(Panel)
-        log = panel.query_one("#stderr-window", OutputWindow)
-        log.write(event.data)
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "open-settings-btn":
@@ -185,7 +164,22 @@ class LSPClient(App[None]):
         editor = self.query_one(TextEditorView)
         editor.open_text_document(event.path)
 
-    async def start_server(self):
+    async def run_server(self):
+        """Start, or restart the server."""
+        if self.client is None:
+            self.client = await self.start_server()
+            return
+
+        # Don't interfere with a client that is starting up.
+        if self.client.state in {ClientState.Starting}:
+            return
+
+        if self.client.state in {ClientState.Running}:
+            await self.stop_server()
+
+        self.client = await self.start_server()
+
+    async def start_server(self) -> LanguageClient | None:
         """Start the server and connect to it."""
 
         server_config = self.config.server
@@ -193,18 +187,23 @@ class LSPClient(App[None]):
             # TODO: Prompt user to set a command.
             return
 
-        def stderr_handler(data: bytes):
-            self.app.post_message(StderrReceived(data))
+        output_window = self.query_one("#stderr-window", OutputWindow)
+        output_window.clear()
 
-        self.client = LanguageClient(
+        server_logger = logging.getLogger("server")
+        server_logger.setLevel(logging.DEBUG)
+        server_logger.addHandler(output_window.log_handler)
+
+        client = LanguageClient(
             self.db,
-            stderr_handler=stderr_handler,
+            logger=server_logger,
             name="lsp-devtools",
             version=importlib.metadata.version("lsp-devtools"),
         )
-        await self.client.start_io(*server_config.command)
 
-        result = await self.client.initialize_async(
+        await client.start_io(*server_config.command)
+
+        result = await client.initialize_async(
             types.InitializeParams(
                 capabilities=types.ClientCapabilities(),
                 process_id=os.getpid(),
@@ -216,7 +215,17 @@ class LSPClient(App[None]):
                 ],
             )
         )
-        self.client.initialized(types.InitializedParams())
+        client.initialized(types.InitializedParams())
+        return client
+
+    async def stop_server(self):
+        if self.client is None or self.client.state not in {ClientState.Running}:
+            return
+
+        await self.client.shutdown_async(None)
+        self.client.exit(None)
+
+        await self.client.stop()
 
 
 def client(args, extra: list[str]):
