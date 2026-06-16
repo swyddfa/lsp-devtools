@@ -7,6 +7,8 @@ on:
     paths:
     - 'lib/pytest-lsp/**'
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest
