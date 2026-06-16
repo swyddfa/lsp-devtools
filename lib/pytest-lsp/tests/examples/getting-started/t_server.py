@@ -1,4 +1,5 @@
 import sys
+from collections.abc import AsyncGenerator
 
 import pytest
 from lsprotocol.types import (
@@ -17,7 +18,7 @@ from pytest_lsp import ClientServerConfig, LanguageClient
 @pytest_lsp.fixture(
     config=ClientServerConfig(server_command=[sys.executable, "server.py"]),
 )
-async def client(lsp_client: LanguageClient):
+async def client(lsp_client: LanguageClient) -> AsyncGenerator[None]:
     # Setup
     params = InitializeParams(capabilities=ClientCapabilities())
     await lsp_client.initialize_session(params)

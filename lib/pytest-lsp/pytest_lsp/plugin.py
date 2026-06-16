@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import contextlib
 import inspect
 import logging
 import textwrap
@@ -192,10 +193,13 @@ def get_fixture_arguments(
         required_parameters.remove("request")
 
     # Inject the language client
-    for name, cls in typing.get_type_hints(fn).items():
-        if issubclass(cls, JsonRPCClient):
-            kwargs[name] = client
-            required_parameters.remove(name)
+    for name, annotation in typing.get_type_hints(fn).items():
+        # Not every annotation is a class...
+        # see: https://github.com/swyddfa/lsp-devtools/issues/237
+        with contextlib.suppress(TypeError):
+            if issubclass(annotation, JsonRPCClient):
+                kwargs[name] = client
+                required_parameters.remove(name)
 
     # Assume all remaining parameters are pytest fixtures
     for name in required_parameters:
