@@ -27,7 +27,7 @@ if typing.TYPE_CHECKING:
     from collections.abc import Sequence
 
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 logger = logging.getLogger(__name__)
 
 DEFAULT_CLIENT_FEATURES: dict[str, Any] = {}

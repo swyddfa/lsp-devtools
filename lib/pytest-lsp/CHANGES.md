@@ -1,3 +1,15 @@
+## v1.0.1 - 2026-06-17
+
+### Enhancements
+
+- The `pytest-lsp` language client now provides a default implementation for the `workspace/diagnostic/refresh` method. ([#206](https://github.com/swyddfa/lsp-devtools/issues/206))
+
+### Fixes
+
+- The `pytest-lsp` client should no longer overreact when receiving an unknown message type and simply report a test failure, rather than killing the server process outright. ([#204](https://github.com/swyddfa/lsp-devtools/issues/204))
+- `pytest-lsp` no longer throws a `TypeError` when you type annotate the `pytest_lsp.fixture` function. ([#237](https://github.com/swyddfa/lsp-devtools/issues/237))
+
+
 ## v1.0.0 - 2025-10-25
 
 ### Enhancements
