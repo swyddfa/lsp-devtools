@@ -12,12 +12,12 @@ from pytest_lsp import ClientServerConfig, LanguageClient
     config=ClientServerConfig(server_command=[sys.executable, "server.py"]),
 )
 async def client(lsp_client: LanguageClient):
-    # Register a custom `workspace/diagnostic/refresh` implementation
-    lsp_client.refresh_requests = 0
+    # Register a custom method implementation
+    lsp_client.my_method_call_count = 0
 
-    @lsp_client.feature(types.WORKSPACE_DIAGNOSTIC_REFRESH)
+    @lsp_client.feature("custom/myMethod")
     def refresh(cl: LanguageClient, params: None):
-        cl.refresh_requests += 1
+        cl.my_method_call_count += 1
 
     # Setup
     await lsp_client.initialize_session(
@@ -46,4 +46,4 @@ async def test_did_open(client: LanguageClient):
 
     # Give the server time to process...
     await asyncio.sleep(1)
-    assert client.refresh_requests == 1
+    assert client.my_method_call_count == 1
