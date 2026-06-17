@@ -10,7 +10,7 @@ import traceback
 import typing
 import warnings
 from importlib import resources
-from typing import Optional
+from typing import Any
 
 import pygls.exceptions as error_types
 import pytest
@@ -25,7 +25,6 @@ from .protocol import LanguageClientProtocol
 
 if typing.TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Any
 
 
 __version__ = "1.0.0"
@@ -35,10 +34,11 @@ DEFAULT_CLIENT_FEATURES: dict[str, Any] = {}
 """The default implementation of LSP methods provided by the client."""
 
 SAFE_ERRORS = {
+    error_types.JsonRpcMethodNotFound,
     error_types.FeatureRequestError,
     error_types.FeatureNotificationError,
 }
-captured_exception_key = pytest.StashKey[Optional[pytest.ExceptionInfo]]()
+captured_exception_key = pytest.StashKey[pytest.ExceptionInfo[Any] | None]()
 
 
 class LanguageClient(BaseLanguageClient):
@@ -85,13 +85,13 @@ class LanguageClient(BaseLanguageClient):
         self._pytest_item: pytest.Item | None = None
         """Indicates the current pytest item (if any)."""
 
-        self._setup_log_index = 0
+        self._setup_log_index: int = 0
         """Used to keep track of which log messages occurred during startup."""
 
-        self._last_log_index = 0
+        self._last_log_index: int = 0
         """Used to keep track of which log messages correspond with which test case."""
 
-        self._stderr_forwarder: asyncio.Task | None = None
+        self._stderr_forwarder: asyncio.Task[Any] | None = None
         """A task that forwards the server's stderr to the test process."""
 
     async def start_io(self, cmd: str, *args, **kwargs):
@@ -103,7 +103,7 @@ class LanguageClient(BaseLanguageClient):
 
     async def stop(self):
         if self._stderr_forwarder:
-            self._stderr_forwarder.cancel()
+            _ = self._stderr_forwarder.cancel()
 
         return await super().stop()
 
@@ -133,9 +133,8 @@ class LanguageClient(BaseLanguageClient):
         if self._pytest_item is not None and excinfo[0] is not None:
             # We cannot use `error` as pygls currently loses the traceback information
             # during its error handling somehow.
-            self._pytest_item.stash[captured_exception_key] = (
-                pytest.ExceptionInfo.from_exc_info(excinfo)
-            )
+            captured_exc = pytest.ExceptionInfo[Any].from_exc_info(excinfo)
+            self._pytest_item.stash[captured_exception_key] = captured_exc
 
         # Only need to cancel everything if we have encountered a fatal error.
         if source in SAFE_ERRORS:
@@ -172,7 +171,7 @@ class LanguageClient(BaseLanguageClient):
 
         Returns
         -------
-        Optional[Any]
+        Any | None
            The requested configuration value or ``None`` if not found.
         """
         section = section or ""
