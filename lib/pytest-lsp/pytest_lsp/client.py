@@ -67,6 +67,9 @@ class LanguageClient(BaseLanguageClient):
         self.diagnostics: dict[str, Sequence[types.Diagnostic]] = {}
         """Holds any recieved diagnostics."""
 
+        self.diagnostic_refresh_count: int = 0
+        """Tracks how many times workspace/diagnostic/refresh has been requested."""
+
         self.progress_reports: dict[
             types.ProgressToken, list[types.ProgressParams]
         ] = {}
@@ -355,6 +358,11 @@ def configuration(client: LanguageClient, params: types.ConfigurationParams):
         client.get_configuration(section=item.section, scope_uri=item.scope_uri)
         for item in params.items
     ]
+
+
+@default_feature(types.WORKSPACE_DIAGNOSTIC_REFRESH)
+def diagnostic_refresh(client: LanguageClient, params: None):
+    client.diagnostic_refresh_count += 1
 
 
 @default_feature(types.TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
