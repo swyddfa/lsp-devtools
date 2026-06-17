@@ -1,5 +1,7 @@
 # pytest-lsp: End-to-end testing of language servers with pytest
 
+[![PyPI](https://img.shields.io/pypi/v/pytest-lsp?style=flat-square)](https://pypi.org/project/pytest-lsp)[![PyPI - Downloads](https://img.shields.io/pypi/dm/pytest-lsp?style=flat-square)](https://pypistats.org/packages/pytest-lsp)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/lsp-devtools/blob/develop/lib/pytest-lsp/LICENSE)
+
 `pytest-lsp` is a pytest plugin for writing end-to-end tests for language servers.
 
 It works by running the language server in a subprocess and communicating with it over stdio, just like a real language client.
