@@ -64,6 +64,11 @@ filterwarnings =
             dict(passed=1, warnings=1),
             id="workspace-configuration",
         ),
+        pytest.param(
+            "workspace-diagnostic-refresh",
+            dict(passed=1, warnings=0),
+            id="workspace-diagnostic-refresh",
+        ),
     ],
 )
 def test_examples(pytester: pytest.Pytester, name: str, expected: dict):
