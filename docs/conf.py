@@ -17,7 +17,7 @@ DEV_BUILD = os.getenv("BUILDDIR", None) == "latest"
 BRANCH = "develop" if DEV_BUILD else "release"
 
 project = "LSP Devtools"
-copyright = "2023, Alex Carney"
+copyright = "2026, Alex Carney"
 author = "Alex Carney"
 
 # -- General configuration ---------------------------------------------------

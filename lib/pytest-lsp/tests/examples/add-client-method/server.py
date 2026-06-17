@@ -6,7 +6,7 @@ server = LanguageServer("add-client-method", "v1")
 
 @server.feature(types.TEXT_DOCUMENT_DID_OPEN)
 async def did_open(ls: LanguageServer, params: types.DidOpenTextDocumentParams):
-    await ls.workspace_diagnostic_refresh_async(None)
+    await ls.protocol.send_request_async("custom/myMethod", None)
 
 
 if __name__ == "__main__":

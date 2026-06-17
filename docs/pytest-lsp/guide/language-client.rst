@@ -133,3 +133,25 @@ See the documentation on :meth:`~pytest_lsp.LanguageClient.set_configuration` an
       :language: python
       :start-at: @server.command
       :end-at: return a + c
+
+
+``workspace/diagnostic/refresh``
+--------------------------------
+
+The client provides a default :lsp:`diagnostic/refresh` implementation.
+
+This implementation only increments a counter, allowing you to assert that the server did/did not call the method.
+If you need the client to actually take some action in response to this method, you can :ref:`replace the default implementation <howto-extend-client-replace-methods>` with your own.
+
+.. card:: test_server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/workspace-diagnostic-refresh/t_server.py
+      :language: python
+      :start-at: @pytest.mark.asyncio
+
+.. card:: server.py
+
+   .. literalinclude:: ../../../lib/pytest-lsp/tests/examples/workspace-diagnostic-refresh/server.py
+      :language: python
+      :start-at: @server.command
+      :end-at: await ls.workspace

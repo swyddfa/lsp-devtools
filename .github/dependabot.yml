@@ -10,3 +10,5 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
+    cooldown:
+      default-days: 7

@@ -259,3 +259,36 @@ async def test_capabilities(client):
 
     message = "E*json.decoder.JSONDecodeError: *"
     results.stdout.fnmatch_lines(message)
+
+
+def test_handle_unknown_method(pytester: pytest.Pytester):
+    """Ensure that the plugin/client gracefully handles the case where the
+    server makes an unknown request."""
+
+    test_code = """\
+import pytest
+from lsprotocol.types import CompletionParams
+from lsprotocol.types import Position
+from lsprotocol.types import TextDocumentIdentifier
+
+
+@pytest.mark.asyncio
+async def test_capabilities(client):
+    expected = {"one"}
+
+    items = await client.text_document_completion_async(
+        CompletionParams(
+            text_document=TextDocumentIdentifier(uri="file:///test.txt"),
+            position=Position(line=0, character=0)
+        )
+    )
+    assert len({i.label for i in items} & expected) == len(items)
+"""
+
+    setup_test(pytester, "unknown_method.py", test_code)
+    results = pytester.runpytest("-vv")
+
+    results.assert_outcomes(failed=1, errors=0)
+
+    message = "E*pygls.exceptions.JsonRpcMethodNotFound: *unknown/method"
+    results.stdout.fnmatch_lines(message)
