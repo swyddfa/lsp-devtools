@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 from datetime import datetime
+from datetime import timezone
 
 from textual.containers import Container
 from textual.containers import Horizontal
@@ -141,16 +142,32 @@ class MessageBrowser(Container):
         self.clear()
         self._last_rowid = -1
 
+    def is_following_tail(self) -> bool:
+        """Return ``True`` if the cursor is on (or past) the latest message.
+
+        Used to decide whether newly arrived messages should steal focus. When the
+        user has selected an older row, their selection is preserved.
+        """
+        table = self.query_one(DataTable)
+        if table.row_count == 0:
+            return True
+        return table.cursor_row >= table.row_count - 1
+
     def reload(self, follow: bool = False):
         """Reload messages.
 
         Parameters
         ----------
         follow
-           If ``True``, move the cursor so that the most recent message is selected
+           If ``True``, move the cursor so that the most recent message is selected.
+           If ``False``, keep the currently selected row (if it still exists).
 
         """
         table = self.query_one(DataTable)
+
+        selected_key: RowKey | None = None
+        if not follow and table.row_count > 0:
+            selected_key = table.coordinate_to_cell_key(table.cursor_coordinate).row_key
 
         for rowid, message in self.app.db.find_messages(after=self._last_rowid):
             # TODO: Convert the filter into a SQL query so we can take advantage of
@@ -162,7 +179,7 @@ class MessageBrowser(Container):
             if (msg_source := message.source) is not None:
                 source = format_message_source(msg_source)
 
-            timestamp = message.timestamp or datetime.now()
+            timestamp = message.timestamp or datetime.now(timezone.utc)
             key = table.add_row(
                 f"{timestamp:%H:%M:%S.%f}",
                 source,
@@ -175,3 +192,5 @@ class MessageBrowser(Container):
 
         if follow:
             table.action_scroll_bottom()
+        elif selected_key is not None and selected_key in self._messages:
+            table.move_cursor(row=table.get_row_index(selected_key), animate=False)
