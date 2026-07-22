@@ -58,7 +58,9 @@ class LSPInspector(App[None]):
     @on(LiveSqlHandler.MessageReceived)
     def on_message_received(self, event: LiveSqlHandler.MessageReceived):
         browser = self.query_one(MessageBrowser)
-        browser.reload(follow=True)
+        # Only jump to the latest message when the user is already following the
+        # tail; otherwise preserve their selected row. See #247.
+        browser.reload(follow=browser.is_following_tail())
 
     async def on_ready(self, event: Ready):
         browser = self.query_one(MessageBrowser)

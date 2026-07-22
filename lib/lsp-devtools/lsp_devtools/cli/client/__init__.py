@@ -12,7 +12,6 @@ from textual import events
 from textual import on
 from textual.app import App
 from textual.containers import Vertical
-from textual.message import Message
 from textual.widgets import Button
 from textual.widgets import Footer
 
@@ -153,7 +152,9 @@ class LSPClient(App[None]):
     @on(LiveSqlHandler.MessageReceived)
     def on_message_received(self, event: LiveSqlHandler.MessageReceived):
         browser = self.query_one(MessageBrowser)
-        browser.reload(follow=True)
+        # Only jump to the latest message when the user is already following the
+        # tail; otherwise preserve their selected row. See #247.
+        browser.reload(follow=browser.is_following_tail())
 
     def on_button_pressed(self, event: Button.Pressed):
         if event.button.id == "open-settings-btn":
@@ -203,7 +204,7 @@ class LSPClient(App[None]):
 
         await client.start_io(*server_config.command)
 
-        result = await client.initialize_async(
+        await client.initialize_async(
             types.InitializeParams(
                 capabilities=types.ClientCapabilities(),
                 process_id=os.getpid(),
