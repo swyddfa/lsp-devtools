@@ -22,6 +22,7 @@ async def forward_stderr(server: asyncio.subprocess.Process):
     # EOF is signalled with an empty bytestring
     while (line := await server.stderr.readline()) != b"":
         sys.stderr.buffer.write(line)
+        sys.stderr.buffer.flush()
 
 
 class AgentClientHandler(logging.Handler):
