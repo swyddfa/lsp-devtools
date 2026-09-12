@@ -61,7 +61,7 @@ FORMATTERS: dict[str, Callable[[Any], str]] = {
 def get_formatter(fmt: str) -> Callable[[Any], str]:
     """Return the formatter with the given name."""
 
-    if (formatter := FORMATTERS.get(fmt.lower(), None)) is not None:
+    if (formatter := FORMATTERS.get(fmt.lower())) is not None:
         return formatter
 
     # Is the formatter is an lsprotocol enum?
